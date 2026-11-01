@@ -1,0 +1,1 @@
+QR encoder: Kazuhiko Arase, QRCode for JavaScript (MIT), vendored by qrcode-terminal. The implementation is bundled locally for offline use; no CDN or framework. See original attribution in js/qrcode.js.
