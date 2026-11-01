@@ -1,22 +1,23 @@
-# Hasil Pengujian Teknis Prototype — 28 Oktober 2026
+# Validasi teknis SiZisNur — 1 November 2026
 
-> Pengujian ini terbatas pada simulasi; tidak ada UAT panitia resmi atau penilaian keamanan backend.
+> Hasil ini adalah pengujian prototype menggunakan DOM browser otomatis, bukan UAT resmi panitia, audit keamanan, ataupun uji produksi.
 
-| Kasus | Hasil |
+| Skenario | Hasil |
 |---|---|
-| Sintaks `app.js` / `qrcode.js` menggunakan `node --check` | Lulus |
-| Render navigasi seluruh halaman pada keenam role + akun tenant kedua | Lulus; tidak ada error JavaScript |
-| Amilin membuat transaksi fiktif lalu muncul akad, struk, dan token QR | Lulus |
-| Pembayaran fitrah uang Rp100.000 untuk 2 jiwa dipisah menjadi Rp90.000 fitrah dan Rp10.000 infak ketika opsi kelebihan aktif | Lulus |
-| Verifikasi transaksi QR menggunakan OpenCV QRCodeDetector pada screenshot | Lulus; teks `AZIS|TN-ANNUR|...` berhasil dibaca |
-| Bendahara membentuk setoran dari transaksi belum disetor | Lulus |
-| Bendahara memasukkan kas fisik tidak cocok, mencatat alasan selisih lalu mengoreksi dan verifikasi | Lulus |
-| Petugas menambah mustahik dengan skor indikatif | Lulus |
-| Petugas mengajukan alokasi, Pengurus menyetujui | Lulus |
-| Petugas mencatat penyaluran, rekap laporan berubah | Lulus |
-| Portal publik verifikasi `TR-001` tanpa nama/nomor telepon | Lulus |
-| Pengajuan tenant ditinjau pada konsol simulasi platform; akun Admin tenant baru tersedia | Lulus |
-| Mobile viewport 390 px, navigasi hamburger, periksa overflow horizontal | Lulus |
-| ZIP verifikasi integritas | Lulus |
+| Pemeriksaan sintaks JavaScript | Lulus (`node --check`) |
+| Halaman awal tanpa sesi | Landing page SiZisNur tampil |
+| Logo landing | Aset termuat dengan ukuran gambar yang valid |
+| Landing → login enam role → dashboard | Lulus |
+| Amilin membuka modul penerimaan | Lulus |
+| Struk lama/new, token QR baru | Token `SIZISNUR\|...` dibuat |
+| Verifikasi QR baru pada portal publik | Lulus |
+| Kompatibilitas verifikasi token QR versi lama | Lulus |
+| Dashboard ↔ beranda produk | Lulus |
+| Logout kembali ke landing | Lulus |
+| Pengajuan lembaga demonstrasi | Form dan transisi ke simulasi pemeriksaan platform berfungsi |
+| Mobile 390 px | Tidak ada overflow horizontal halaman depan |
+| Browser JavaScript console/page errors | Tidak ada page error pada smoke test |
 
-Pengujian otomatis menggunakan Playwright (hanya di lingkungan pembuat). Aplikasi pengguna tidak memerlukan Playwright atau Python untuk dijalankan. Hasil ini tidak membuktikan keamanan, kebenaran aturan syariah, reliabilitas, isolasi data antarpengguna, atau integrasi perangkat yang belum dibuat.
+**Batasan pengujian:** Browser headless dibuka dengan konten HTML/CSS/JS yang disisipkan ke dokumen pengujian karena navigasi localhost/file dibatasi pada lingkungan uji. Source eksternal tetap dicek sintaksnya. Semua berkas bersifat statis dan dapat digunakan sebagai Netlify/Vercel Drop. Validasi deployment pada akun hosting pengguna belum dilakukan.
+
+**Tidak mengubah alur bisnis:** Uji regresi sebelumnya terhadap transaksi, bendahara, mustahik, alokasi, persetujuan, distribusi, dan laporan tetap menjadi acuan; perubahan revisi ini terbatas pada branding, halaman depan, dan perpindahan antarhalaman publik.
