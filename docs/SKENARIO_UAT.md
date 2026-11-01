@@ -8,7 +8,7 @@ Seluruh angka dan nama di bawah adalah contoh. Setelah unzip, buka `index.html` 
 2. Pilih **Penerimaan Zakat → Transaksi baru**.
 3. Pilih **Ahmad Santoso (Demo)**; isi 2 jiwa dan rincian zakat fitrah uang Rp100.000.
 4. Amati kewajiban fitrah Rp90.000 dan checkbox kelebihan; simpan. Hasil yang diharapkan: transaksi baru tercatat dengan baris Fitrah Rp90.000 + Infak Rp10.000.
-5. Periksa modal layar akad dan struk QR. Klik tombol layar kedua/pop-out, lalu cetak dua rangkap bila printer tersedia. QR akan memuat token teks `AZIS|...`.
+5. Periksa modal layar akad dan struk QR. Klik tombol layar kedua/pop-out, lalu cetak dua rangkap bila printer tersedia. QR akan memuat token teks `SiZisNur|...`.
 6. Keluar, masuk **Bendahara Demo**. Buka **Bendahara & Setoran**.
 7. Klik **Buat setoran**, pilih Amilin Demo. Semua transaksi `tercatat` milik amilin tersebut dibuat sebagai satu setoran; transaksi berubah menjadi `disetor`.
 8. Klik **Periksa**, ubah nilai kas aktual menjadi berbeda dari nilai sistem, beri alasan. Simpan → status **selisih**, transaksi belum terverifikasi.

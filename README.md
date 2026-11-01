@@ -1,16 +1,16 @@
-# AZIS — Prototype Administrasi Zakat Masjid An-Nur VPA Batam
+# SiZisNur — Prototype Platform Pengelolaan Zakat, Infak & Sedekah
 
 **Jenis:** Prototype simulasi interaktif (TO-BE), bukan aplikasi zakat resmi.
 **Teknologi:** HTML5, CSS3, JavaScript murni. Tanpa framework, backend, build tools, database server, atau CDN. Generator QR pihak ketiga dibundel secara lokal (lihat `docs/THIRD_PARTY.md`).
-**Tanggal perancangan:** 28 Oktober 2026.
+**Rancangan awal:** 28 Oktober 2026. **Revisi branding dan landing page:** 1 November 2026.
 
 ## Cara menjalankan
 
 1. Ekstrak paket ZIP ke folder mana saja.
 2. **Cara termudah:** buka `index.html` melalui browser Chrome, Edge atau Firefox. Semua file JS dan CSS disimpan lokal.
 3. Jika pembatasan browser mencegah penyimpanan pada halaman `file://`, jalankan server lokal opsional tanpa instalasi library: di folder proyek jalankan `python -m http.server 8000`, lalu buka `http://localhost:8000/`.
-4. Pilih akun peran demo dari halaman login. **Tidak ada password** karena ini demonstrasi, bukan sistem produksi.
-5. Jika ingin seluruh aplikasi dalam satu file, gunakan versi lain yang juga disediakan: `Prototype_Zakat_Annur_Standalone.html`.
+4. Di **landing page**, klik **Masuk / Coba Demo**, lalu pilih akun peran demo dari halaman login. **Tidak ada password** karena ini demonstrasi, bukan sistem produksi.
+5. Jika ingin seluruh aplikasi dalam satu file, gunakan versi lain yang juga disediakan: `SiZisNur_Prototype_Standalone.html`.
 
 **Jangan memasukkan data pribadi, NIK, nomor rekening, atau informasi pembayaran asli. Semua data disimpan di browser yang digunakan.**
 
@@ -22,7 +22,9 @@ Prototype_Zakat_Annur_Vanilla/
 ├── css/style.css         # Styling responsif + light/dark
 ├── js/app.js             # Data simulasi, router, UI, aturan demo, event handlers
 ├── js/qrcode.js          # Mesin QR offline, lisensi sumber dicatat
-├── assets/               # Screenshot hasil uji
+├── assets/sizisnur-logo-mark.png   # Simbol logo dari desain yang telah disetujui
+├── assets/sizisnur-branding-reference.png # Papan referensi identitas logo
+├── assets/               # Aset dan screenshot hasil uji
 ├── docs/THIRD_PARTY.md   # Atribusi QR
 ├── docs/CAKUPAN_FITUR.md # Modul vs implementasi/batasan
 ├── docs/SKENARIO_UAT.md  # Tutorial verifikasi alur lintas role
@@ -72,7 +74,7 @@ Akun **Admin Tenant B** memperlihatkan bagaimana data tenant berbeda ditampilkan
 
 ## Penyimpanan dan reset
 
-Data demo persisten pada `localStorage` dengan key `azis_demo_database_v3`; session pada browser storage. Log aktivitas dapat dilihat pada menu Audit & Arsip. Menu **Reset data demo** mengembalikan contoh awal. Menghapus data browser juga dapat menghapus semua transaksi demo.
+Data demo persisten pada `localStorage` dengan key `sizisnur_demo_database_v3`; session pada browser storage. Log aktivitas dapat dilihat pada menu Audit & Arsip. Menu **Reset data demo** mengembalikan contoh awal. Menghapus data browser juga dapat menghapus semua transaksi demo.
 
 ## Uji coba
 
@@ -81,3 +83,17 @@ File `docs/SKENARIO_UAT.md` menjelaskan urutan simulasi. Pengujian otomatis head
 ## Dasar kebutuhan
 
 Diturunkan dari naskah analisis proses berjalan, tiga rangkaian wawancara panitia (22 Feb, 18 Apr, 23 Apr 2026), observasi workbook zakat, daftar user requirements, serta pembagian modul FR/NFR yang sebelumnya disusun. Ketika sumber bertentangan, penggunaan rumus belum disahkan diberi label *simulasi* dan tidak diimplementasikan sebagai keputusan syariah otomatis.
+
+## Rebranding SiZisNur & landing page (revisi 1 November 2026)
+
+- Logo baru di landing page, layar login, sidebar, favicon, dan identitas antarmuka. Nama SiZisNur digunakan di seluruh label yang ditampilkan, termasuk token QR baru (`SIZISNUR|...`).
+- Landing page adalah **halaman awal** sebelum login. Berisi proposisi nilai, masalah yang diselesaikan, fitur, alur, enam role, rancangan multi-tenant, tombol masuk demo, portal publik, dan pengajuan tenant simulasi. Halaman pemasaran tidak menambahkan kewenangan atau kebutuhan bisnis baru.
+- Penyimpanan browser kini memakai awalan `sizisnur_`. Saat dibuka dari asal web/browser yang sama, data dan sesi demo dari versi sebelumnya akan dicoba dimigrasikan otomatis. QR lama masih dapat diverifikasi melalui portal publik demo. Data di browser lain tidak ikut terbawa.
+- **Bukan layanan produksi**: tidak ada pembayaran nyata, pemasaran berbayar, kontrak SaaS, server bersama, pengamanan backend, atau integrasi email. Statistik pada halaman depan berlabel contoh.
+- Untuk deploy di Netlify/Vercel, unggah isi folder ini (pastikan `index.html` berada di root). Lakukan UAT ulang setelah mengganti identitas karena nama dan alur masuk berubah.
+
+### Akses cepat
+- `index.html`: halaman depan + semua modul interaktif, siap diunggah ke hosting statis.
+- [Panduan deploy](docs/DEPLOY_NETLIFY_VERCEL.md).
+- [Hasil pemeriksaan perubahan](docs/QA_HASIL_PENGUJIAN.md).
+- [Rincian penyesuaian branding](docs/REBRANDING_DAN_LANDING_PAGE.md).
