@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://sizisnur.sroft.my.id" target="_blank">
-    <img src="https://github.com/AsyrafRF/SiZisNur-Proto/blob/6416aaa8d71a077878c70d6b83ed64da6200b2ba/assets/sizisnur-logo-mark.png" width="300" alt="MoneyMate Logo">
+    <img src="https://github.com/AsyrafRF/SiZisNur-Proto/blob/6416aaa8d71a077878c70d6b83ed64da6200b2ba/assets/sizisnur-logo-mark.png" width="90" alt="MoneyMate Logo">
   </a>
 </p>
 
