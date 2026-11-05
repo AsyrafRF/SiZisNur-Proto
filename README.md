@@ -1,3 +1,23 @@
+<p align="center">
+  <a href="https://sizisnur.sroft.my.id" target="_blank">
+    <img src="https://github.com/AsyrafRF/SiZisNur-Proto/blob/6416aaa8d71a077878c70d6b83ed64da6200b2ba/assets/sizisnur-logo-mark.png" width="90" alt="MoneyMate Logo">
+  </a>
+</p>
+
+<p align="center">
+  <em>Platform ZIS untuk masjid dan komunitas perumahan.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/AsyrafRF/SiZisNur-Proto">
+    <img src="https://img.shields.io/badge/Project-Prototype-blue" alt="Project Status">
+  </a>
+  <img src="https://img.shields.io/badge/Development-In%20Progress-orange" alt="Development Status">
+  <img src="https://img.shields.io/badge/Platform-Web-green" alt="Platform">
+  <img src="https://img.shields.io/badge/Domain-ZIS-purple" alt="ZIS Platform">
+  <img src="https://img.shields.io/badge/License-GPL--3.0-blue?logo=gnu&logoColor=white" alt="GNU GPL v3.0">
+</p>
+
 # SiZisNur V3 — Prototype Platform Pengelolaan Zakat, Infak & Sedekah
 
 **Jenis:** Prototype simulasi interaktif (TO-BE), bukan aplikasi zakat resmi.
