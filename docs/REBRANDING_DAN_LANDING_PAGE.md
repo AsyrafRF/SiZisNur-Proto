@@ -28,3 +28,8 @@ Semua modul lama **tetap dipertahankan**: tenant, akun/peran, dashboard, periode
 4. Coba Portal Publik dan verifikasi nomor transaksi/token QR baru.
 5. Coba Pengajuan Lembaga dari landing dan masuk dari tenant kedua.
 6. Uji browser mobile, mode tema gelap, reset data, serta penyimpanan dan refresh.
+
+
+## Catatan migrasi pada V3 (4 November 2026)
+
+V3 memakai key database browser baru `sizisnur_demo_database_v4` dan session `sizisnur_demo_session_v4`. Dataset demo V2 tidak dimigrasikan otomatis agar struktur lama tidak tercampur dengan model skor dan alokasi workbook. Pengguna tetap dapat membuka paket V2 secara terpisah; V3 memulai data demo baru.

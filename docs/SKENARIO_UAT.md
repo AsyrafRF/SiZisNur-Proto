@@ -1,6 +1,6 @@
 # Skenario Pengujian Prototype (UAT Manual)
 
-Seluruh angka dan nama di bawah adalah contoh. Setelah unzip, buka `index.html` dan gunakan menu demo per role. Klik **Reset Data Demo** untuk mengulang dari awal.
+Nama dan identitas pada demo bersifat sintetis. Angka pada menu Acuan Workbook 1447H merupakan agregat sumber workbook resmi. Setelah unzip, buka `index.html` dan gunakan menu demo per role. Klik **Reset Data Demo** untuk mengulang dari awal.
 
 ## Skenario A — Penerimaan sampai verifikasi bendahara
 
@@ -17,9 +17,9 @@ Seluruh angka dan nama di bawah adalah contoh. Setelah unzip, buka `index.html` 
 
 ## Skenario B — Survei, alokasi, approval, distribusi
 
-1. Masuk **Petugas Demo**, buka **Mustahik & Survei**, tambah mustahik fiktif dan hitung skor indikatif. Pilih asnaf manual serta status diverifikasi.
+1. Masuk **Petugas Demo**, buka **Mustahik & Survei**, tambah mustahik sintetis. Pilih lima faktor dan jalur Mualaf; sistem menghitung jalur F/M dan final status sesuai formula workbook. Verifikasi survei setelah diperiksa.
 2. Buka **Alokasi & Persetujuan**; lihat saldo terverifikasi yang belum dialokasikan.
-3. Setelah skenario A menghasilkan dana baru, buat rencana Rp90.000 tanpa pembulatan (kelipatan Rp1) dan simpan sebagai draf; klik Ajukan.
+3. Untuk menguji alokasi generik, setelah skenario A menghasilkan dana baru, buat rencana maksimal saldo terverifikasi dan simpan sebagai draf; klik Ajukan. Untuk alokasi sumber workbook, gunakan skenario E.
 4. Keluar lalu masuk **Pengurus Demo**, buka Alokasi dan pilih **Putuskan → Setujui**.
 5. Keluar lalu masuk **Petugas Demo**, buka **Penyaluran**, pilih salah satu item alokasi, catat realisasinya.
 6. Coba mencatat penerima yang sama lagi untuk alokasi yang sama: pilihan penerima tidak boleh muncul lagi.
@@ -43,8 +43,20 @@ Seluruh angka dan nama di bawah adalah contoh. Setelah unzip, buka `index.html` 
 - Coba menutup periode yang masih memiliki setoran atau alokasi belum selesai: harus ditolak.
 - Ekspor laporan CSV atau JSON dan buka dengan aplikasi lain.
 
+## Skenario E — V3 berbasis workbook 1447H/2026M
+
+1. Masuk **Petugas Demo** dan buka **Acuan Workbook 1447H**. Cocokkan penerimaan Rp175.240.500, 3.114 jiwa, 980 blanko, beras zakat 1.882,6 kg, dan komposisi mustahik 21/103/5.
+2. Buka **Mustahik & Survei**. Daftar awal memuat 129 identitas sintetis; klik **Lihat aturan skor** untuk memeriksa lima faktor, ambang >360/>240, dan jalur Mualaf.
+3. Tambah survei dummy. Pilih wilayah, tempat tinggal, status pernikahan, kategori penghasilan, tanggungan, dan jalur Mualaf; simpan. Final status harus dihitung dari formula workbook, bukan dipilih manual.
+4. Buka **Alokasi & Persetujuan**. Klik **Buat Tahap 1 · Workbook**. Hasil dasar harus Rp71.900.000 dan 274 paket (685 kg). Simpan draf, ajukan.
+5. Login **Pengurus Demo**, buka Alokasi, periksa rincian, lalu setujui.
+6. Kembali sebagai **Petugas Demo** dan buat Tahap 2. Dasar per asnaf Rp76.350.000 dan 466 paket; saldo agregat Rp37.500 + 13,04 paket ditampilkan terpisah. Total tahap 2 sesuai rekap menjadi Rp76.387.500 dan 479,04 paket (1.197,6 kg).
+7. Setujui tahap 2 melalui Pengurus. Rencana gabungan harus sama dengan Summary1: Rp148.287.500 dan 753,04 paket = 1.882,6 kg. Saldo agregat tidak muncul sebagai item individu untuk penyaluran.
+8. Buka **Insentif Amil**. Pastikan metode blanko dan kehadiran masing-masing menunjukkan pool Rp8.000.000 dan total manual K38 Rp17.208.500 ditampilkan terpisah.
+9. Buka Acuan Workbook dan baca daftar temuan; selisih beras 0,6 kg, satuan paket, formula baris pertama, perbedaan cache/formula R16, 4–5 juta, tanggungan 4 ATAU LEBIH, dan P43/P49 tidak boleh diubah otomatis.
+
 ## Catatan pengujian otomatis
 
-Pengujian headless Chromium telah berhasil dijalankan untuk semua menu setiap role tanpa exception JavaScript, pembuatan transaksi, rekonsiliasi selisih, persetujuan alokasi, penyaluran, laporan, dan verifikasi portal publik. Screenshot demo tersedia dalam folder `assets`.
+Jalankan `node tests/workbook-rules.test.cjs` untuk pengujian formula, batas klasifikasi, jumlah mustahik sintetis, render template halaman, dan total Tahap 1/2. Uji browser penuh pada perangkat pengguna serta UAT resmi belum dilakukan.
 
 UAT resmi dan penandatanganan stakeholder belum dilakukan. Prototype ini belum membuktikan seluruh persyaratan keamanan, ketersediaan, skalabilitas atau kebenaran rumus resmi.
