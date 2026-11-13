@@ -73,7 +73,7 @@ listeners.offline();
 assert.equal(elements['offline-state'].textContent, 'Offline');
 assert.equal(elements['hero-connection-state'].dataset.connectionState, 'offline');
 assert.equal(elements['sync-mode-state'].textContent, 'Tersimpan di perangkat ini');
-assert.equal(elements['local-queue-count'].textContent, '1', 'queue should count only the active tenant');
+assert.equal(elements['local-queue-count'].textContent, '1', 'queue should count only the active lembaga');
 
 navigator.onLine = true;
 listeners.online();
@@ -87,4 +87,4 @@ for (const rule of [
   '@media(max-width:800px)', '@media(max-width:520px)',
 ]) assert.ok(css.includes(rule), `responsive dashboard status styling should include ${rule}`);
 
-console.log('PASS — dashboard role, koneksi, dan antrean tersusun rapi; status online/offline dan jumlah antrean aktif-tenant diperbarui secara dinamis');
+console.log('PASS — dashboard role, koneksi, dan antrean tersusun rapi; status online/offline dan jumlah antrean lembaga aktif diperbarui secara dinamis');

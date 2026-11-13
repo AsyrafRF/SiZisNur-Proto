@@ -39,9 +39,9 @@ vm.runInContext(source, context, { timeout: 5000 });
 const db = window.__SiZisNurBridge.db;
 const annurRules = db.rules.find((x) => x.tenantId === 'TN-ANNUR');
 const alhikmahRules = db.rules.find((x) => x.tenantId === 'TN-ALHIKMAH');
-assert.equal(annurRules.moneyRate, 45000, 'existing tenant fitrah rate is retained');
-assert.equal(alhikmahRules.moneyRate, 50000, 'other tenant keeps its own fitrah rate');
-assert.notEqual(annurRules, alhikmahRules, 'tariff settings are tenant-scoped');
+assert.equal(annurRules.moneyRate, 45000, 'existing lembaga fitrah rate is retained');
+assert.equal(alhikmahRules.moneyRate, 50000, 'other lembaga keeps its own fitrah rate');
+assert.notEqual(annurRules, alhikmahRules, 'tariff settings are scoped per lembaga');
 assert.equal(annurRules.fidyahRate, 65000);
 assert.equal(annurRules.professionNisabMonthly, 7640144);
 
@@ -62,7 +62,7 @@ const rules = {
   kafaratMealRate: 30000,
 };
 
-// Fitrah: tenant rates are used for both money and rice.
+// Fitrah: lembaga rates are used for both money and rice.
 const fitrahMoney = calculate('Zakat Fitrah', 'uang', 4, 0, 'no', 'yamin', rules);
 assert.equal(fitrahMoney.due, 180000);
 const fitrahRice = calculate('Zakat Fitrah', 'beras', 4, 0, 'no', 'yamin', rules);
@@ -85,12 +85,12 @@ assert.equal(professionEligible.due, monthlyNisab * 0.025);
 const professionAnnual = calculate('Zakat Profesi', 'uang', 1, monthlyNisab * 12, 'no', 'yamin', rules, { professionPeriod: 'annual' });
 assert.equal(professionAnnual.due, monthlyNisab * 12 * 0.025);
 
-// Fidyah is counted by missed fasting days and uses the tenant's daily rate.
+// Fidyah is counted by missed fasting days and uses the lembaga's daily rate.
 const fidyah = calculate('Fidyah', 'uang', 3, 0, 'no', 'yamin', rules);
 assert.equal(fidyah.due, 195000);
 assert.equal(fidyah.splitExcessEligible, false);
 
-// Kafarat depends on the case; meal rates are configurable per tenant.
+// Kafarat depends on the case; meal rates are configurable per lembaga.
 const oathKafarat = calculate('Kafarat', 'uang', 1, 0, 'no', 'yamin', rules);
 assert.equal(oathKafarat.meals, 10);
 assert.equal(oathKafarat.due, 300000);

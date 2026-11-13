@@ -41,7 +41,7 @@ const db = A.db
 const publicPortal = window.__SIZISNUR_PUBLIC_PORTAL
 assert.ok(publicPortal, 'public portal module should register')
 
-// The unauthenticated public route is accessible without a tenant login.
+// The unauthenticated public route is accessible without a lembaga login.
 A.state.page = 'public'
 A.render()
 assert.ok(elements.app.innerHTML.includes('Portal Publik SiZisNur'))
@@ -50,8 +50,8 @@ assert.ok(elements.app.innerHTML.includes('Masjid Al-Hikmah'))
 assert.ok(elements.app.innerHTML.includes('Verifikasi struk publik'))
 assert.ok(elements.app.innerHTML.includes('public-camera'), 'public camera scanner should be available')
 assert.ok(elements.app.innerHTML.includes('public-scan-token'), 'manual token entry should remain available')
-assert.ok(!elements.app.innerHTML.includes('demo@annur.invalid'), 'tenant email must not be public')
-assert.ok(!elements.app.innerHTML.includes('0778-000000'), 'tenant phone must not be public')
+assert.ok(!elements.app.innerHTML.includes('demo@annur.invalid'), 'lembaga email must not be public')
+assert.ok(!elements.app.innerHTML.includes('0778-000000'), 'lembaga phone must not be public')
 
 // Aggregate public transparency contains confirmed transactions only.
 const baselineAnnur = publicPortal.aggregate('TN-ANNUR')
@@ -72,7 +72,7 @@ assert.equal(annurAggregate.received.money, baselineAnnur.received.money + 10500
 assert.equal(annurAggregate.distributionCount, baselineAnnur.distributionCount + 1)
 assert.equal(annurAggregate.distributed.money, baselineAnnur.distributed.money + 25000)
 
-// Exact QR binds tenant, transaction ID, and serial; individual identity and amounts stay hidden.
+// Exact QR binds lembaga, transaction ID, and serial; individual identity and amounts stay hidden.
 const token = 'SIZISNUR|TN-ANNUR|TR-PUBLIC-001|AM-001-PUBLIC'
 const verified = publicPortal.verifyPublicToken(token)
 assert.match(verified, /STRUK VALID/)
@@ -85,11 +85,11 @@ const pending = publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-002|
 assert.match(pending, /BELUM TERVAKLIDASI/)
 assert.doesNotMatch(pending, /STRUK VALID/)
 
-// Suspended and unpublished tenants do not appear or pass public QR verification.
+// Suspended and unpublished lembaga do not appear or pass public QR verification.
 const hidden = A.db.tenants.find((item) => item.id === 'TN-ALHIKMAH')
 hidden.publicPortalEnabled = false
 assert.ok(!publicPortal.publicTenants().some((item) => item.id === 'TN-ALHIKMAH'))
-assert.match(publicPortal.verifyPublicToken('SIZISNUR|TN-ALHIKMAH|TR-NOPE|X'), /Tenant asal tidak tersedia/)
+assert.match(publicPortal.verifyPublicToken('SIZISNUR|TN-ALHIKMAH|TR-NOPE|X'), /Lembaga asal tidak tersedia/)
 hidden.publicPortalEnabled = true
 hidden.status = 'ditangguhkan'
 assert.ok(!publicPortal.publicTenants().some((item) => item.id === 'TN-ALHIKMAH'))
@@ -97,10 +97,10 @@ hidden.status = 'aktif'
 
 // Serial collisions are rejected unless the complete QR token is scanned.
 db.transactions.push({ id: 'TR-PUBLIC-003', tenantId: 'TN-ALHIKMAH', serial: 'AM-001-PUBLIC', status: 'paid', lines: [], createdAt: '2026-11-14T09:00:00.000Z' })
-assert.match(publicPortal.verifyPublicToken('AM-001-PUBLIC'), /lebih dari satu tenant/)
+assert.match(publicPortal.verifyPublicToken('AM-001-PUBLIC'), /lebih dari satu lembaga/)
 assert.match(publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-001|WRONG-SERIAL'), /QR tidak cocok/)
 
-// Platform Admin can control visibility per tenant; new active tenants are listed by default.
+// Platform Admin can control visibility per lembaga; new active tenants are listed by default.
 const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
   name: 'UPZ Uji Transparansi', adminName: 'Admin Uji', adminEmail: 'admin.transparansi@example.invalid',
   email: 'kontak@example.invalid', status: 'aktif', daerah: 'Kota Uji',
@@ -110,4 +110,4 @@ assert.ok(publicPortal.publicTenants().some((item) => item.id === created.id))
 created.publicPortalEnabled = false
 assert.ok(!publicPortal.publicTenants().some((item) => item.id === created.id))
 
-console.log('PASS — portal publik multi-tenant, agregat tanpa identitas, verifikasi QR lintas tenant, status validasi, serta kontrol visibilitas root')
+console.log('PASS — portal publik multi-lembaga, agregat tanpa identitas, verifikasi QR lintas lembaga, status validasi, serta kontrol visibilitas root')

@@ -21,16 +21,16 @@ Contoh tampilan pada panduan merupakan ilustrasi pengenal elemen menu, bukan tan
 ## Cakupan role
 
 - **Admin** — ringkasan, profil lembaga dan UPZ, akun dan peran, periode zakat, tarif dan rumus, Mustahik dan kelayakan, notifikasi, audit dan arsip, serta acuan workbook.
-- **Muzakki** — Dashboard Zakat Saya yang hanya menampilkan status, jenis, nilai, verifikasi, dan riwayat zakat pribadi; tenant dan profil, data keluarga tanggungan, kalkulator, rencana transaksi dan QR tetap tersedia di bagian Layanan Mandiri.
+- **Muzakki** — Dashboard Zakat Saya yang hanya menampilkan status, jenis, nilai, verifikasi, dan riwayat zakat pribadi; lembaga dan profil, data keluarga tanggungan, kalkulator, rencana transaksi dan QR tetap tersedia di bagian Layanan Mandiri.
 - **Operator** — ringkasan, data Muzakki Walk-in, input transaksi konter, struk digital dan cetak, serta pengajuan koreksi.
 - **Amil** — ringkasan, shift dan kehadiran, input konter saat tidak ada Operator, pemindaian QR dan verifikasi, bukti setor zakat, ketentuan dan akad, serta notifikasi.
 - **Bendahara** — ringkasan, serah terima dan rekonsiliasi, jurnal dan laporan keuangan, koreksi, alokasi, batch penyaluran, laporan, insentif, audit, dan acuan workbook.
 - **Relawan** — ringkasan, daftar batch penyaluran, pemindaian QR Mustahik, konfirmasi penerimaan, serta panduan kendala kamera atau jaringan.
-- **Pengurus** — ringkasan, peninjauan tenant, penerimaan, rekonsiliasi, koreksi, persetujuan alokasi, jurnal, laporan, insentif, audit, dan acuan workbook dengan akses baca saja kecuali tindakan persetujuan program yang memang disediakan.
+- **Pengurus** — ringkasan, peninjauan lembaga, penerimaan, rekonsiliasi, koreksi, persetujuan alokasi, jurnal, laporan, insentif, audit, dan acuan workbook dengan akses baca saja kecuali tindakan persetujuan program yang memang disediakan.
 
 ## Batasan prototype
 
-Panduan menjelaskan kemampuan prototype, bukan menjanjikan layanan produksi. Akun dan data masih berjalan pada lingkungan prototype berbasis browser. Pengiriman email dan WhatsApp, autentikasi produksi, isolasi tenant server-side, sinkronisasi cloud, serta integrasi resmi BAZNAS tetap memerlukan backend dan konfigurasi tahap rilis. Kamera pemindai memerlukan konteks HTTPS dan izin perangkat.
+Panduan menjelaskan kemampuan prototype, bukan menjanjikan layanan produksi. Akun dan data masih berjalan pada lingkungan prototype berbasis browser. Pengiriman email dan WhatsApp, autentikasi produksi, isolasi lembaga server-side, sinkronisasi cloud, serta integrasi resmi BAZNAS tetap memerlukan backend dan konfigurasi tahap rilis. Kamera pemindai memerlukan konteks HTTPS dan izin perangkat.
 
 ## Pengujian
 

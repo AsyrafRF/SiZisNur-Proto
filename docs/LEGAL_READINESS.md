@@ -31,7 +31,7 @@ Rujukan di atas adalah titik awal pemeriksaan. Pengurus dan penasihat hukum perl
 
 ## Checklist keamanan teknis sebelum go-live
 
-- Bangun backend dan basis data dengan isolasi tenant pada query dan policy server-side.
+- Bangun backend dan basis data dengan isolasi lembaga pada query dan policy server-side.
 - Gunakan autentikasi kuat, MFA untuk role kritis, pengelolaan sesi, rate limiting, pemulihan akun dan pencabutan perangkat.
 - Terapkan validasi input server-side, CSRF protection, pengamanan XSS, CSP, secure headers, secret management dan dependency scanning.
 - Enkripsi koneksi TLS dan data sensitif saat tersimpan dengan pengelolaan kunci yang terpisah.
@@ -42,4 +42,4 @@ Rujukan di atas adalah titik awal pemeriksaan. Pengurus dan penasihat hukum perl
 
 ## Batas prototype saat ini
 
-Project yang disertakan adalah front-end statis. `localStorage`, pembatasan menu JavaScript dan rantai hash di browser tidak menyediakan autentikasi, enkripsi, kontrol akses kuat, isolasi tenant, audit immutable, ataupun kepatuhan hukum. Data demo tidak boleh diganti dengan data pribadi atau transaksi sesungguhnya.
+Project yang disertakan adalah front-end statis. `localStorage`, pembatasan menu JavaScript dan rantai hash di browser tidak menyediakan autentikasi, enkripsi, kontrol akses kuat, isolasi lembaga, audit immutable, ataupun kepatuhan hukum. Data demo tidak boleh diganti dengan data pribadi atau transaksi sesungguhnya.

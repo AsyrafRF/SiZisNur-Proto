@@ -43,8 +43,8 @@ const rootAccount = db.platformAdmins.find((item) => item.id === 'PA-SIZISNUR-RO
 assert.ok(rootAccount, 'Root account should be seeded')
 assert.equal(rootAccount.role, 'Admin SiZisNur')
 assert.equal(rootAccount.scope, 'platform')
-assert.equal(rootAccount.tenantId, undefined, 'Root account must not be bound to a tenant')
-assert.ok(!db.users.some((item) => item.id === rootAccount.id), 'Root account must not be in tenant users collection')
+assert.equal(rootAccount.tenantId, undefined, 'Root account must not be bound to a lembaga')
+assert.ok(!db.users.some((item) => item.id === rootAccount.id), 'Root account must not be in lembaga users collection')
 assert.ok(app.html().includes('Admin SiZisNur'), 'Root account should appear on the demo login screen')
 assert.ok(app.html().includes('Konsol tingkat root'))
 
@@ -52,20 +52,20 @@ assert.ok(app.html().includes('Konsol tingkat root'))
 bridge.state.page = 'platform'
 bridge.render()
 assert.equal(bridge.state.page, 'public')
-assert.ok(!app.html().includes('Verifikasi Pengajuan Tenant — Demo'))
+assert.ok(!app.html().includes('Verifikasi Pengajuan Lembaga — Demo'))
 assert.ok(!app.html().includes('data-action="platform-review"'))
 
 bridge.login(rootAccount.id, false)
 assert.equal(bridge.user().role, 'Admin SiZisNur')
 assert.equal(bridge.state.page, 'platform-admin')
 assert.ok(app.html().includes('Ringkasan Platform'))
-assert.ok(app.html().includes('Tenant terdaftar'))
+assert.ok(app.html().includes('Lembaga terdaftar'))
 assert.ok(app.html().includes('Pengaturan sistem'))
 assert.ok(app.html().includes('Audit platform'))
 bridge.state.platformTab = 'tenants'
 bridge.state.selectedPlatformTenant = 'TN-ANNUR'
 bridge.render()
-assert.ok(app.html().includes('Tampilkan tenant pada Portal Publik'))
+assert.ok(app.html().includes('Tampilkan lembaga pada Portal Publik'))
 assert.ok(app.html().includes('publicPortalEnabled'))
 
 const initialTenantCount = db.tenants.length
@@ -75,20 +75,20 @@ const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
 })
 assert.equal(db.tenants.length, initialTenantCount + 1)
 assert.equal(db.users.filter((item) => item.tenantId === created.id && item.role === 'Admin').length, 1)
-assert.equal(created.publicPortalEnabled, true, 'active tenants are publicly listed by default')
+assert.equal(created.publicPortalEnabled, true, 'active lembaga are publicly listed by default')
 assert.ok(db.platformAudit.some((item) => item.type === 'TENANT_CREATED' && item.detail.includes('Lembaga Uji Root')))
 assert.equal(JSON.stringify(window.__SIZISNUR_PLATFORM_ADMIN.tenantMetrics(created.id)), JSON.stringify({ users: 1, admins: 1, transactions: 0, pending: 0, verified: 0 }))
 
 bridge.state.platformTab = 'overview'
 bridge.state.selectedPlatformTenant = null
 bridge.render()
-assert.ok(app.html().includes('Lembaga Uji Root'), 'New tenant should be visible in platform overview')
+assert.ok(app.html().includes('Lembaga Uji Root'), 'New lembaga should be visible in platform overview')
 
-// Tenant suspension blocks its users without deleting its data.
+// Lembaga suspension blocks its users without deleting its data.
 const originalStatus = db.tenants.find((item) => item.id === 'TN-ANNUR').status
 db.tenants.find((item) => item.id === 'TN-ANNUR').status = 'ditangguhkan'
 bridge.login('US-ADM', false)
-assert.ok(app.html().includes('AKSES TENANT DIBATASI'))
+assert.ok(app.html().includes('AKSES LEMBAGA DIBATASI'))
 assert.ok(app.html().includes('ditangguhkan'))
 db.tenants.find((item) => item.id === 'TN-ANNUR').status = originalStatus
 
@@ -97,4 +97,4 @@ bridge.login(rootAccount.id, false)
 assert.ok(app.html().includes('KONSOL PLATFORM / ROOT'))
 assert.equal(db.platformAdmins.length, 1)
 
-console.log('PASS — akun root terpisah, konsol tenant, pengelolaan tenant, audit platform, dan blokir akses tenant ditangguhkan')
+console.log('PASS — akun root terpisah, konsol lembaga, pengelolaan lembaga, audit platform, dan blokir akses lembaga yang ditangguhkan')

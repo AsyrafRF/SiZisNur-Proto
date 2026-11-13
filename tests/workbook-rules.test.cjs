@@ -144,7 +144,7 @@ for (const [uid, allowed, denied] of [
   for (const page of denied) assert.ok(!app.bridge.can(page), `${uid} must not be permitted to ${page}`);
 }
 app.loginRef('US-T2');
-assert.ok(!app.bridge.can('workbook'), 'tenant B must not access An-Nur workbook');
+assert.ok(!app.bridge.can('workbook'), 'Lembaga B must not access An-Nur workbook');
 app.loginRef('US-PTG');
 app.mustahikModal(null);
 assert.ok(app.modalHtml().includes('incomeBand'));

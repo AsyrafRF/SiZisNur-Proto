@@ -85,7 +85,7 @@
     const metric = aggregate(tenant.id)
     const region = tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan'
     return `<article class="card public-tenant-card">
-      <div class="public-tenant-card-head"><div><span class="tag ok">Tenant aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
+      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
       <div class="public-tenant-stats">
         <div><small>Transaksi disahkan</small><b>${metric.transactions.toLocaleString('id-ID')}</b></div>
         <div><small>Penerimaan uang</small><b>${money(metric.received.money)}</b></div>
@@ -101,24 +101,24 @@
   function renderDirectory(tenants) {
     const total = globalAggregate(tenants)
     const notice = String(db.platformSettings?.publicNotice || '').trim()
-    return `<div class="public-hero"><div><span class="lp-section-kicker">SIZISNUR · TRANSPARANSI MULTI-TENANT</span><h1>Portal Publik SiZisNur</h1><p>Jelajahi ringkasan penghimpunan dan penyaluran dari seluruh lembaga aktif yang membuka data transparansi. Informasi Muzakki, Mustahik, kontak, dan transaksi individual tidak ditampilkan.</p></div><div class="public-hero-seal"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><b>SiZisNur</b><small>Transparansi ZIS</small></div></div>
+    return `<div class="public-hero"><div><span class="lp-section-kicker">SIZISNUR · TRANSPARANSI MULTI-LEMBAGA</span><h1>Portal Publik SiZisNur</h1><p>Jelajahi ringkasan penghimpunan dan penyaluran dari seluruh lembaga aktif yang membuka data transparansi. Informasi Muzakki, Mustahik, kontak, dan transaksi individual tidak ditampilkan.</p></div><div class="public-hero-seal"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><b>SiZisNur</b><small>Transparansi ZIS</small></div></div>
       ${notice ? `<div class="alert light">${esc(notice)}</div>` : ''}
       <div class="cards public-global-stats">
-        ${stat('Tenant tampil publik', tenants.length.toLocaleString('id-ID'), 'Tenant aktif dan dipublikasikan', '▦')}
-        ${stat('Transaksi disahkan', total.transactions.toLocaleString('id-ID'), 'Akumulasi seluruh tenant tampil', '✓')}
+        ${stat('Lembaga tampil publik', tenants.length.toLocaleString('id-ID'), 'Lembaga aktif dan dipublikasikan', '▦')}
+        ${stat('Transaksi disahkan', total.transactions.toLocaleString('id-ID'), 'Akumulasi seluruh lembaga tampil', '✓')}
         ${stat('Penerimaan uang', money(total.received.money), 'Pembayaran yang disahkan Amil', 'Rp')}
         ${stat('Penerimaan beras', kilos(total.received.rice), 'Pembayaran yang disahkan Amil', 'kg')}
         ${stat('Uang tersalurkan', money(total.distributed.money), 'Realisasi catatan penyaluran selesai', '⇥')}
         ${stat('Beras tersalurkan', kilos(total.distributed.rice), 'Realisasi catatan penyaluran selesai', '⇥')}
       </div>
-      <section class="card public-directory-section"><div class="public-section-head"><div><h2>Tenant terdaftar</h2><p class="caption">Pilih lembaga untuk melihat ringkasan transparansi lebih lanjut.</p></div><div class="public-search"><input id="public-tenant-search" type="search" placeholder="Cari nama masjid / lembaga…" aria-label="Cari tenant publik"></div></div>
-        <div id="public-tenant-list" class="public-tenant-grid">${tenants.length ? tenants.map(tenantCard).join('') : '<div class="empty">Belum ada tenant aktif yang membuka Portal Publik.</div>'}</div>
-        <p id="public-tenant-empty" class="empty" hidden>Tidak ada tenant yang sesuai dengan pencarian.</p>
+      <section class="card public-directory-section"><div class="public-section-head"><div><h2>Lembaga terdaftar</h2><p class="caption">Pilih lembaga untuk melihat ringkasan transparansi lebih lanjut.</p></div><div class="public-search"><input id="public-tenant-search" type="search" placeholder="Cari nama masjid / lembaga…" aria-label="Cari lembaga publik"></div></div>
+        <div id="public-tenant-list" class="public-tenant-grid">${tenants.length ? tenants.map(tenantCard).join('') : '<div class="empty">Belum ada lembaga aktif yang membuka Portal Publik.</div>'}</div>
+        <p id="public-tenant-empty" class="empty" hidden>Tidak ada lembaga yang sesuai dengan pencarian.</p>
       </section>
       <section class="card public-verification-card"><div class="public-section-head"><div><h2>Verifikasi struk publik</h2><p class="caption">Pindai QR pada struk fisik atau masukkan nomor seri / token secara manual.</p></div><span class="tag info">Baca saja</span></div>
         ${verificationPanel()}
       </section>
-      <div class="alert light public-privacy-note"><b>Privasi publik:</b> portal hanya menyajikan agregat per tenant dan status keabsahan struk. Nama pembayar, nomor kontak, identitas penerima, petugas, serta nilai transaksi individual tidak ditampilkan.</div>
+      <div class="alert light public-privacy-note"><b>Privasi publik:</b> portal hanya menyajikan agregat per lembaga dan status keabsahan struk. Nama pembayar, nomor kontak, identitas penerima, petugas, serta nilai transaksi individual tidak ditampilkan.</div>
       <div class="app-footer">SiZisNur · Portal transparansi publik · Data prototype tersimpan lokal pada perangkat ini</div>`
   }
 
@@ -135,8 +135,8 @@
     const metric = aggregate(tenant.id)
     const categories = categorySummary(tenant.id)
     const dist = metric.distributed
-    return `<div class="public-detail-toolbar">${button('← Semua tenant', 'tenant-list', 'sm')}<span class="tag ok">Tenant aktif</span></div>
-      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI TENANT</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')}</p></div>
+    return `<div class="public-detail-toolbar">${button('← Semua lembaga', 'tenant-list', 'sm')}<span class="tag ok">Lembaga aktif</span></div>
+      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')}</p></div>
       <div class="cards public-global-stats">
         ${stat('Transaksi disahkan', metric.transactions.toLocaleString('id-ID'), 'Pembayaran disahkan Amil', '✓')}
         ${stat('Penghimpunan uang', money(metric.received.money), 'Transaksi berstatus Paid / disetor / terverifikasi', 'Rp')}
@@ -145,7 +145,7 @@
       </div>
       <div class="two-col public-detail-grid"><section class="card"><h2>Penghimpunan per kategori</h2>${categories.length ? `<div class="public-category-list">${categories.map(([name, value]) => `<div class="public-category-row"><b>${esc(name)}</b><span>${money(value.money)}</span><span>${kilos(value.rice)}</span></div>`).join('')}</div><p class="caption">Seluruh nilai merupakan agregat; tidak ada rincian individual.</p>` : '<div class="empty">Belum ada transaksi yang disahkan untuk ditampilkan.</div>'}</section>
         <section class="card"><h2>Realisasi penyaluran</h2><div class="public-distribution-total"><small>Total uang tersalurkan</small><b>${money(dist.money)}</b></div><div class="public-distribution-total"><small>Total beras tersalurkan</small><b>${kilos(dist.rice)}</b></div><p class="caption">${metric.distributionCount.toLocaleString('id-ID')} catatan penyaluran berstatus selesai. Nama dan identitas penerima tidak dipublikasikan.</p></section></div>
-      <section class="card public-verification-card"><h2>Verifikasi struk tenant ini</h2><p class="caption">Pemindaian tetap memeriksa identitas QR dan status transaksi pada basis data prototype.</p>${verificationPanel()}</section>
+      <section class="card public-verification-card"><h2>Verifikasi struk lembaga ini</h2><p class="caption">Pemindaian tetap memeriksa identitas QR dan status transaksi pada basis data prototype.</p>${verificationPanel()}</section>
       <div class="alert light public-privacy-note"><b>Privasi:</b> hanya agregat keuangan dan status umum yang dipublikasikan. Tidak ada nama Muzakki, nomor HP/email, nama Mustahik, alamat rumah, atau nama petugas.</div>`
   }
 
@@ -166,21 +166,21 @@
     if (value.startsWith('SIZISNUR|')) {
       const parts = value.split('|')
       if (parts.length !== 4 || !parts[1] || !parts[2] || !parts[3]) return { error: 'Format QR tidak dikenali.' }
-      if (!visibleIds.has(parts[1])) return { error: 'Tenant asal tidak tersedia pada Portal Publik.' }
+      if (!visibleIds.has(parts[1])) return { error: 'Lembaga asal tidak tersedia pada Portal Publik.' }
       const tx = db.transactions.find((item) => item.tenantId === parts[1] && item.id === parts[2] && item.serial === parts[3])
       return tx ? { tx } : { error: 'QR tidak cocok dengan data transaksi. Periksa kemungkinan QR palsu atau salah cetak.' }
     }
     // Legacy QR is accepted only when all four fields match exactly.
     if (value.startsWith('AZIS|')) {
       const parts = value.split('|')
-      if (parts.length < 4 || !visibleIds.has(parts[1])) return { error: 'Tenant asal tidak tersedia pada Portal Publik.' }
+      if (parts.length < 4 || !visibleIds.has(parts[1])) return { error: 'Lembaga asal tidak tersedia pada Portal Publik.' }
       const tx = db.transactions.find((item) => item.tenantId === parts[1] && item.id === parts[2] && item.serial === parts[3])
       return tx ? { tx } : { error: 'QR lama tidak cocok dengan data transaksi.' }
     }
     const matches = db.transactions.filter((item) => visibleIds.has(item.tenantId) && (item.id === value || item.serial === value))
-    if (matches.length > 1) return { error: 'Nomor seri ditemukan pada lebih dari satu tenant. Gunakan QR lengkap agar asal transaksi dapat dipastikan.' }
+    if (matches.length > 1) return { error: 'Nomor seri ditemukan pada lebih dari satu lembaga. Gunakan QR lengkap agar asal transaksi dapat dipastikan.' }
     if (matches.length === 1) return { tx: matches[0] }
-    return { error: 'Struk tidak ditemukan pada tenant aktif yang dipublikasikan.' }
+    return { error: 'Struk tidak ditemukan pada lembaga aktif yang dipublikasikan.' }
   }
 
   function verifyPublicToken(raw) {
@@ -188,7 +188,7 @@
     if (result.error) return `<div class="alert danger"><b>Struk tidak dapat divalidasi</b><br>${esc(result.error)}<br><small>Tidak ada identitas atau data pribadi yang dibuka.</small></div>`
     const tx = result.tx
     const tenant = visibleTenant(tx.tenantId)
-    if (!tenant) return '<div class="alert danger">Tenant asal tidak tersedia pada Portal Publik.</div>'
+    if (!tenant) return '<div class="alert danger">Lembaga asal tidak tersedia pada Portal Publik.</div>'
 
     let validity = 'unconfirmed'
     let label = 'Belum disahkan Amil'
@@ -210,7 +210,7 @@
     const icon = validity === 'valid' ? '✓' : validity === 'invalid' ? '×' : '…'
     const alertClass = validity === 'valid' ? 'ok' : validity === 'invalid' ? 'danger' : 'warn'
     return `<div class="alert ${alertClass} public-receipt-status"><div class="public-receipt-status-title"><span aria-hidden="true">${icon}</span><b>${validity === 'valid' ? 'STRUK VALID' : validity === 'invalid' ? 'STRUK TIDAK VALID' : 'BELUM TERVAKLIDASI'}</b></div>
-      <p>${esc(detail)}</p><div class="public-receipt-facts"><div><small>Tenant</small><b>${esc(tenant.name)}</b></div><div><small>Nomor seri</small><b class="mono">${esc(tx.serial)}</b></div><div><small>Tanggal tercatat</small><b>${esc(prettyDate(tx.createdAt))}</b></div><div><small>Status transaksi</small><b>${esc(label)}</b></div><div><small>Kategori</small><b>${esc(Array.from(new Set((tx.lines || []).map((line) => line.category)).values()).join(', ') || '—')}</b></div></div>
+      <p>${esc(detail)}</p><div class="public-receipt-facts"><div><small>Lembaga</small><b>${esc(tenant.name)}</b></div><div><small>Nomor seri</small><b class="mono">${esc(tx.serial)}</b></div><div><small>Tanggal tercatat</small><b>${esc(prettyDate(tx.createdAt))}</b></div><div><small>Status transaksi</small><b>${esc(label)}</b></div><div><small>Kategori</small><b>${esc(Array.from(new Set((tx.lines || []).map((line) => line.category)).values()).join(', ') || '—')}</b></div></div>
       <small class="public-verification-privacy">Verifikasi publik tidak menampilkan nama pembayar, kontak, petugas, alamat, atau nilai pembayaran individual.</small></div>`
   }
 
@@ -274,7 +274,7 @@
     try {
       if (action === 'tenant-open') {
         const tenant = visibleTenant(button.dataset.id)
-        if (!tenant) throw new Error('Tenant tidak tersedia untuk publik.')
+        if (!tenant) throw new Error('Lembaga tidak tersedia untuk publik.')
         stopCamera()
         state.publicTenantId = tenant.id
         A.render()

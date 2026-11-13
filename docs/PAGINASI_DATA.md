@@ -12,9 +12,9 @@
 
 ## Cakupan
 
-Paginasi berlaku secara terpusat pada tabel di seluruh role dan halaman, termasuk daftar Mustahik, Muzakki, tenant yang terhubung pada akun Muzakki, transaksi, serah terima, mutasi rekening, jurnal, koreksi, batch, penyaluran, laporan, notifikasi, dan audit. Tabel yang ditampilkan di modal juga menggunakan aturan yang sama. Formulir yang berisi input yang dapat diedit langsung (misalnya editor anggota keluarga) tetap dipertahankan sebagai satu form agar data yang belum disimpan tidak hilang saat berpindah halaman.
+Paginasi berlaku secara terpusat pada tabel di seluruh role dan halaman, termasuk daftar Mustahik, Muzakki, lembaga yang terhubung pada akun Muzakki, transaksi, serah terima, mutasi rekening, jurnal, koreksi, batch, penyaluran, laporan, notifikasi, dan audit. Tabel yang ditampilkan di modal juga menggunakan aturan yang sama. Formulir yang berisi input yang dapat diedit langsung (misalnya editor anggota keluarga) tetap dipertahankan sebagai satu form agar data yang belum disimpan tidak hilang saat berpindah halaman.
 
-Riwayat audit tidak lagi dipotong pada 150 baris sebelum ditampilkan. Seluruh record tenant aktif diberikan ke helper paginasi.
+Riwayat audit tidak lagi dipotong pada 150 baris sebelum ditampilkan. Seluruh record lembaga aktif diberikan ke helper paginasi.
 
 ## Data dan ekspor
 
@@ -28,4 +28,4 @@ Jalankan:
 node tests/pagination.test.cjs
 ```
 
-Tes mencakup renderer HTML 23 baris menjadi 10 + 10 + 3, navigasi halaman pertama/kedua, batas halaman, tabel pendek dan kosong, keberadaan kontrol responsif, daftar tenant Muzakki, audit tanpa batas 100/150 baris, serta jalur PDF menggunakan seluruh baris laporan.
+Tes mencakup renderer HTML 23 baris menjadi 10 + 10 + 3, navigasi halaman pertama/kedua, batas halaman, tabel pendek dan kosong, keberadaan kontrol responsif, daftar lembaga Muzakki, audit tanpa batas 100/150 baris, serta jalur PDF menggunakan seluruh baris laporan.

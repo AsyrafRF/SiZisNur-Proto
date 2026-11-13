@@ -66,7 +66,7 @@ app.navigateRef('dashboard');
 assert.equal(bridge.can('dashboard'), false);
 assert.ok(!app.html().includes('Status Distribusi'));
 
-// A previous-period transaction linked by tenant + person remains visible as personal history.
+// A previous-period transaction linked by lembaga + person remains visible as personal history.
 bridge.db.periods.push({ id: 'PR-1446', tenantId: 'TN-ANNUR', name: 'Ramadan 1446 H', status: 'selesai' });
 bridge.db.transactions.push({
   id: 'TR-MZK-OLD', tenantId: 'TN-ANNUR', periodId: 'PR-1446', serial: 'OLD-0001',

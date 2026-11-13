@@ -7,24 +7,24 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 1. Jalankan `index.html` melalui server lokal untuk menguji PWA dan kamera. Kamera hanya tersedia pada browser/perangkat yang mendukung izin kamera dan BarcodeDetector.
 2. Pilih **Masuk / Coba Demo**, lalu masuk sesuai role.
 3. Pastikan data demo belum diubah. Gunakan **Reset Data Demo** untuk mengulang skenario bila opsi tersedia.
-4. Sebelum skenario transaksi mandiri, login sebagai Admin untuk memeriksa tarif fitrah, fidyah, biaya makan kafarat, nisab maal, harga emas, nisab profesi, dan kadar zakat pada menu Tarif & Konfigurasi Perhitungan. Ubah hanya tenant uji, lalu kembali login sebagai role yang sedang diuji.
+4. Sebelum skenario transaksi mandiri, login sebagai Admin untuk memeriksa tarif fitrah, fidyah, biaya makan kafarat, nisab maal, harga emas, nisab profesi, dan kadar zakat pada menu Tarif & Konfigurasi Perhitungan. Ubah hanya lembaga uji, lalu kembali login sebagai role yang sedang diuji.
 5. Catat hasil, browser, perangkat, tanggal, dan temuan yang memerlukan keputusan stakeholder.
 
 ## A. Registrasi dan transaksi mandiri Muzakki
 
 1. Dari landing page, buka pendaftaran akun Muzakki.
-2. Isi nama, salah satu kontak, tenant awal, Daerah, RT jika VPA, alamat dan persetujuan.
+2. Isi nama, salah satu kontak, lembaga awal, Daerah, RT jika VPA, alamat dan persetujuan.
 3. Setelah akun masuk, tambahkan anggota keluarga dan simpan.
-4. Buka kalkulator zakat dan uji Fitrah, Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah. Cocokkan satuan uang `Rp` dan beras `kg`, nisab/haul maal, mode bulanan/tahunan profesi, serta tarif tenant yang telah ditetapkan Admin.
-5. Untuk kafarat sumpah, pastikan biaya makan 10 orang dihitung dengan tarif tenant. Untuk kafarat bertahap, pastikan 60 orang tidak dihitung sebelum opsi ketidakmampuan tahapan sebelumnya dikonfirmasi.
-6. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif tenant.
+4. Buka kalkulator zakat dan uji Fitrah, Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah. Cocokkan satuan uang `Rp` dan beras `kg`, nisab/haul maal, mode bulanan/tahunan profesi, serta tarif lembaga yang telah ditetapkan Admin.
+5. Untuk kafarat sumpah, pastikan biaya makan 10 orang dihitung dengan tarif lembaga. Untuk kafarat bertahap, pastikan 60 orang tidak dihitung sebelum opsi ketidakmampuan tahapan sebelumnya dikonfirmasi.
+6. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif lembaga.
 7. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Simpan dan terbitkan QR**; dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
 8. Uji pembayaran sama dengan dan di bawah kewajiban; tidak boleh muncul dialog kelebihan. Uji kelebihan Fidyah/Kafarat; tampilkan selisih, tetapi jangan otomatis mengalihkan kategori.
 9. Pastikan status transaksi `Pending`, QR tampil, dan masa berlakunya 24 jam.
 10. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
-11. Coba membuat transaksi kedua pada tenant dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
-12. Hubungkan akun ke tenant lain, pindah tenant, lalu pastikan transaksi/QR tenant pertama tidak dapat diverifikasi pada tenant kedua.
-13. Buat transaksi pada tenant kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk tenant dan periodenya masing-masing.
+11. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
+12. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
+13. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
 
 ## B. Jalur Operator dan verifikasi Amil
 
@@ -36,7 +36,7 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 6. Simpan dan pastikan status transaksi `Pending` serta QR/struk tersedia.
 7. Pastikan Operator tidak memiliki tombol verifikasi, penerimaan kas atau akses shift.
 8. Masuk sebagai Amil. Buka shift.
-9. Scan QR Operator atau Muzakki mandiri. Pastikan identitas Muzakki, tenant, nilai, rincian jenis zakat dan identitas Amil terlihat.
+9. Scan QR Operator atau Muzakki mandiri. Pastikan identitas Muzakki, lembaga, nilai, rincian jenis zakat dan identitas Amil terlihat.
 10. Coba sahkan tanpa menandai penerimaan fisik atau akad. Sistem harus menolak.
 11. Konfirmasi penerimaan uang/beras dan akad, sahkan transaksi, lalu pastikan bukti setor zakat muncul.
 12. Tutup shift dan pastikan ringkasan jumlah transaksi, uang, dan beras tersimpan.
@@ -71,7 +71,7 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 2. Masuk Bendahara dan buat alokasi fleksibel sebagai draf. Periksa bahwa jumlah uang dan kg tidak melampaui saldo sesudah seluruh draf dan alokasi aktif dikurangkan.
 3. Ajukan rencana tersebut.
 4. Masuk Pengurus. Baca rincian, lalu setujui atau tolak dengan catatan.
-5. Pastikan Pengurus tidak dapat mengubah transaksi, setoran, jurnal, data Mustahik atau master tenant.
+5. Pastikan Pengurus tidak dapat mengubah transaksi, setoran, jurnal, data Mustahik atau master lembaga.
 6. Masuk Bendahara, buat Batch 1 dengan sebagian penerima dan tetapkan Relawan.
 7. Buat Batch 2 dari penerima yang tersisa. Penerima tidak boleh dimasukkan ke batch lain bila sudah dialokasikan atau telah disalurkan.
 8. Masuk Relawan pada perangkat mobile. Uji kamera dan input kode manual.
@@ -82,8 +82,8 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 
 | Role | Yang perlu diuji | Batas akses yang diharapkan |
 |---|---|---|
-| Admin | Akun, role, tenant, tarif, periode, Mustahik | Tidak mengubah transaksi terverifikasi, setoran, atau jurnal |
-| Muzakki | Self-service, keluarga, kalkulator, tenant dan transaksi pribadi | Tidak melihat transaksi orang lain atau data kas |
+| Admin | Akun, role, lembaga, tarif, periode, Mustahik | Tidak mengubah transaksi terverifikasi, setoran, atau jurnal |
+| Muzakki | Self-service, keluarga, kalkulator, lembaga dan transaksi pribadi | Tidak melihat transaksi orang lain atau data kas |
 | Operator | Input walk-in dan QR | Tidak membuka shift atau mengesahkan pembayaran |
 | Amil | Shift, scan, akad, transaksi | Tidak menerima setoran Bendahara atau membuat alokasi |
 | Bendahara | Serah terima, jurnal, koreksi, alokasi dan batch | Tidak mengubah master kelayakan Mustahik atau keputusan Pengurus |

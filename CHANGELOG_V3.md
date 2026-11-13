@@ -1,10 +1,16 @@
-## 14 November 2026 — Portal Publik Multi-Tenant dan Scan QR Publik
+## 14 November 2026 — Penyelarasan Istilah Antarmuka
 
-- Mengganti portal khusus Masjid An-Nur menjadi direktori seluruh tenant aktif yang diizinkan tampil pada portal publik.
-- Menambahkan ringkasan transparansi agregat global dan per tenant: penghimpunan uang/beras, transaksi yang disahkan, rincian kategori agregat, serta realisasi penyaluran.
+- Mengganti istilah antarmuka dan dokumentasi dari “tenant” menjadi “Lembaga” agar lebih akrab bagi pengurus masjid, UPZ, dan komunitas.
+- Menyelaraskan label pada konsol Admin SiZisNur, workspace lembaga, pendaftaran, Portal Publik, verifikasi QR, petunjuk penggunaan, dan pesan validasi.
+- Mempertahankan nama teknis internal seperti `tenantId`, `db.tenants`, dan identitas QR agar kompatibel dengan struktur data dan integrasi prototype yang sudah ada.
+
+## 14 November 2026 — Portal Publik Multi-Lembaga dan Scan QR Publik
+
+- Mengganti portal khusus Masjid An-Nur menjadi direktori seluruh lembaga aktif yang diizinkan tampil pada portal publik.
+- Menambahkan ringkasan transparansi agregat global dan per lembaga: penghimpunan uang/beras, transaksi yang disahkan, rincian kategori agregat, serta realisasi penyaluran.
 - Membatasi portal agar tidak menampilkan nama Muzakki, Mustahik, kontak, alamat rumah, akun, petugas, atau nominal transaksi perorangan.
-- Menambahkan kontrol `publicPortalEnabled` pada detail tenant di konsol Admin SiZisNur; tenant aktif baru tampil secara default, sedangkan tenant ditangguhkan atau disembunyikan tidak ditampilkan.
-- Menambahkan verifikasi QR lintas tenant berdasarkan kecocokan `tenantId + transactionId + serial`, dukungan input manual, dan penanganan serial ambigu.
+- Menambahkan kontrol `publicPortalEnabled` pada detail lembaga di konsol Admin SiZisNur; lembaga aktif baru tampil secara default, sedangkan lembaga ditangguhkan atau disembunyikan tidak ditampilkan.
+- Menambahkan verifikasi QR lintas lembaga berdasarkan kecocokan `tenantId + transactionId + serial`, dukungan input manual, dan penanganan serial ambigu.
 - Menambahkan status publik: valid setelah disahkan Amil, belum tervalidasi bila masih Pending/tercatat, dan tidak valid bila dibatalkan/ditolak/kedaluwarsa.
 - Menambahkan scan QR kamera menggunakan `getUserMedia` dan `BarcodeDetector`; input manual tetap tersedia sebagai fallback untuk browser/perangkat yang belum mendukung API pemindai.
 - Menambahkan dokumentasi `PORTAL_PUBLIK_TRANSPARANSI_DAN_QR.md`, checklist QA, dan `tests/public-portal.test.cjs`.
@@ -13,24 +19,24 @@
 
 ## 14 November 2026 — Admin SiZisNur (root/platform)
 
-- Menambahkan aktor **Admin SiZisNur** dengan akun demo `root@sizisnur.demo`, terpisah dari koleksi akun pengguna tenant.
-- Menambahkan konsol root untuk ringkasan platform, tenant terdaftar, pengajuan lembaga, akun tenant, pengaturan sistem, audit platform, dan profil root.
-- Menambahkan tindakan buat tenant + Admin awal, ubah metadata, aktifkan/tangguhkan tenant, tinjau pengajuan, dan aktifkan/nonaktifkan akun tenant.
-- Menambahkan pengaturan nama platform, email dukungan, buka/tutup pendaftaran tenant, status default tenant, pengumuman, dan mode pemeliharaan.
-- Menutup jalur verifikasi tenant publik lama; pengajuan baru masuk ke daftar tinjauan root.
-- Memblokir workspace tenant yang ditangguhkan atau saat mode pemeliharaan aktif.
-- Menambahkan test integrasi untuk pemisahan akun root, pembuatan tenant, audit, dan pembatasan akses.
-- Batas: autentikasi root, RBAC, audit immutable, dan isolasi tenant masih perlu ditegakkan pada backend sebelum produksi.
+- Menambahkan aktor **Admin SiZisNur** dengan akun demo `root@sizisnur.demo`, terpisah dari koleksi akun pengguna lembaga.
+- Menambahkan konsol root untuk ringkasan platform, lembaga terdaftar, pengajuan lembaga, akun lembaga, pengaturan sistem, audit platform, dan profil root.
+- Menambahkan tindakan buat lembaga + Admin awal, ubah metadata, aktifkan/tangguhkan lembaga, tinjau pengajuan, dan aktifkan/nonaktifkan akun lembaga.
+- Menambahkan pengaturan nama platform, email dukungan, buka/tutup pendaftaran lembaga, status default lembaga, pengumuman, dan mode pemeliharaan.
+- Menutup jalur verifikasi lembaga publik lama; pengajuan baru masuk ke daftar tinjauan root.
+- Memblokir workspace lembaga yang ditangguhkan atau saat mode pemeliharaan aktif.
+- Menambahkan test integrasi untuk pemisahan akun root, pembuatan lembaga, audit, dan pembatasan akses.
+- Batas: autentikasi root, RBAC, audit immutable, dan isolasi lembaga masih perlu ditegakkan pada backend sebelum produksi.
 
 ## 13 November 2026 — Dashboard pribadi Muzakki dan pemisahan dashboard panitia
 
 
 - Menghapus akses role Muzakki ke dashboard agregat panitia. Dashboard ringkasan penerimaan, grafik kategori, Status Distribusi, transaksi terbaru, dan angka agregat hanya tersedia bagi anggota panitia zakat.
 - Mengganti halaman awal Muzakki menjadi **Dashboard Zakat Saya** yang menampilkan status zakat periode aktif, total uang dan beras pribadi yang tercatat, jiwa/unit pada transaksi, rincian jenis zakat, dan status verifikasi Bendahara.
-- Menambahkan riwayat transaksi pribadi lintas periode dan tenant yang memang terhubung dengan membership akun tersebut. Transaksi dicocokkan lewat `accountId` atau pasangan `tenantId + personId`, bukan dengan seluruh transaksi tenant.
+- Menambahkan riwayat transaksi pribadi lintas periode dan lembaga yang memang terhubung dengan membership akun tersebut. Transaksi dicocokkan lewat `accountId` atau pasangan `tenantId + personId`, bukan dengan seluruh transaksi lembaga.
 - Menegaskan status personal: `Paid` berarti disahkan Amil; status Terverifikasi hanya ditampilkan bila transaksi tercantum pada berita acara setoran yang sudah berstatus `terverifikasi` setelah rekonsiliasi Bendahara.
-- Memindahkan pengelolaan tenant, profil, keluarga tanggungan, dan kalkulator ke bagian Layanan Mandiri yang dapat dibuka saat diperlukan agar fokus utama halaman adalah status zakat pribadi.
-- Memperketat pembukaan/unduhan struk untuk role Muzakki agar hanya transaksi yang terhubung dengan akun atau membership pribadinya yang dapat diakses, termasuk riwayat tenant lain yang terhubung.
+- Memindahkan pengelolaan lembaga, profil, keluarga tanggungan, dan kalkulator ke bagian Layanan Mandiri yang dapat dibuka saat diperlukan agar fokus utama halaman adalah status zakat pribadi.
+- Memperketat pembukaan/unduhan struk untuk role Muzakki agar hanya transaksi yang terhubung dengan akun atau membership pribadinya yang dapat diakses, termasuk riwayat lembaga lain yang terhubung.
 - Mengarahkan sesi Muzakki yang masih menunjuk ke halaman dashboard lama ke Dashboard Zakat Saya.
 - Menambahkan `tests/muzakki-dashboard.test.cjs` untuk pemeriksaan isolasi data, status berdasarkan berita acara, riwayat lintas periode, dan pemisahan akses role.
 
@@ -50,7 +56,7 @@
 - Mengelompokkan status role, koneksi, mode penyimpanan/sinkronisasi, dan jumlah antrean lokal pada panel khusus di sisi kanan kartu hero Dashboard.
 - Memisahkan label Online/Offline dari keterangan mode lokal/server agar informasi tidak saling menempel atau bertumpuk.
 - Menampilkan indikator koneksi visual dengan pembaruan status real-time saat browser menerima event online/offline.
-- Menghitung antrean untuk tenant yang sedang aktif dan memperbarui angka setelah event sinkronisasi ditambahkan atau diakui server.
+- Menghitung antrean untuk lembaga yang sedang aktif dan memperbarui angka setelah event sinkronisasi ditambahkan atau diakui server.
 - Menambahkan tata letak responsif untuk desktop, tablet, dan ponsel serta status aksesibel melalui `aria-live`.
 - Menambahkan `tests/dashboard-status.test.cjs`; seluruh suite pengujian lulus dan HTML standalone dibangun ulang.
 
@@ -60,7 +66,7 @@
 - Daftar dengan lebih dari 10 data ditampilkan 10 baris per halaman, lengkap dengan rentang data, jumlah total, nomor halaman, serta tombol Sebelumnya dan Selanjutnya.
 - Tabel dengan 10 data atau kurang tetap ditampilkan utuh tanpa kontrol paginasi.
 - Kontrol halaman memperbarui tabel yang dipilih saja dan mengikuti Light/Dark Mode serta tampilan mobile.
-- Paginasi berlaku juga untuk tabel dalam modal, hasil pencarian dan filter, termasuk daftar tenant yang terhubung pada akun Muzakki. Data sumber dan ekspor CSV/XLSX tetap menggunakan seluruh record.
+- Paginasi berlaku juga untuk tabel dalam modal, hasil pencarian dan filter, termasuk daftar lembaga yang terhubung pada akun Muzakki. Data sumber dan ekspor CSV/XLSX tetap menggunakan seluruh record.
 - Riwayat audit tidak lagi dibatasi 100 atau 150 record sebelum ditampilkan.
 - Cetak/PDF laporan dibangun dari seluruh hasil filter aktif, bukan hanya baris yang sedang terlihat di halaman tabel.
 - Menambahkan `docs/PAGINASI_DATA.md` dan `tests/pagination.test.cjs`, serta memperbarui cache service worker.
@@ -98,7 +104,7 @@
 
 ## 13 November 2026 — Penyesuaian copywriting landing page
 
-- Mengembalikan komposisi visual landing page yang digunakan pada V3: navigasi, hero dengan ilustrasi dashboard, floating labels, strip ringkasan, tiga kartu manfaat, enam kartu fitur, diagram alur, visual tujuh aktor, ilustrasi multi-tenant, CTA dan footer.
+- Mengembalikan komposisi visual landing page yang digunakan pada V3: navigasi, hero dengan ilustrasi dashboard, floating labels, strip ringkasan, tiga kartu manfaat, enam kartu fitur, diagram alur, visual tujuh aktor, ilustrasi multi-lembaga, CTA dan footer.
 - Memperbarui copywriting agar berfokus pada layanan mandiri Muzakki, QR transaksi dan verifikasi Amil, rekonsiliasi Bendahara, distribusi per batch, laporan, dan pemisahan tugas tujuh aktor.
 - Tidak mengubah stylesheet atau sistem desain visual landing page.
 - Memperbarui title dan meta description halaman.
@@ -110,8 +116,8 @@ Pembaruan dilakukan dengan mempertahankan acuan workbook 1447H/2026M dan data mu
 ### Actor dan transaksi
 
 - Mengganti matriks role menjadi Admin, Muzakki, Operator, Amil, Bendahara, Relawan dan Pengurus.
-- Menambahkan self-service Muzakki dengan keanggotaan multi-tenant, data keluarga, kalkulator, riwayat dan satu transaksi aktif per tenant/periode. Pemeriksaan juga mempertimbangkan identitas orang pada transaksi Walk-in yang belum tertaut akun.
-- Menambahkan transaksi Pending untuk jalur mandiri dan Walk-in, QR tenant-bound dan masa berlaku 24 jam atau sampai periode ditutup.
+- Menambahkan self-service Muzakki dengan keanggotaan multi-lembaga, data keluarga, kalkulator, riwayat dan satu transaksi aktif per lembaga/periode. Pemeriksaan juga mempertimbangkan identitas orang pada transaksi Walk-in yang belum tertaut akun.
+- Menambahkan transaksi Pending untuk jalur mandiri dan Walk-in, QR lembaga-bound dan masa berlaku 24 jam atau sampai periode ditutup.
 - Memisahkan fungsi Operator dari penerimaan uang dan verifikasi. Amil dapat memakai fungsi input konter, tetapi Operator tidak dapat memakai fungsi Amil.
 - Menambahkan shift Amil, pemindaian QR, ringkasan akad, validasi pembayaran dan bukti setor zakat.
 
@@ -134,7 +140,7 @@ Pembaruan dilakukan dengan mempertahankan acuan workbook 1447H/2026M dan data mu
 
 ### Batas yang diketahui
 
-Login, peran, database, notifikasi, audit dan antrean sync masih simulasi browser. Tidak ada backend, OTP/MFA, isolasi tenant server, integrasi email/WhatsApp, bank feed, sinkronisasi cloud aktif atau integrasi resmi BAZNAS. Alokasi fleksibel memakai asumsi pembagian rata dan harus disahkan stakeholder. Lihat `docs/CAKUPAN_FITUR.md` serta `docs/LEGAL_READINESS.md`.
+Login, peran, database, notifikasi, audit dan antrean sync masih simulasi browser. Tidak ada backend, OTP/MFA, isolasi lembaga server, integrasi email/WhatsApp, bank feed, sinkronisasi cloud aktif atau integrasi resmi BAZNAS. Alokasi fleksibel memakai asumsi pembagian rata dan harus disahkan stakeholder. Lihat `docs/CAKUPAN_FITUR.md` serta `docs/LEGAL_READINESS.md`.
 
 ## 4 November 2026 — Workbook 1447H/2026M
 

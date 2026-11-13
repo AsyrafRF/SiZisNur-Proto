@@ -40,7 +40,7 @@ const app = window.__SiZisNurTest;
 const bridge = window.__SiZisNurBridge;
 const db = bridge.db;
 
-// Master data examples and tenant-specific foreign-key boundaries.
+// Master data examples and lembaga-specific foreign-key boundaries.
 const annurArea = db.areas.find((x) => x.tenantId === 'TN-ANNUR');
 const alhikmahArea = db.areas.find((x) => x.tenantId === 'TN-ALHIKMAH');
 assert.equal(annurArea.name, 'Perumahan Villa Pesona Asri');
@@ -55,7 +55,7 @@ assert.equal(JSON.stringify(alhikmahRws.map((rw) => db.rts.filter((x) => x.tenan
 assert.ok(db.rws.every((rw) => db.areas.some((area) => area.id === rw.areaId && area.tenantId === rw.tenantId)));
 assert.ok(db.rts.every((rt) => db.rws.some((rw) => rw.id === rt.rwId && rw.tenantId === rt.tenantId)));
 
-// The existing identities migrate to references, while the master IDs remain tenant scoped.
+// The existing identities migrate to references, while the master IDs remain scoped per lembaga.
 const annurPerson = db.persons.find((x) => x.id === 'PS-01');
 const alhikmahPerson = db.persons.find((x) => x.id === 'PS-T2');
 assert.ok(annurPerson, 'Annur demo person should exist');
@@ -66,7 +66,7 @@ assert.equal(db.rws.find((x) => x.id === annurPerson.rwId).name, 'RW 11');
 assert.equal(alhikmahPerson.domicileStatus, 'non_daerah');
 assert.equal(alhikmahPerson.areaId, null);
 
-// Form fields are dropdowns backed by tenant master data; free-typed RT is absent.
+// Form fields are dropdowns backed by lembaga master data; free-typed RT is absent.
 const annurForm = window.__SIZISNUR_DOMICILE_FIELDS(null, 'TN-ANNUR');
 assert.ok(annurForm.includes('Warga Perumahan Villa Pesona Asri'));
 assert.ok(annurForm.includes('Non-Perumahan Villa Pesona Asri'));
@@ -113,7 +113,7 @@ modal = app.modalHtml();
 assert.ok(modal.includes('Wilayah penilaian (kolom H)'));
 assert.ok(modal.indexOf('name="domicileStatus"') < modal.indexOf('name="address"'));
 
-// Tenant admin pages and recaps render the hierarchy for the selected tenant.
+// Lembaga admin pages and recaps render the hierarchy for the selected tenant.
 app.navigateRef('tenant');
 assert.ok(app.html().includes('Master wilayah administratif'));
 assert.ok(app.html().includes('Perumahan Villa Pesona Asri'));
@@ -144,10 +144,10 @@ assert.ok(app.html().includes('RW 2'));
 assert.ok(app.html().includes('RT 10'));
 const alForm = window.__SIZISNUR_DOMICILE_FIELDS(null, 'TN-ALHIKMAH');
 assert.ok(alForm.includes('Warga Kompleks Buana Citra'));
-db.tenants.push({ id: 'TN-NEW', name: 'Tenant Uji', status: 'aktif' });
+db.tenants.push({ id: 'TN-NEW', name: 'Lembaga Uji', status: 'aktif' });
 const newTenantForm = window.__SIZISNUR_DOMICILE_FIELDS(null, 'TN-NEW');
-assert.ok(newTenantForm.includes('Warga Tenant Uji'));
-assert.ok(db.areas.some((x) => x.tenantId === 'TN-NEW' && x.name === 'Tenant Uji'));
+assert.ok(newTenantForm.includes('Warga Lembaga Uji'));
+assert.ok(db.areas.some((x) => x.tenantId === 'TN-NEW' && x.name === 'Lembaga Uji'));
 assert.ok(db.rws.filter((x) => x.tenantId === 'TN-ALHIKMAH').every((x) => x.areaId === alhikmahArea.id));
 
-console.log('PASS — master Daerah/RW/RT per tenant, validasi relasi, formulir Muzakki/Mustahik, rekap hierarkis, dan pemisahan kolom penilaian workbook');
+console.log('PASS — master Daerah/RW/RT per lembaga, validasi relasi, formulir Muzakki/Mustahik, rekap hierarkis, dan pemisahan kolom penilaian workbook');

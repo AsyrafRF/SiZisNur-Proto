@@ -1,6 +1,6 @@
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 13 November 2026
+Tanggal pembaruan: 14 November 2026
 
 ## Pemeriksaan statis
 
@@ -12,12 +12,12 @@ Tanggal pembaruan: 13 November 2026
 | `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 313 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
-| `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, tenant Muzakki, audit penuh, serta PDF laporan lengkap |
-| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per tenant |
-| `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas tenant/periode |
+| `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
+| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per lembaga |
+| `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas lembaga/periode |
 | `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
-| `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean tenant dan role tervalidasi |
-| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per tenant, alokasi kelebihan, dan aturan konfirmasi kafarat |
+| `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
+| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per lembaga, alokasi kelebihan, dan aturan konfirmasi kafarat |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -27,8 +27,8 @@ Tanggal pembaruan: 13 November 2026
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
 - Token tema UI global untuk badge status, label serta input form, aksi berbahaya, progres, panel pemindaian QR, preview panduan, panel hasil panduan, dan aksen teks pada dark mode.
-- Paginasi bersama pada seluruh tabel data, termasuk tenant yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
-- Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/tenant. Akses dashboard agregat panitia ditolak.
+- Paginasi bersama pada seluruh tabel data, termasuk lembaga yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
+- Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
@@ -78,9 +78,9 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 ## Perapian status Dashboard — 13 November 2026
 
 - Role aktif, status Online/Offline, mode penyimpanan lokal/server, serta antrean lokal kini ditampilkan dalam kelompok yang terpisah pada kartu hero Dashboard.
-- Status koneksi berubah mengikuti event browser `online` dan `offline`; jumlah antrean dihitung khusus tenant aktif.
+- Status koneksi berubah mengikuti event browser `online` dan `offline`; jumlah antrean dihitung khusus lembaga aktif.
 - Panel status memiliki penyesuaian breakpoint desktop, tablet, dan ponsel serta label status yang diumumkan melalui `aria-live`.
-- Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per tenant.
+- Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per lembaga.
 - Seluruh tujuh suite tes proyek lulus setelah perubahan dan HTML standalone dibuat ulang.
 
 
@@ -99,7 +99,7 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 ## Dashboard pribadi Muzakki — 13 November 2026
 
 - `node tests/muzakki-dashboard.test.cjs` lulus untuk sesi default Muzakki, larangan akses dashboard agregat, transaksi milik sendiri, status berita acara Bendahara, dan riwayat lintas periode.
-- Tes memastikan transaksi Muzakki lain pada tenant yang sama tidak tampil di dashboard pribadi.
+- Tes memastikan transaksi Muzakki lain pada lembaga yang sama tidak tampil di dashboard pribadi.
 - Tes mengganti status berita acara dari `terverifikasi` menjadi `kas_diterima` dan memastikan label menjadi Belum terverifikasi.
 - Status personal menggunakan relasi berita acara setoran sebagai bukti rekonsiliasi. Status transaksi `terverifikasi` tanpa berita acara terverifikasi tidak otomatis dianggap lulus rekonsiliasi.
 - Pembukaan dan unduhan struk untuk role Muzakki juga dibatasi pada transaksi yang terkait akun atau membership pribadi.
@@ -108,8 +108,16 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 ## Pemulihan kalkulator dan pemisahan kelebihan pembayaran — 13 November 2026
 
 - Kalkulator bersama digunakan oleh form transaksi self-service Muzakki serta form konter Operator/Amil.
-- Admin mengelola tarif fitrah uang/beras, fidyah, biaya makan kafarat, nisab emas, harga emas, nisab profesi bulanan, dan kadar zakat pada setiap tenant.
+- Admin mengelola tarif fitrah uang/beras, fidyah, biaya makan kafarat, nisab emas, harga emas, nisab profesi bulanan, dan kadar zakat pada setiap lembaga.
 - Kalkulasi otomatis mencakup fitrah, maal (harta bersih agregat dengan nisab/haul umum), profesi (mode bulanan/tahunan), fidyah, dan kafarat. Kasus kafarat bertahap memerlukan konfirmasi ketidakmampuan tahapan sebelumnya sebelum opsi 60 orang dihitung.
 - Kelebihan fitrah, maal, dan profesi dapat disimpan sebagai baris Infak/Sedekah dengan media yang sama. Bila belum dicentang, dialog konfirmasi muncul sebelum simpan. Kelebihan fidyah/kafarat ditampilkan tetapi tidak otomatis direklasifikasi.
 - Tes `node tests/transaction-calculator.test.cjs` mencakup nilai contoh Rp45.000 kewajiban dan Rp50.000 pembayaran yang menghasilkan Rp45.000 zakat dan Rp5.000 Infak/Sedekah bila pengguna menyetujui.
 - Semua test `tests/*.test.cjs` dan `node --check` lulus pada revisi ini. Build standalone dibuat ulang. Uji browser headless belum dinyatakan lulus; UAT interaktif di browser pengguna masih diperlukan.
+
+
+## Penyelarasan istilah antarmuka — 14 November 2026
+
+- Menggunakan **Lembaga** pada menu, judul halaman, label formulir, Portal Publik, konsol Admin SiZisNur, panduan, dan pesan validasi.
+- Menambahkan `docs/GLOSARIUM_TERMINOLOGI.md` untuk menyamakan istilah Admin Lembaga, Admin SiZisNur, dan Portal Publik.
+- Nama teknis internal seperti `tenantId`, `db.tenants`, rute/event internal, dan format identitas QR tetap dipertahankan untuk kompatibilitas.
+- Seluruh 12 suite pengujian yang tersedia lulus setelah ekspektasi teks antarmuka diperbarui. Build HTML standalone berhasil dibuat ulang.

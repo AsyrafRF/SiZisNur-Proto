@@ -37,7 +37,7 @@ python tools/build-standalone.py
 
 ## Konfigurasi sinkronisasi API
 
-Secara default tidak ada server yang dikonfigurasi. Jika backend uji sudah tersedia, sebelum memuat `js/revision-v5.js` tetapkan `window.SIZISNUR_API_BASE` ke base URL API yang benar dan terproteksi HTTPS. Endpoint `/sync` harus dibangun secara khusus untuk menerima envelope event versi skema 5, memvalidasi identitas pengguna dan tenant di server, menerapkan idempotensi, menangani konflik, serta mengembalikan JSON `acknowledgedEventIds` berisi ID event yang benar-benar sudah diterima dan diproses. Jangan mengaktifkan URL contoh atau endpoint yang belum memenuhi kontrak tersebut.
+Secara default tidak ada server yang dikonfigurasi. Jika backend uji sudah tersedia, sebelum memuat `js/revision-v5.js` tetapkan `window.SIZISNUR_API_BASE` ke base URL API yang benar dan terproteksi HTTPS. Endpoint `/sync` harus dibangun secara khusus untuk menerima envelope event versi skema 5, memvalidasi identitas pengguna dan lembaga di server, menerapkan idempotensi, menangani konflik, serta mengembalikan JSON `acknowledgedEventIds` berisi ID event yang benar-benar sudah diterima dan diproses. Jangan mengaktifkan URL contoh atau endpoint yang belum memenuhi kontrak tersebut.
 
 Klien hanya menghapus event dari antrean ketika ID-nya tercantum pada `acknowledgedEventIds`. Event tanpa acknowledgement akan tetap disimpan dan dicoba kembali.
 

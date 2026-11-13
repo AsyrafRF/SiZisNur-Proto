@@ -70,8 +70,8 @@ assert.match(css, /body\.dark[\s\S]*?--ui-tag-info-ink/, 'dark theme tokens must
 assert.match(revisionJs, /records\.map\(\(x\) => \[esc\(new Date\(x\.at\)/, 'audit history must not be truncated before pagination');
 assert.doesNotMatch(revisionJs, /records\.slice\(0,\s*150\)/, 'audit page must expose all records to pagination');
 assert.doesNotMatch(appJs, /scoped\('audit'\)\.slice\(0,\s*100\)/, 'legacy audit page must not truncate records either');
-assert.match(revisionJs, /A\.table\(\['Tenant', 'Daerah \/ RT', 'Status', 'Aksi'\]/, 'Muzakki tenant membership list must use shared pagination');
+assert.match(revisionJs, /A\.table\(\['Lembaga', 'Daerah \/ RT', 'Status', 'Aksi'\]/, 'Muzakki Lembaga membership list must use shared pagination');
 assert.doesNotMatch(revisionJs, /<div class="table-wrap">\$\{A\.table/, 'table pagination must not be nested inside an extra horizontal wrapper');
 assert.match(revisionJs, /const rows = reportRows\(\)[\s\S]*?export-report-pdf/, 'PDF report path must use the full filtered report data');
 
-console.log('PASS — renderer 10 data per halaman, navigasi dan batas halaman, daftar pendek/kosong, tenant Muzakki, audit penuh, dan PDF laporan lengkap');
+console.log('PASS — renderer 10 data per halaman, navigasi dan batas halaman, daftar pendek/kosong, Lembaga Muzakki, audit penuh, dan PDF laporan lengkap');
