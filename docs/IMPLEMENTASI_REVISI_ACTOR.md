@@ -25,7 +25,7 @@ Dokumen ini menjadi jejak keterlacakan dari butir revisi ke modul prototype. Sta
 | Alokasi fleksibel dan distribusi bertahap | Draf alokasi hanya menggunakan saldo terverifikasi. Batch dapat dibentuk bertahap setelah persetujuan Pengurus. | `allocation`, `distribution` | Pembagian rata hanya asumsi demonstrasi, bukan formula final. |
 | Relawan mobile-first dan QR | Halaman Relawan mengutamakan scan atau input kode, hanya menampilkan batch tugas, dan mencegah distribusi ganda. | `distribution` | Kamera membutuhkan HTTPS/izin. Bukti foto/GPS dan tanda tangan belum disertakan. |
 | Pengurus read-only | Pengurus dapat membaca laporan, transaksi, serah terima, jurnal, koreksi dan audit, serta menyetujui/menolak program alokasi. | `pageAccess`, `allocation` | Pembatasan UI bukan jaminan keamanan server. |
-| Dashboard grafik interaktif dan filter | Ringkasan dan grafik dapat disaring menurut jenis data/periode sesuai halaman. | `dashboard`, `reports` | Data tidak live lintas perangkat. |
+| Dashboard grafik interaktif dan filter | Dashboard menampilkan total uang/beras tercatat, Muzakki terdaftar, jiwa dibayarkan, penyaluran uang/beras, Status Distribusi, Transaksi Terbaru, dan alur sesuai role. Grafik enam kategori memiliki filter media Uang/Beras serta status Tercatat/Terverifikasi/Tersalurkan. | `dashboard`, `reports` | Grafik Terverifikasi bersumber dari berita acara setoran berstatus terverifikasi; distribusi tanpa rincian kategori ditandai Belum dipetakan. Data tidak live lintas perangkat. |
 | Laporan PDF, XLSX dan CSV | Ekspor CSV, pembuatan XLSX, serta cetak/simpan PDF dari browser. Paket UPZ disertakan. | `reports` | Skema UPZ perlu persetujuan BAZNAS. Tidak ada pengiriman otomatis. |
 | Daerah dan RT | Tenant mempunyai label Daerah. Form Muzakki memisahkan VPA dan Non VPA serta menampilkan RT untuk VPA. | `tenant`, `my-zis`, `muzakki` | Rekap wilayah masih sebatas data demo. |
 | Kalkulator zakat dan BSZ pribadi | Kalkulator jenis zakat, ringkasan transaksi dan unduh/cetak bukti tersedia di akun Muzakki. | `my-zis` | Tarif dan nisab masih parameter demo. |
@@ -44,3 +44,8 @@ Dokumen ini menjadi jejak keterlacakan dari butir revisi ke modul prototype. Sta
 - Dataset mustahik contoh tetap sintetis dan hasil workbook 1447H tidak ditimpa oleh pembaruan actor.
 
 Lihat `CAKUPAN_FITUR.md` untuk status interaktif/simulasi/belum, `SKENARIO_UAT.md` untuk pengujian manual, dan `LEGAL_READINESS.md` untuk checklist sebelum rilis.
+
+### Aturan rincian kategori distribusi dashboard
+
+Grafik penyaluran membaca `categoryBreakdown` hanya bila disimpan eksplisit pada record distribusi atau item alokasinya. Format yang didukung adalah array objek seperti `[{ category: 'Zakat Fitrah', money: 50000, rice: 0 }]` atau objek dengan `type: 'uang'|'beras'` dan `value`. Jumlah setiap kategori harus sama dengan total uang dan beras pada record distribusi. Bila rincian tidak ada, tidak lengkap, atau tidak cocok, seluruh nilai record ditampilkan sebagai **Belum dipetakan**; aplikasi tidak membagi total ke kategori berdasarkan asumsi.
+

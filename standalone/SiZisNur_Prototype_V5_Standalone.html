@@ -469,6 +469,48 @@ body.dark .landing-page {
  .hero-queue{min-height:0;padding:10px 0 0;border-top:1px solid rgba(255,255,255,.17);border-left:0}
 }
 
+
+/* Dashboard analytics, distribution status, and role-specific workflow */
+.dashboard-summary-cards{grid-template-columns:repeat(5,minmax(0,1fr))}
+.dashboard-summary-cards .stat{min-width:0}
+.stat .stat-amount-pair{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.stat .stat-amount-pair>span{display:flex;flex-direction:column;gap:2px;font-size:18px;line-height:1.2}
+.stat .stat-amount-pair>span small{font-size:10px;font-weight:650;color:var(--muted);letter-spacing:0}
+.dashboard-chart-card .card-top{align-items:flex-start}
+.dashboard-chart-card .chart-filters{margin:0;justify-content:flex-end}
+.dashboard-chart-card .chart-filters select{min-width:120px}
+.dashboard-chart-card .bar-row label{width:125px}
+.dashboard-chart-card .bar-row b{min-width:110px}
+.distribution-status-list{display:flex;flex-direction:column}
+.distribution-status-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}
+.distribution-status-row:last-child{border-bottom:0}
+.distribution-status-row>span{color:var(--muted)}
+.distribution-status-row>b{display:flex;justify-content:flex-end;gap:16px;text-align:right;font-size:12px}
+.distribution-status-row>b>span{display:flex;flex-direction:column;gap:2px}
+.distribution-status-row small{font-size:9px;font-weight:600;color:var(--muted)}
+.dashboard-workflow-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;list-style:none;margin:14px 0 0;padding:0}
+.dashboard-workflow-steps li{display:flex;align-items:flex-start;gap:9px;min-height:62px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-size:11px;line-height:1.55}
+.workflow-step-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 23px;width:23px;height:23px;border-radius:50%;background:var(--main-w);color:var(--main);font-size:11px;font-weight:800}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1140px){
+  .dashboard-summary-cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .dashboard-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-chart-card .card-top{align-items:flex-start;flex-direction:column}
+  .dashboard-chart-card .chart-filters{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  .dashboard-chart-card .chart-filters select{flex:1;min-width:0}
+  .dashboard-chart-card .bar-row label{width:105px}
+  .distribution-status-row{align-items:flex-start;flex-direction:column;gap:6px}
+  .distribution-status-row>b{justify-content:flex-start;text-align:left}
+}
+@media(max-width:430px){
+  .dashboard-summary-cards{grid-template-columns:1fr}
+  .dashboard-workflow-steps{grid-template-columns:1fr 1fr}
+  .dashboard-chart-card .bar-row label{width:90px;font-size:10px}
+  .dashboard-chart-card .bar-row b{min-width:90px;font-size:10px}
+}
+
   </style>
 </head>
 <body>
@@ -2749,16 +2791,22 @@ render();
   function revisedMetrics() {
     const period = currentPeriod() || A.scoped('periods')[0]
     const transactions = A.scoped('transactions').filter((x) => x.periodId === period?.id && !['batal', 'expired', 'kedaluwarsa'].includes(x.status))
-    const verified = transactions.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status))
-    const reconciled = transactions.filter((x) => x.status === 'terverifikasi')
+    // Paid hanya menandai pembayaran yang disahkan Amil. Status Terverifikasi
+    // untuk laporan/dashboard berasal dari berita acara yang lulus rekonsiliasi Bendahara.
+    const amilAuthorized = transactions.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status))
+    const deposits = A.scoped('deposits').filter((x) => x.periodId === period?.id)
+    const reconciledDeposits = deposits.filter((x) => x.status === 'terverifikasi')
+    const reconciledTransactionIds = new Set(reconciledDeposits.flatMap((x) => Array.isArray(x.transactionIds) ? x.transactionIds : []))
+    const reconciled = transactions.filter((x) => reconciledTransactionIds.has(x.id))
     const allocations = A.scoped('allocations').filter((x) => x.periodId === period?.id && x.status === 'disetujui')
     const ledgerAllocations = allocations.filter((x) => x.source !== 'workbook-1447')
     const workbookAllocations = allocations.filter((x) => x.source === 'workbook-1447')
     const distributions = A.scoped('distributions').filter((x) => x.periodId === period?.id && x.status === 'tersalurkan')
     return {
-      p: period, t: transactions, v: verified, a: allocations, aLedger: ledgerAllocations, aWorkbook: workbookAllocations, d: distributions,
+      p: period, t: transactions, v: amilAuthorized, deposits, reconciledDeposits, reconciledTransactions: reconciled,
+      a: allocations, aLedger: ledgerAllocations, aWorkbook: workbookAllocations, d: distributions,
       received: sum(transactions, (x) => effectiveTotals(x).money), rice: sum(transactions, (x) => effectiveTotals(x).rice),
-      verified: sum(verified, (x) => effectiveTotals(x).money), verifiedRice: sum(verified, (x) => effectiveTotals(x).rice),
+      verified: sum(amilAuthorized, (x) => effectiveTotals(x).money), verifiedRice: sum(amilAuthorized, (x) => effectiveTotals(x).rice),
       reconciled: sum(reconciled, (x) => effectiveTotals(x).money), reconciledRice: sum(reconciled, (x) => effectiveTotals(x).rice),
       allocated: sum(allocations, (x) => sum(x.items || [], 'money') + Number(x.balanceMoney || 0)),
       allocatedRice: sum(allocations, (x) => sum(x.items || [], 'rice') + Number(x.balanceRiceKg || 0)),
@@ -2772,8 +2820,12 @@ render();
   }
   A.set('metrics', revisedMetrics)
 
-  function statusPill(status) {
-    const labels = { pending: 'Menunggu Amil', paid: 'Terverifikasi Amil', disetor: 'Diserahkan Bendahara', kas_diterima: 'Kas diterima', terverifikasi: 'Rekonsiliasi selesai', expired: 'Kedaluwarsa', selisih_bank: 'Selisih rekening', batal: 'Dibatalkan' }
+  function statusPill(status, context = 'generic') {
+    const labels = {
+      pending: 'Menunggu Amil', paid: 'Paid · disahkan Amil', disetor: 'Diserahkan Bendahara',
+      kas_diterima: 'Kas diterima', terverifikasi: context === 'transaction' || context === 'deposit' ? 'Terverifikasi Bendahara' : 'Terverifikasi',
+      expired: 'Kedaluwarsa', selisih_bank: 'Selisih rekening', batal: 'Dibatalkan',
+    }
     return `<span class="tag ${['paid', 'kas_diterima', 'terverifikasi', 'tersalurkan', 'disetujui'].includes(status) ? 'ok' : ['pending', 'disetor', 'draf', 'diajukan'].includes(status) ? 'warn' : ['expired', 'batal', 'selisih', 'selisih_bank', 'ditolak'].includes(status) ? 'bad' : 'info'}">${esc(labels[status] || String(status || '—').replaceAll('_', ' '))}</span>`
   }
   function transactionTableRows(txs) {
@@ -2783,7 +2835,7 @@ render();
       const receipt = activeUser()?.role === 'Pengurus' ? '<span class="caption">Baca laporan</span>' : actionFor('Struk / QR', 'receipt-open', tx.id, 'sm')
       const correction = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) && ['Amil', 'Operator'].includes(activeUser()?.role) ? actionFor('Ajukan koreksi', 'correction-new', tx.id, 'sm') : ''
       const verify = activeUser()?.role === 'Amil' && tx.status === 'pending' ? `<span class="caption">Scan QR untuk verifikasi</span>` : ''
-      return [`<b class="mono">${esc(tx.serial)}</b><div class="tiny mono">${esc(tx.id)}</div>`, `<b>${esc(person?.name || 'Muzakki')}</b><div class="tiny">${tx.jiwa || 1} jiwa</div>`, esc(A.who(tx.handledBy)), esc(tx.source === 'self-service' ? 'Mandiri' : 'Konter'), money(total.money), kilos(total.rice), statusPill(tx.status), `${receipt} ${correction} ${verify}`]
+      return [`<b class="mono">${esc(tx.serial)}</b><div class="tiny mono">${esc(tx.id)}</div>`, `<b>${esc(person?.name || 'Muzakki')}</b><div class="tiny">${tx.jiwa || 1} jiwa</div>`, esc(A.who(tx.handledBy)), esc(tx.source === 'self-service' ? 'Mandiri' : 'Konter'), money(total.money), kilos(total.rice), statusPill(tx.status, 'transaction'), `${receipt} ${correction} ${verify}`]
     })
   }
   function transactionsPageV5() {
@@ -2796,7 +2848,7 @@ render();
     let shift = amilShift()
     const shiftBar = amil ? `<section class="card shift-status"><div><b>Shift Amil</b><p class="caption">Verifikasi transaksi hanya aktif saat Amil membuka shift.</p><div>${shift ? `<span class="tag ok">Shift dibuka ${esc(shift.openedAtLabel || '')}</span>` : '<span class="tag warn">Shift belum dibuka</span>'}</div></div><div>${shift ? action('Tutup shift', 'shift-close', 'danger') : action('Absensi buka shift', 'shift-open', 'primary')}</div></section>` : ''
     const scanner = amil ? `<section class="card scanner-card"><div class="card-top"><div><h3>Scan QR transaksi</h3><p class="caption">Pindai struk digital Muzakki atau Operator. Detail transaksi dan identitas Amil muncul sebelum akad dan pembayaran divalidasi.</p></div><span class="tag info">Khusus Amil</span></div><div class="scan-inline"><input id="amil-scan-token" type="text" placeholder="Tempel token QR atau nomor seri" autocomplete="off"><button class="btn primary" data-v5-action="amil-scan">Periksa QR</button><button class="btn" data-v5-action="camera-start" data-camera="amil">Buka kamera</button></div><video id="amil-camera" class="camera-preview" playsinline muted hidden></video><div id="amil-scan-result" class="section-gap"></div></section>` : ''
-    return `${A.boxhead('Penerimaan dan Verifikasi Amil', 'Satu alur untuk transaksi mandiri Muzakki dan input konter Operator. Semua transaksi dimulai sebagai Pending dan hanya Amil yang mengesahkan pembayaran.', canWalkIn ? action('Input transaksi konter', 'operator-new', 'primary') : '')}${shiftBar}${scanner}<div class="cards">${A.stat('Transaksi periode', txs.length, 'Semua sumber')}${A.stat('Menunggu Amil', txs.filter((x) => x.status === 'pending').length, 'Belum dibayar / diverifikasi')}${A.stat('Terverifikasi Amil', txs.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status)).length, 'Masuk perhitungan setoran')}${A.stat('Kedaluwarsa', txs.filter((x) => x.status === 'expired').length, 'Pending lebih dari batas waktu')}</div><div class="card">${cardTitle('Daftar transaksi', 'Filter mengikuti periode aktif tenant')}${A.table(['Nomor / ID', 'Muzakki', 'Amil', 'Sumber', 'Uang', 'Beras', 'Status', 'Aksi'], transactionTableRows(txs))}</div><div class="alert light">Kode QR terikat pada tenant asal. Tenant lain tidak dapat memverifikasi transaksi ini. QR Pending berlaku 24 jam atau sampai periode ditutup. Pemindaian kamera memerlukan HTTPS dan izin perangkat, sedangkan input token tetap tersedia.</div>`
+    return `${A.boxhead('Penerimaan dan Verifikasi Amil', 'Satu alur untuk transaksi mandiri Muzakki dan input konter Operator. Semua transaksi dimulai sebagai Pending dan hanya Amil yang mengesahkan pembayaran.', canWalkIn ? action('Input transaksi konter', 'operator-new', 'primary') : '')}${shiftBar}${scanner}<div class="cards">${A.stat('Transaksi periode', txs.length, 'Semua sumber')}${A.stat('Menunggu Amil', txs.filter((x) => x.status === 'pending').length, 'Belum dibayar / diverifikasi')}${A.stat('Disahkan Amil (Paid)', txs.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status)).length, 'Belum berarti lulus rekonsiliasi Bendahara')}${A.stat('Kedaluwarsa', txs.filter((x) => x.status === 'expired').length, 'Pending lebih dari batas waktu')}</div><div class="card">${cardTitle('Daftar transaksi', 'Filter mengikuti periode aktif tenant')}${A.table(['Nomor / ID', 'Muzakki', 'Amil', 'Sumber', 'Uang', 'Beras', 'Status', 'Aksi'], transactionTableRows(txs))}</div><div class="alert light">Kode QR terikat pada tenant asal. Tenant lain tidak dapat memverifikasi transaksi ini. QR Pending berlaku 24 jam atau sampai periode ditutup. Pemindaian kamera memerlukan HTTPS dan izin perangkat, sedangkan input token tetap tersedia.</div>`
   }
   A.set('transactionsPage', transactionsPageV5)
 
@@ -2807,7 +2859,7 @@ render();
     const token = transactionToken(tx)
     const receiptTitle = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
     const msg = `${person?.name || 'Muzakki'}, terima kasih telah menunaikan zakat melalui ${tenant?.name || 'tenant'}. Tercatat ${tx.jiwa || 1} jiwa dengan ${tx.lines.map((x) => x.category).join(', ')}. Total ${money(totals.money)} dan ${kilos(totals.rice)}. Tunjukkan QR ini kepada Amil ${tenant?.name || ''}. Ttd, Amil ${tenant?.name || ''}.`
-    A.modal(`Struk digital ${tx.serial}`, `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${receiptTitle}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah tanggungan</span><b>${tx.jiwa || 1} orang</b></div><div><span>Jenis zakat</span><b>${esc(tx.lines.map((x) => x.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totals.money)}</b></div><div><span>Total beras</span><b>${kilos(totals.rice)}</b></div><div><span>Status</span>${statusPill(tx.status)}</div><div><span>Batas waktu</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div><p class="receipt-thanks">${esc(msg)}</p><small>Struk simulasi prototype. Belum menjadi bukti setor resmi.</small></div><div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`, true)
+    A.modal(`Struk digital ${tx.serial}`, `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${receiptTitle}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah tanggungan</span><b>${tx.jiwa || 1} orang</b></div><div><span>Jenis zakat</span><b>${esc(tx.lines.map((x) => x.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totals.money)}</b></div><div><span>Total beras</span><b>${kilos(totals.rice)}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div><p class="receipt-thanks">${esc(msg)}</p><small>Struk simulasi prototype. Belum menjadi bukti setor resmi.</small></div><div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`, true)
   }
   function makeReceiptPrint(tx, thermal = false) {
     const html = A.receiptHtml(tx)
@@ -2866,7 +2918,7 @@ render();
     const transactions = db.transactions.filter((x) => x.accountId === account?.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     const pending = transactions.filter((x) => x.tenantId === currentTenantId() && x.periodId === period?.id && x.status === 'pending')
     const nextTxBlocked = period && oneTxPerTenantPeriod(account?.id, currentTenantId(), period.id, person?.id)
-    return `${A.boxhead('Layanan Mandiri Muzakki', 'Kelola keluarga, hitung kewajiban, buat rencana transaksi, dan bawa QR ke meja Amil.', action('Gabung tenant lain', 'tenant-join', 'primary'))}<div class="cards">${A.stat('Tenant terdaftar', tenants.length, 'Satu akun dapat terhubung ke beberapa tenant')}${A.stat('Anggota keluarga', household.length, 'Dapat digunakan kembali pada periode selanjutnya')}${A.stat('Transaksi aktif periode ini', nextTxBlocked ? 1 : 0, period?.name || 'Periode belum aktif')}${A.stat('Riwayat transaksi', transactions.length, 'Status dan bukti transaksi')}</div><div class="two-col"><section class="card"><h3>Tenant yang terhubung</h3><div class="form-inline"><label for="muzakki-tenant-switch">Pilih tenant aktif</label><select id="muzakki-tenant-switch">${tenants.map((m) => `<option value="${m.tenantId}" ${m.tenantId === currentTenantId() ? 'selected' : ''}>${esc(tenantLabel(m.tenantId))}</option>`).join('')}</select></div>${A.table(['Tenant', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan tenant pada prototype</label>${formButton('Simpan profil')}</form></section></div><div class="two-col"><section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Satu baris untuk satu anggota keluarga. Data ini dapat dipakai kembali saat periode baru dibuka.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section><section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter tenant yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Nilai harta (khusus maal, Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.fld('Jumlah jiwa / hari', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.fld('Harga emas per gram (Rp)', 'goldPrice', A.rule()?.goldPricePerGram || 1500000, 'text', 'inputmode="numeric" data-format="idr"')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section></div><section class="card"><div class="card-top"><h3>Transaksi periode aktif</h3>${nextTxBlocked ? '<span class="tag warn">Satu transaksi sudah dibuat untuk periode ini</span>' : action('Buat rencana zakat', 'self-tx-new', 'primary')}</div>${pending.length ? alert(`Ada ${pending.length} transaksi Pending. Tunjukkan QR kepada Amil sebelum ${esc(new Date(pending[0].expiresAt).toLocaleString('id-ID'))}.`, 'warn') : ''}${A.table(['Tanggal', 'Tenant', 'Nomor', 'Jenis', 'Total uang', 'Beras', 'Status', 'Bukti'], transactions.map((tx) => { const total = effectiveTotals(tx); return [esc(new Date(tx.createdAt).toLocaleString('id-ID')), esc(tenantLabel(tx.tenantId)), `<b class="mono">${esc(tx.serial)}</b>`, esc(tx.lines.map((x) => x.category).join(', ')), money(total.money), kilos(total.rice), statusPill(tx.status), actionFor('Lihat struk', 'receipt-open', tx.id, 'sm')] }))}</section><div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>`
+    return `${A.boxhead('Layanan Mandiri Muzakki', 'Kelola keluarga, hitung kewajiban, buat rencana transaksi, dan bawa QR ke meja Amil.', action('Gabung tenant lain', 'tenant-join', 'primary'))}<div class="cards">${A.stat('Tenant terdaftar', tenants.length, 'Satu akun dapat terhubung ke beberapa tenant')}${A.stat('Anggota keluarga', household.length, 'Dapat digunakan kembali pada periode selanjutnya')}${A.stat('Transaksi aktif periode ini', nextTxBlocked ? 1 : 0, period?.name || 'Periode belum aktif')}${A.stat('Riwayat transaksi', transactions.length, 'Status dan bukti transaksi')}</div><div class="two-col"><section class="card"><h3>Tenant yang terhubung</h3><div class="form-inline"><label for="muzakki-tenant-switch">Pilih tenant aktif</label><select id="muzakki-tenant-switch">${tenants.map((m) => `<option value="${m.tenantId}" ${m.tenantId === currentTenantId() ? 'selected' : ''}>${esc(tenantLabel(m.tenantId))}</option>`).join('')}</select></div>${A.table(['Tenant', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan tenant pada prototype</label>${formButton('Simpan profil')}</form></section></div><div class="two-col"><section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Satu baris untuk satu anggota keluarga. Data ini dapat dipakai kembali saat periode baru dibuka.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section><section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter tenant yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Nilai harta (khusus maal, Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.fld('Jumlah jiwa / hari', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.fld('Harga emas per gram (Rp)', 'goldPrice', A.rule()?.goldPricePerGram || 1500000, 'text', 'inputmode="numeric" data-format="idr"')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section></div><section class="card"><div class="card-top"><h3>Transaksi periode aktif</h3>${nextTxBlocked ? '<span class="tag warn">Satu transaksi sudah dibuat untuk periode ini</span>' : action('Buat rencana zakat', 'self-tx-new', 'primary')}</div>${pending.length ? alert(`Ada ${pending.length} transaksi Pending. Tunjukkan QR kepada Amil sebelum ${esc(new Date(pending[0].expiresAt).toLocaleString('id-ID'))}.`, 'warn') : ''}${A.table(['Tanggal', 'Tenant', 'Nomor', 'Jenis', 'Total uang', 'Beras', 'Status', 'Bukti'], transactions.map((tx) => { const total = effectiveTotals(tx); return [esc(new Date(tx.createdAt).toLocaleString('id-ID')), esc(tenantLabel(tx.tenantId)), `<b class="mono">${esc(tx.serial)}</b>`, esc(tx.lines.map((x) => x.category).join(', ')), money(total.money), kilos(total.rice), statusPill(tx.status, 'transaction'), actionFor('Lihat struk', 'receipt-open', tx.id, 'sm')] }))}</section><div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>`
   }
 
   function openSelfTransaction() {
@@ -3003,8 +3055,8 @@ render();
       const tx = db.transactions.filter((x) => s.transactionIds.includes(x.id) && x.tenantId === currentTenantId())
       const expectedMoney = sum(tx, (x) => effectiveTotals(x).money), expectedRice = sum(tx, (x) => effectiveTotals(x).rice)
       const actions = !isTreasurer ? '<span class="caption">Read-only</span>' : s.status === 'menunggu' || s.status === 'selisih' ? actionFor('Periksa kas fisik', 'deposit-stage1-open', s.id, 'sm primary') : s.status !== 'terverifikasi' ? actionFor('Rekonsiliasi rekening', 'deposit-stage2-open', s.id, 'sm primary') : '<span class="caption">Selesai</span>'
-      return [`<b class="mono">${esc(s.id)}</b><div class="tiny">${esc(s.shiftId || 'Shift lama')}</div>`, esc(A.who(s.amilId)), tx.length, `${money(expectedMoney)}<br>${kilos(expectedRice)}`, `${money(s.actualMoney ?? expectedMoney)}<br>${kilos(s.actualRice ?? expectedRice)}`, statusPill(s.status), actions]
-    }))}</section><section class="card"><h3>Mutasi rekening</h3>${A.table(['Tanggal', 'Setoran', 'Bank uang', 'Bank beras', 'Pemeriksa', 'Status'], deposits.filter((x) => x.bankCheckedAt).map((x) => [esc(new Date(x.bankCheckedAt).toLocaleString('id-ID')), esc(x.id), money(x.bankMoney), kilos(x.bankRice), esc(A.who(x.bankCheckedBy)), statusPill(x.status)]))}</section><div class="alert warn">Transaksi yang sudah diverifikasi Amil tidak dapat diubah atau dihapus. Jika ditemukan kesalahan, ajukan koreksi terpisah dan Bendahara meninjau dampaknya. Perubahan nilai aktual tidak pernah menimpa rincian transaksi asal.</div>`
+      return [`<b class="mono">${esc(s.id)}</b><div class="tiny">${esc(s.shiftId || 'Shift lama')}</div>`, esc(A.who(s.amilId)), tx.length, `${money(expectedMoney)}<br>${kilos(expectedRice)}`, `${money(s.actualMoney ?? expectedMoney)}<br>${kilos(s.actualRice ?? expectedRice)}`, statusPill(s.status, 'deposit'), actions]
+    }))}</section><section class="card"><h3>Mutasi rekening</h3>${A.table(['Tanggal', 'Setoran', 'Bank uang', 'Bank beras', 'Pemeriksa', 'Status'], deposits.filter((x) => x.bankCheckedAt).map((x) => [esc(new Date(x.bankCheckedAt).toLocaleString('id-ID')), esc(x.id), money(x.bankMoney), kilos(x.bankRice), esc(A.who(x.bankCheckedBy)), statusPill(x.status, 'deposit')]))}</section><div class="alert warn">Transaksi yang sudah diverifikasi Amil tidak dapat diubah atau dihapus. Jika ditemukan kesalahan, ajukan koreksi terpisah dan Bendahara meninjau dampaknya. Perubahan nilai aktual tidak pernah menimpa rincian transaksi asal.</div>`
   }
   A.set('depositsPage', depositsPageV5)
 
@@ -3124,7 +3176,10 @@ render();
     const item = alloc?.items.find((x) => x.mustahikId === mustahikId)
     if (!item) throw new Error('Penerima tidak termasuk alokasi batch')
     if (A.scoped('distributions').some((x) => x.allocationId === alloc.id && x.mustahikId === mustahikId)) throw new Error('Penerima ini sudah menerima bantuan')
-    const dist = { id: newId('DS'), tenantId: currentTenantId(), periodId: alloc.periodId, allocationId: alloc.id, batchId: batch.id, mustahikId, money: item.money, rice: item.rice, status: 'tersalurkan', deliveredAt: timestamp(), deliveredBy: activeUser().id, note: 'Konfirmasi QR Relawan' }
+    const explicitBreakdown = Array.isArray(item.categoryBreakdown) && item.categoryBreakdown.length
+      ? item.categoryBreakdown.map((detail) => ({ ...detail }))
+      : (item.category && item.type ? [{ category: item.category, type: item.type, value: item.value ?? item.amount ?? (item.type === 'uang' ? item.money : item.rice) }] : null)
+    const dist = { id: newId('DS'), tenantId: currentTenantId(), periodId: alloc.periodId, allocationId: alloc.id, batchId: batch.id, mustahikId, money: item.money, rice: item.rice, ...(explicitBreakdown ? { categoryBreakdown: explicitBreakdown } : {}), status: 'tersalurkan', deliveredAt: timestamp(), deliveredBy: activeUser().id, note: 'Konfirmasi QR Relawan' }
     db.distributions.push(dist)
     batch.completed = (batch.completed || 0) + 1
     if (batch.completed >= batch.itemIds.length) { batch.status = 'selesai'; batch.completedAt = timestamp() }
@@ -3191,11 +3246,11 @@ render();
         ready: ['Pastikan akun Anda terdaftar sebagai Amil', 'Periksa jadwal dan tenant tempat bertugas', 'Siapkan perangkat pemindai atau kolom token manual'],
         flow: ['Buka shift', 'Scan QR transaksi', 'Cocokkan identitas dan nominal', 'Pandu akad dan terima pembayaran', 'Sahkan, terbitkan BSZ, lalu tutup shift'],
         modules: [
-          { menu: 'Ringkasan', goal: 'Melihat kondisi antrean dan akses cepat ke proses verifikasi.', steps: ['Periksa tenant dan periode aktif.', 'Lihat kartu Menunggu Amil untuk mengetahui antrean transaksi Pending.', 'Gunakan pintasan Scan QR atau buka Penerimaan & Verifikasi.', 'Selesaikan verifikasi secara berurutan dan jangan mengesahkan transaksi yang belum diterima pembayarannya.'], preview: [['Transaksi periode', 'Semua transaksi tenant'], ['Menunggu Amil', 'QR yang belum disahkan'], ['Terverifikasi Amil', 'Pembayaran yang sudah diterima'], ['Pintasan', 'Penerimaan & Verifikasi']], result: 'Anda mengetahui antrean dan dapat mulai melayani transaksi.' },
+          { menu: 'Ringkasan', goal: 'Melihat kondisi antrean dan akses cepat ke proses verifikasi.', steps: ['Periksa tenant dan periode aktif.', 'Lihat kartu Menunggu Amil untuk mengetahui antrean transaksi Pending.', 'Gunakan pintasan Scan QR atau buka Penerimaan & Verifikasi.', 'Selesaikan verifikasi secara berurutan dan jangan mengesahkan transaksi yang belum diterima pembayarannya.'], preview: [['Transaksi periode', 'Semua transaksi tenant'], ['Menunggu Amil', 'QR yang belum disahkan'], ['Paid · disahkan Amil', 'Pembayaran yang sudah disahkan Amil; belum tentu lulus rekonsiliasi Bendahara'], ['Pintasan', 'Penerimaan & Verifikasi']], result: 'Anda mengetahui antrean dan dapat mulai melayani transaksi.' },
           { menu: 'Shift & Kehadiran', goal: 'Memeriksa jadwal tugas dan memahami bahwa verifikasi hanya aktif dalam shift yang dibuka.', steps: ['Buka Shift & Kehadiran untuk melihat jadwal tanggal, jam tugas, nama Amil, dan status kehadiran.', 'Pastikan jadwal yang tampil sesuai penugasan Anda. Bila nama atau jadwal tidak sesuai, hubungi koordinator.', 'Untuk membuka shift operasional, buka Penerimaan & Verifikasi lalu tekan Absensi buka shift.', 'Saat pekerjaan selesai, kembali ke halaman yang sama dan tekan Tutup shift.', 'Pastikan total transaksi shift tercatat sebelum menyerahkan kas fisik kepada Bendahara.'], preview: [['Menu jadwal', 'Tanggal · Jam shift · Petugas'], ['Status jadwal', 'Hadir / Belum / Digantikan'], ['Aksi operasional', 'Absensi buka shift'], ['Aksi selesai', 'Tutup shift']], result: 'Shift aktif tercatat dan verifikasi transaksi dapat dilakukan sesuai sesi petugas.', caution: 'Menu jadwal menunjukkan jadwal dan kehadiran. Tombol buka atau tutup sesi operasional berada pada halaman Penerimaan & Verifikasi.' },
           { menu: 'Data Muzakki · Bantuan Input Konter', goal: 'Membantu warga yang belum memiliki transaksi mandiri saat Operator tidak tersedia.', steps: ['Buka Data Muzakki dan cari warga berdasarkan nama atau kontak.', 'Bila warga belum ada, tekan Tambah Muzakki dan lengkapi identitas, status domisili, RW/RT dari master bila warga daerah, serta alamat.', 'Simpan data warga dan pastikan namanya tampil pada daftar.', 'Bila perlu langsung mencatat transaksi, buka Penerimaan & Verifikasi lalu gunakan Input transaksi konter. Amil memiliki kewenangan input yang sama seperti Operator.', 'Setelah menyimpan transaksi, lanjutkan pemeriksaan melalui scan QR seperti alur biasa.'], preview: [['Pencarian', 'Nama · HP · Kode kartu'], ['Data baru', 'Nama · Kontak · Wilayah · Alamat'], ['Aksi', 'Tambah Muzakki'], ['Input transaksi', 'Input transaksi konter']], result: 'Warga yang belum siap menggunakan layanan mandiri tetap dapat dilayani tanpa mengubah tahapan verifikasi.', caution: 'Hak input konter diberikan kepada Amil agar layanan tetap berjalan ketika Operator tidak tersedia. Operator tidak memperoleh hak verifikasi Amil.' },
-          { menu: 'Penerimaan & Verifikasi · Scan QR', goal: 'Memeriksa sumber transaksi, identitas, rincian zakat, dan mengesahkan pembayaran.', steps: ['Pastikan shift sudah dibuka. Jika belum, tekan Absensi buka shift terlebih dahulu.', 'Pada kartu Scan QR transaksi, pilih Buka kamera dan izinkan akses kamera bila diminta. Arahkan kamera ke QR pada struk Muzakki atau Operator.', 'Jika kamera tidak dapat digunakan, tempel token QR atau ketik nomor seri pada kolom input, lalu tekan Periksa QR.', 'Baca detail transaksi yang muncul. Cocokkan nama Muzakki, tenant asal, jumlah jiwa, jenis zakat, nominal uang, dan berat beras.', 'Pastikan tenant pada transaksi sama dengan tenant tempat Anda bertugas. Jangan memverifikasi QR tenant lain.', 'Pandu Muzakki melakukan niat dan akad sesuai ketentuan tenant. Pastikan uang atau beras benar-benar diterima dan jumlah fisiknya cocok.', 'Setelah seluruh pemeriksaan benar, gunakan tindakan verifikasi pada rincian transaksi. Periksa konfirmasi sebelum menyelesaikan.', 'Pastikan status berubah dari Pending menjadi Terverifikasi Amil atau Paid. Setelah itu bukti setor dapat diterbitkan.'], preview: [['Pemindai', 'Kamera atau token manual'], ['Identitas', 'Nama · Tenant · Jumlah jiwa'], ['Rincian', 'Kategori · Uang · Beras'], ['Petugas', 'Identitas Amil yang sedang login'], ['Aksi akhir', 'Verifikasi setelah akad dan pembayaran']], result: 'Transaksi berubah menjadi terverifikasi dan masuk perhitungan setoran shift.', caution: 'QR yang valid tidak membuktikan bahwa uang sudah diterima. Jangan menekan verifikasi sebelum akad dan penerimaan fisik selesai. Kamera memerlukan HTTPS dan izin perangkat.' },
-          { menu: 'Struk dan Bukti Setor Zakat', goal: 'Memberikan bukti kepada Muzakki setelah status pembayaran berhasil disahkan.', steps: ['Setelah verifikasi, buka transaksi yang baru selesai dari daftar transaksi.', 'Tekan Struk / QR untuk melihat identitas, nilai, status, dan kode QR transaksi.', 'Pastikan judul bukti menunjukkan Bukti Setor Zakat · Simulasi dan status sudah terverifikasi.', 'Gunakan Unduh gambar PNG, Cetak / Simpan PDF, atau Cetak thermal 80 mm sesuai perangkat yang tersedia.', 'Berikan salinan kepada Muzakki dan simpan arsip sesuai prosedur tenant.'], preview: [['Judul bukti', 'Bukti Setor Zakat · Simulasi'], ['Nomor transaksi', 'Kode unik'], ['Status', 'Terverifikasi Amil'], ['Aksi', 'PNG · PDF · Thermal 80 mm']], result: 'Muzakki menerima bukti transaksi yang telah diverifikasi dalam bentuk digital atau cetak.', caution: 'Semua bukti pada prototype masih berlabel simulasi. Jangan menyebutnya dokumen resmi untuk keperluan hukum atau perpajakan.' },
+          { menu: 'Penerimaan & Verifikasi · Scan QR', goal: 'Memeriksa sumber transaksi, identitas, rincian zakat, dan mengesahkan pembayaran.', steps: ['Pastikan shift sudah dibuka. Jika belum, tekan Absensi buka shift terlebih dahulu.', 'Pada kartu Scan QR transaksi, pilih Buka kamera dan izinkan akses kamera bila diminta. Arahkan kamera ke QR pada struk Muzakki atau Operator.', 'Jika kamera tidak dapat digunakan, tempel token QR atau ketik nomor seri pada kolom input, lalu tekan Periksa QR.', 'Baca detail transaksi yang muncul. Cocokkan nama Muzakki, tenant asal, jumlah jiwa, jenis zakat, nominal uang, dan berat beras.', 'Pastikan tenant pada transaksi sama dengan tenant tempat Anda bertugas. Jangan memverifikasi QR tenant lain.', 'Pandu Muzakki melakukan niat dan akad sesuai ketentuan tenant. Pastikan uang atau beras benar-benar diterima dan jumlah fisiknya cocok.', 'Setelah seluruh pemeriksaan benar, gunakan tindakan verifikasi pada rincian transaksi. Periksa konfirmasi sebelum menyelesaikan.', 'Pastikan status berubah menjadi Paid setelah Amil mengesahkan pembayaran. Status ini belum berarti lulus rekonsiliasi Bendahara.'], preview: [['Pemindai', 'Kamera atau token manual'], ['Identitas', 'Nama · Tenant · Jumlah jiwa'], ['Rincian', 'Kategori · Uang · Beras'], ['Petugas', 'Identitas Amil yang sedang login'], ['Aksi akhir', 'Verifikasi setelah akad dan pembayaran']], result: 'Transaksi berubah menjadi terverifikasi dan masuk perhitungan setoran shift.', caution: 'QR yang valid tidak membuktikan bahwa uang sudah diterima. Jangan menekan verifikasi sebelum akad dan penerimaan fisik selesai. Kamera memerlukan HTTPS dan izin perangkat.' },
+          { menu: 'Struk dan Bukti Setor Zakat', goal: 'Memberikan bukti kepada Muzakki setelah status pembayaran berhasil disahkan.', steps: ['Setelah verifikasi, buka transaksi yang baru selesai dari daftar transaksi.', 'Tekan Struk / QR untuk melihat identitas, nilai, status, dan kode QR transaksi.', 'Pastikan judul bukti menunjukkan Bukti Setor Zakat · Simulasi dan status sudah terverifikasi.', 'Gunakan Unduh gambar PNG, Cetak / Simpan PDF, atau Cetak thermal 80 mm sesuai perangkat yang tersedia.', 'Berikan salinan kepada Muzakki dan simpan arsip sesuai prosedur tenant.'], preview: [['Judul bukti', 'Bukti Setor Zakat · Simulasi'], ['Nomor transaksi', 'Kode unik'], ['Status', 'Paid · disahkan Amil'], ['Aksi', 'PNG · PDF · Thermal 80 mm']], result: 'Muzakki menerima bukti transaksi yang telah diverifikasi dalam bentuk digital atau cetak.', caution: 'Semua bukti pada prototype masih berlabel simulasi. Jangan menyebutnya dokumen resmi untuk keperluan hukum atau perpajakan.' },
           { menu: 'Ketentuan, Dalil, Doa dan Akad', goal: 'Menggunakan halaman referensi saat memandu proses akad dan layanan zakat.', steps: ['Buka menu Dalil, Ketentuan & Akad.', 'Baca urutan layanan dan rujukan yang ditampilkan sebelum bertugas.', 'Saat melayani, sampaikan niat dan doa dengan bahasa yang dipahami Muzakki serta ikuti arahan pembimbing agama tenant.', 'Pastikan Muzakki memahami jenis zakat dan nilai yang akan diserahkan.', 'Lanjutkan ke verifikasi pembayaran hanya setelah proses akad dan penerimaan selesai.'], preview: [['Rujukan', 'QS. At-Taubah ayat 103 · QS. Al-Baqarah ayat 43'], ['Materi', 'Doa dan niat ilustratif'], ['Penggunaan', 'Panduan saat akad'], ['Validasi', 'Perlu pemeriksaan pembimbing agama']], result: 'Amil memiliki referensi ringkas untuk menjalankan layanan dengan tertib.', caution: 'Lafaz pada halaman ini merupakan materi ilustratif dan perlu disahkan pembimbing agama tenant. Tombol verifikasi tidak dengan sendirinya menjadikan akad sah.' },
           { menu: 'Koreksi Terkendali', goal: 'Mengajukan perbaikan jika ditemukan kesalahan pada transaksi yang telah diproses.', steps: ['Cari transaksi terkait pada halaman Penerimaan & Verifikasi atau Koreksi Terkendali.', 'Tekan Ajukan koreksi pada transaksi yang tersedia.', 'Isi nominal uang dan jumlah beras yang benar.', 'Tuliskan alasan yang dapat diperiksa, misalnya perbedaan hasil hitung atau salah satuan.', 'Kirim permintaan dan tunggu tinjauan Bendahara. Jangan mengubah catatan transaksi sumber secara manual.'], preview: [['Transaksi asal', 'Nomor dan nilai yang tercatat'], ['Nilai seharusnya', 'Uang · Beras'], ['Alasan', 'Wajib diisi'], ['Status', 'Menunggu keputusan Bendahara']], result: 'Permintaan perbaikan tercatat tanpa menghapus bukti transaksi awal.' }
         ],
@@ -3207,7 +3262,7 @@ render();
         flow: ['Terima berita acara shift', 'Cocokkan kas fisik', 'Cocokkan mutasi rekening', 'Tinjau jurnal dan koreksi', 'Buat alokasi lalu batch distribusi'],
         modules: [
           { menu: 'Ringkasan', goal: 'Memantau arus masuk, rekonsiliasi, dan jumlah yang sudah disalurkan.', steps: ['Periksa tenant dan periode aktif.', 'Bandingkan kartu Uang tercatat, Beras tercatat, Uang diverifikasi Amil, dan Uang disalurkan.', 'Gunakan grafik kategori untuk melihat komposisi penerimaan.', 'Buka Serah Terima & Rekonsiliasi untuk pekerjaan kas yang masih tertunda.'], preview: [['Penerimaan uang', 'Semua transaksi periode'], ['Beras', 'Kilogram terpisah'], ['Diverifikasi Amil', 'Pembayaran sudah disahkan'], ['Disalurkan', 'Realisasi dari batch']], result: 'Anda dapat melihat bagian proses keuangan yang masih perlu diselesaikan.' },
-          { menu: 'Serah Terima & Rekonsiliasi', goal: 'Mencocokkan laporan shift Amil, kas atau beras fisik, dan mutasi rekening melalui dua tahap.', steps: ['Pastikan Amil telah menekan Tutup shift. Shift yang masih terbuka tidak tersedia untuk berita acara.', 'Tekan Buat berita acara serah terima. Pilih shift Amil yang akan diserahterimakan lalu periksa estimasi transaksi, uang, dan beras.', 'Setelah uang dan beras dihitung bersama, buka Periksa kas fisik. Masukkan jumlah aktual yang benar-benar diterima.', 'Bila jumlah aktual berbeda dari catatan sistem, isi catatan selisih secara jelas. Simpan penerimaan fisik dan lakukan pemeriksaan ulang.', 'Setelah tahap kas diterima, buka Rekonsiliasi rekening. Masukkan mutasi rekening masuk dan jumlah beras atau saldo logistik yang tercatat.', 'Isi nomor referensi rekening bila tersedia dan tambahkan catatan pencocokan. Tekan Selesaikan rekonsiliasi tahap 2.', 'Periksa status akhir. Status Terverifikasi menandakan tahap rekonsiliasi selesai. Selisih tetap harus ditelusuri, bukan ditutup dengan angka perkiraan.'], preview: [['Tahap 1', 'Kas aktual dan beras fisik'], ['Nilai sistem', 'Estimasi dari transaksi Paid dalam shift'], ['Tahap 2', 'Mutasi rekening / saldo logistik'], ['Referensi', 'Nomor referensi rekening'], ['Status akhir', 'Terverifikasi / Selisih rekening']], result: 'Setoran memiliki catatan uang dan beras aktual, data rekening, pemeriksa, dan status rekonsiliasi.', caution: 'Jangan memasukkan angka perkiraan hanya agar status menjadi Terverifikasi. Selisih harus dicatat dan ditindaklanjuti sesuai prosedur.' },
+          { menu: 'Serah Terima & Rekonsiliasi', goal: 'Mencocokkan laporan shift Amil, kas atau beras fisik, dan mutasi rekening melalui dua tahap.', steps: ['Pastikan Amil telah menekan Tutup shift. Shift yang masih terbuka tidak tersedia untuk berita acara.', 'Tekan Buat berita acara serah terima. Pilih shift Amil yang akan diserahterimakan lalu periksa estimasi transaksi, uang, dan beras.', 'Setelah uang dan beras dihitung bersama, buka Periksa kas fisik. Masukkan jumlah aktual yang benar-benar diterima.', 'Bila jumlah aktual berbeda dari catatan sistem, isi catatan selisih secara jelas. Simpan penerimaan fisik dan lakukan pemeriksaan ulang.', 'Setelah tahap kas diterima, buka Rekonsiliasi rekening. Masukkan mutasi rekening masuk dan jumlah beras atau saldo logistik yang tercatat.', 'Isi nomor referensi rekening bila tersedia dan tambahkan catatan pencocokan. Tekan Selesaikan rekonsiliasi tahap 2.', 'Periksa status akhir. Status Terverifikasi Bendahara menandakan pencocokan kas fisik dan rekening/logistik selesai. Selisih tetap harus ditelusuri, bukan ditutup dengan angka perkiraan.'], preview: [['Tahap 1', 'Kas aktual dan beras fisik'], ['Nilai sistem', 'Estimasi dari transaksi Paid dalam shift'], ['Tahap 2', 'Mutasi rekening / saldo logistik'], ['Referensi', 'Nomor referensi rekening'], ['Status akhir', 'Terverifikasi Bendahara / Selisih rekening']], result: 'Setoran memiliki catatan uang dan beras aktual, data rekening, pemeriksa, dan status rekonsiliasi.', caution: 'Jangan memasukkan angka perkiraan hanya agar status menjadi Terverifikasi. Selisih harus dicatat dan ditindaklanjuti sesuai prosedur.' },
           { menu: 'Jurnal dan Laporan Keuangan', goal: 'Memeriksa jurnal otomatis, neraca ringkas, dan perubahan dana.', steps: ['Buka Jurnal & Laporan Keuangan.', 'Periksa kartu saldo kas atau bank, penerimaan dana zakat, penyaluran dana, dan persediaan beras.', 'Baca Neraca uang dan Neraca persediaan beras secara terpisah. Jangan menjumlahkan rupiah dengan kilogram.', 'Periksa laporan perubahan dana untuk melihat penerimaan dikurangi penyaluran.', 'Pada tabel Jurnal umum, periksa tanggal, referensi, keterangan, akun debit, akun kredit, dan pencatat.', 'Tekan Unduh jurnal XLSX untuk menyimpan rincian jurnal dan gunakan sebagai bahan pemeriksaan.'], preview: [['Neraca uang', 'Kas / Bank · Dana Zakat'], ['Neraca beras', 'Persediaan Beras · Dana Zakat Beras'], ['Perubahan dana', 'Penerimaan · Distribusi · Bersih'], ['Jurnal', 'Tanggal · Referensi · Debit · Kredit'], ['Tombol', 'Unduh jurnal XLSX']], result: 'Anda memperoleh gambaran arus dana dan persediaan yang tercatat otomatis pada prototype.', caution: 'Jurnal ini belum merupakan laporan keuangan final yang diaudit. Bagan akun, dana terikat, kebijakan pengakuan, dan format sesuai standar perlu disepakati bersama pihak akuntansi dan BAZNAS.' },
           { menu: 'Koreksi Terkendali', goal: 'Meninjau dan memutuskan permintaan koreksi dari Amil atau Operator.', steps: ['Buka Koreksi Terkendali dan cari permintaan berstatus Menunggu.', 'Tekan Tinjau pada baris permintaan.', 'Bandingkan nilai lama dan nilai usulan. Baca alasan dari pemohon serta catatan transaksi terkait.', 'Pilih Setujui koreksi bila bukti mendukung atau Tolak koreksi bila tidak dapat dibenarkan.', 'Isi catatan keputusan. Simpan keputusan dan pastikan status berubah.', 'Periksa jurnal atau laporan setelah koreksi disetujui. Transaksi asli tetap tersimpan sebagai sumber audit.'], preview: [['Nilai lama', 'Uang dan beras pada transaksi awal'], ['Nilai usulan', 'Angka yang diminta pemohon'], ['Alasan', 'Penjelasan kesalahan'], ['Keputusan', 'Setujui / Tolak'], ['Tombol', 'Simpan keputusan']], result: 'Keputusan koreksi tercatat sebagai jejak terpisah dan dapat ditinjau Pengurus.', caution: 'Jangan mengubah atau menghapus transaksi asal. Setiap persetujuan harus memiliki dasar dan catatan yang bisa ditelusuri.' },
           { menu: 'Alokasi & Persetujuan', goal: 'Menyiapkan rencana pembagian dari saldo yang sudah direkonsiliasi dan mengirimkannya kepada Pengurus.', steps: ['Buka Alokasi & Persetujuan. Periksa kartu Dana direkonsiliasi dan daftar rencana yang sudah ada.', 'Pilih Alokasi fleksibel bila akan membuat rencana berdasarkan saldo tersedia. Untuk uji acuan workbook, pilih Tahap 1 atau Tahap 2 sesuai kebutuhan evaluasi.', 'Pada alokasi fleksibel, isi nama rencana, anggaran uang, dan anggaran beras. Pastikan angkanya tidak melebihi saldo tersedia.', 'Baca peringatan bahwa pembagian rata pada prototype merupakan asumsi demonstrasi. Isi catatan dasar pembagian dan simpan sebagai draf.', 'Buka Rincian untuk memeriksa jumlah penerima dan nilai masing-masing.', 'Bila sudah diperiksa, tekan Ajukan. Status berubah menjadi Diajukan dan Pengurus dapat melakukan peninjauan.', 'Pantau keputusan. Bila ditolak, baca catatan dan diskusikan perbaikannya sebelum membuat pengajuan baru.'], preview: [['Saldo uang dan beras', 'Saldo hasil rekonsiliasi'], ['Anggaran', 'Isi sesuai keputusan'], ['Metode', 'Pembagian rata sementara untuk evaluasi'], ['Status awal', 'Draf'], ['Aksi', 'Ajukan kepada Pengurus']], result: 'Rencana tersimpan, diajukan, dan menunggu persetujuan Pengurus sebelum dapat menjadi dasar distribusi.', caution: 'Jangan menganggap pembagian rata sebagai ketentuan resmi. Rumus, prioritas mustahik, dan alokasi saldo harus disetujui stakeholder terlebih dahulu.' },
@@ -3215,7 +3270,7 @@ render();
           { menu: 'Laporan & Statistik', goal: 'Menyusun rekap penerimaan, rekonsiliasi, distribusi, mustahik, serta bahan pelaporan UPZ.', steps: ['Buka Laporan & Statistik.', 'Pilih Periode yang ingin diperiksa.', 'Pilih Jenis laporan, misalnya Semua ZIS, Penerimaan, Rekonsiliasi kas, Distribusi, atau Mustahik dan wilayah.', 'Periksa kartu ringkasan dan rincian yang tampil. Uang dan beras tetap menggunakan satuan masing-masing.', 'Gunakan Unduh CSV untuk olah data sederhana, Unduh XLSX untuk lembar kerja, atau Cetak / PDF untuk dokumen yang siap ditinjau.', 'Gunakan paket laporan UPZ XLSX atau CSV sebagai bahan penyesuaian dengan format yang nantinya disepakati BAZNAS.'], preview: [['Periode', 'Pilih periode pelaporan'], ['Jenis laporan', 'Semua · Penerimaan · Kas · Distribusi · Mustahik'], ['Ekspor', 'CSV · XLSX · PDF'], ['Paket UPZ', 'XLSX / CSV']], result: 'File rekap terunduh dan dapat diteruskan kepada pihak yang berwenang untuk diperiksa.', caution: 'Ekspor prototype bukan pengiriman otomatis ke BAZNAS. Periksa filter, periode, dan kelengkapan data sebelum membagikan file.' },
           { menu: 'Audit & Arsip', goal: 'Menelusuri jejak aktivitas dan memastikan tidak ada perubahan log lokal yang tidak konsisten.', steps: ['Buka Audit & Arsip.', 'Periksa status hash chain, jumlah aktivitas, hash terakhir, dan antrean sinkronisasi.', 'Gunakan tabel log untuk mencari waktu, pengguna, jenis aktivitas, dan detail peristiwa.', 'Bila menemukan anomali atau selisih, catat referensi transaksi atau setoran dan laporkan kepada Pengurus.', 'Jangan memperbaiki log dengan mengubah localStorage secara manual.'], preview: [['Pemeriksaan', 'Konsisten / Perlu audit'], ['Aktivitas', 'Urut terbaru'], ['Hash', 'SHA-256 berantai'], ['Antrean', 'Event lokal menunggu sinkronisasi']], result: 'Informasi jejak aktivitas siap digunakan sebagai bahan audit internal.', caution: 'Penyimpanan lokal bukan audit server immutable. Antrean sinkronisasi belum berarti data sudah terkirim ke cloud.' }
         ],
-        faqs: [['Mengapa berita acara belum bisa dibuat?', 'Pastikan Amil sudah menutup shift dan ada transaksi Paid dalam shift tersebut.'], ['Apa yang harus dilakukan bila uang fisik berbeda?', 'Masukkan nilai aktual yang benar dan tulis catatan selisih. Telusuri penyebabnya sebelum menyelesaikan tahap berikutnya.'], ['Bolehkah batch dibuat sebelum persetujuan?', 'Tidak. Batch harus bersumber dari alokasi yang sudah disetujui Pengurus.']]
+        faqs: [['Mengapa berita acara belum bisa dibuat?', 'Pastikan Amil sudah menutup shift dan ada transaksi Paid dalam shift tersebut. Paid adalah pengesahan Amil, bukan status terverifikasi Bendahara.'], ['Apa yang harus dilakukan bila uang fisik berbeda?', 'Masukkan nilai aktual yang benar dan tulis catatan selisih. Telusuri penyebabnya sebelum menyelesaikan tahap berikutnya.'], ['Bolehkah batch dibuat sebelum persetujuan?', 'Tidak. Batch harus bersumber dari alokasi yang sudah disetujui Pengurus.']]
       },
       Relawan: {
         intro: 'Anda bertugas di lapangan untuk memastikan bantuan diterima oleh Mustahik yang tepat. Pilih batch tugas Anda, cocokkan identitas penerima, lalu catat serah terima satu kali.',
@@ -3499,14 +3554,14 @@ render();
     const rows = categories.map((c) => [c, sum(m.txs, (x) => sum(x.lines.filter((l) => l.category === c && l.type === 'uang'), 'value')), sum(m.txs, (x) => sum(x.lines.filter((l) => l.category === c && l.type === 'beras'), 'value'))])
     const muzakki = A.scoped('muzakki').map((x) => ({ x, p: A.person(x.personId) })).filter((x) => x.p)
     const territoryRows = territoryReportRows()
-    const baznas = [ ['Tenant / UPZ', A.tenant().name], ['Periode pelaporan', m.period?.name || '—'], ['Jumlah transaksi', m.txs.length], ['Jumlah Muzakki', new Set(m.txs.map((x) => x.personId)).size], ['Penerimaan uang', money(m.received)], ['Penerimaan beras', kilos(m.rice)], ['Pembayaran terverifikasi Amil', money(m.verified)], ['Realisasi distribusi', money(m.sent)], ['Mustahik menerima', new Set(m.distributions.map((x) => x.mustahikId)).size], ['Rekonsiliasi selesai', m.deposits.filter((x) => x.status === 'terverifikasi').length] ]
+    const baznas = [ ['Tenant / UPZ', A.tenant().name], ['Periode pelaporan', m.period?.name || '—'], ['Jumlah transaksi', m.txs.length], ['Jumlah Muzakki', new Set(m.txs.map((x) => x.personId)).size], ['Penerimaan uang', money(m.received)], ['Penerimaan beras', kilos(m.rice)], ['Pembayaran disahkan Amil (Paid)', money(m.verified)], ['Realisasi distribusi', money(m.sent)], ['Mustahik menerima', new Set(m.distributions.map((x) => x.mustahikId)).size], ['Rekonsiliasi selesai', m.deposits.filter((x) => x.status === 'terverifikasi').length] ]
     const type = state.filters.reportType || 'all'
-    const receiptTable = `<section class="card"><h3>Rincian penghimpunan</h3>${A.table(['Nomor', 'Tanggal', 'Muzakki', 'Sumber', 'Status', 'Uang', 'Beras'], m.txs.map((tx) => [esc(tx.serial), esc(new Date(tx.createdAt).toLocaleDateString('id-ID')), esc(A.person(tx.personId)?.name || 'Muzakki'), esc(tx.source === 'self-service' ? 'Mandiri' : 'Konter'), statusPill(tx.status), money(effectiveTotals(tx).money), kilos(effectiveTotals(tx).rice)]))}</section>`
-    const cashTable = `<section class="card"><h3>Rincian serah terima dan rekening</h3>${A.table(['Kode setoran', 'Amil', 'Jumlah transaksi', 'Kas aktual', 'Rekening', 'Status'], m.deposits.map((x) => [esc(x.id), esc(A.who(x.amilId)), x.transactionIds.length, `${money(x.actualMoney ?? x.declaredMoney)} · ${kilos(x.actualRice ?? x.declaredRice)}`, `${money(x.bankMoney || 0)} · ${kilos(x.bankRice || 0)}`, statusPill(x.status)]))}</section>`
+    const receiptTable = `<section class="card"><h3>Rincian penghimpunan</h3>${A.table(['Nomor', 'Tanggal', 'Muzakki', 'Sumber', 'Status', 'Uang', 'Beras'], m.txs.map((tx) => [esc(tx.serial), esc(new Date(tx.createdAt).toLocaleDateString('id-ID')), esc(A.person(tx.personId)?.name || 'Muzakki'), esc(tx.source === 'self-service' ? 'Mandiri' : 'Konter'), statusPill(tx.status, 'transaction'), money(effectiveTotals(tx).money), kilos(effectiveTotals(tx).rice)]))}</section>`
+    const cashTable = `<section class="card"><h3>Rincian serah terima dan rekening</h3>${A.table(['Kode setoran', 'Amil', 'Jumlah transaksi', 'Kas aktual', 'Rekening', 'Status'], m.deposits.map((x) => [esc(x.id), esc(A.who(x.amilId)), x.transactionIds.length, `${money(x.actualMoney ?? x.declaredMoney)} · ${kilos(x.actualRice ?? x.declaredRice)}`, `${money(x.bankMoney || 0)} · ${kilos(x.bankRice || 0)}`, statusPill(x.status, 'deposit')]))}</section>`
     const distributionTable = `<section class="card"><h3>Rincian distribusi</h3>${A.table(['Tanggal', 'Batch', 'Mustahik ID', 'Uang', 'Beras', 'Pelaksana'], m.distributions.map((x) => [esc(new Date(x.deliveredAt).toLocaleDateString('id-ID')), esc(db.batches.find((b) => b.id === x.batchId)?.name || '—'), esc(x.mustahikId), money(x.money), kilos(x.rice), esc(A.who(x.deliveredBy))]))}</section>`
     const mustahikTable = `<section class="card"><h3>Daftar mustahik terverifikasi</h3>${A.table(['Nomor', 'Nama', 'Status domisili / Daerah / RW / RT', 'Wilayah penilaian (kolom H)', 'Asnaf', 'Status'], m.mustahiks.map((x) => { const p = A.person(x.personId); return [esc(x.registrationNo || x.id), esc(p?.name || '—'), `${esc(p?.domicileStatus === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah')} · ${esc(domicileLabel(p, currentTenantId()))}`, esc(x.region || '—'), esc(x.finalStatus || x.asnaf || '—'), statusPill(x.status)] }))}</section>`
     const detail = type === 'receipt' ? receiptTable : type === 'cash' ? cashTable : type === 'distribution' ? distributionTable : type === 'mustahik' ? mustahikTable : `<div class="two-col"><section class="card"><h3>Rekap per jenis ZIS</h3>${A.table(['Jenis', 'Uang', 'Beras'], rows.map(([x, u, r]) => [esc(x), money(u), kilos(r)]))}</section><section class="card"><h3>Rekap identitas per Daerah / RW / RT</h3>${A.table(['Tingkat', 'Daerah', 'RW', 'RT', 'Muzakki', 'Mustahik', 'Total'], territoryRows.map((x) => [esc(x.level), esc(x.areaName), esc(x.rwName || '—'), esc(x.rtName || '—'), x.muzakki, x.mustahik, x.muzakki + x.mustahik]))}</section></div>${receiptTable}${cashTable}${distributionTable}${mustahikTable}`
-    return `${A.boxhead('Pelaporan Periode dan UPZ', 'Rekap penghimpunan, rekonsiliasi, batch distribusi, penyaluran dan jejak audit untuk pemeriksaan dan laporan berkala.', `<div class="actions">${action('Unduh CSV', 'export-report-csv', 'sm')}${action('Unduh XLSX', 'export-report-xlsx', 'sm primary')}${action('Cetak / PDF', 'export-report-pdf', 'sm')}</div>`)}<div class="cards">${A.stat('Penerimaan uang', money(m.received), 'Nilai transaksi non-batal')}${A.stat('Penerimaan beras', kilos(m.rice), 'Dicatat sebagai kilogram')}${A.stat('Terverifikasi Amil', money(m.verified), 'Tahap penghimpunan')}${A.stat('Sudah disalurkan', money(m.sent), 'Realisasi batch Relawan')}</div><section class="card"><h3>Filter laporan</h3><div class="grid-form">${A.sel('Periode', 'report-period', A.scoped('periods').map((p) => [p.id, p.name]), m.period?.id || '')}${A.sel('Jenis laporan', 'report-type', [['all', 'Semua ZIS'], ['receipt', 'Penerimaan'], ['cash', 'Rekonsiliasi kas'], ['distribution', 'Distribusi'], ['mustahik', 'Mustahik dan wilayah']], type)}</div><p class="caption">Filter periode dan jenis laporan diterapkan pada tampilan serta berkas ekspor.</p></section><section class="card"><h3>Ringkasan BAZNAS / UPZ</h3><p class="caption">Format ringkas ini menjadi bahan penyelarasan dengan BAZNAS. Pengiriman pusat belum aktif karena endpoint dan format integrasi resmi belum disediakan.</p>${A.table(['Indikator', 'Nilai'], baznas.map(([k, v]) => [esc(k), esc(v)]))}<div class="form-actions">${action('Unduh paket laporan UPZ XLSX', 'export-baznas-xlsx', 'sm primary')}${action('Unduh paket laporan UPZ CSV', 'export-baznas-csv', 'sm')}</div></section>${detail}`
+    return `${A.boxhead('Pelaporan Periode dan UPZ', 'Rekap penghimpunan, rekonsiliasi, batch distribusi, penyaluran dan jejak audit untuk pemeriksaan dan laporan berkala.', `<div class="actions">${action('Unduh CSV', 'export-report-csv', 'sm')}${action('Unduh XLSX', 'export-report-xlsx', 'sm primary')}${action('Cetak / PDF', 'export-report-pdf', 'sm')}</div>`)}<div class="cards">${A.stat('Penerimaan uang', money(m.received), 'Nilai transaksi non-batal')}${A.stat('Penerimaan beras', kilos(m.rice), 'Dicatat sebagai kilogram')}${A.stat('Disahkan Amil (Paid)', money(m.verified), 'Tahap penghimpunan; belum lulus rekonsiliasi Bendahara')}${A.stat('Sudah disalurkan', money(m.sent), 'Realisasi batch Relawan')}</div><section class="card"><h3>Filter laporan</h3><div class="grid-form">${A.sel('Periode', 'report-period', A.scoped('periods').map((p) => [p.id, p.name]), m.period?.id || '')}${A.sel('Jenis laporan', 'report-type', [['all', 'Semua ZIS'], ['receipt', 'Penerimaan'], ['cash', 'Rekonsiliasi kas'], ['distribution', 'Distribusi'], ['mustahik', 'Mustahik dan wilayah']], type)}</div><p class="caption">Filter periode dan jenis laporan diterapkan pada tampilan serta berkas ekspor.</p></section><section class="card"><h3>Ringkasan BAZNAS / UPZ</h3><p class="caption">Format ringkas ini menjadi bahan penyelarasan dengan BAZNAS. Pengiriman pusat belum aktif karena endpoint dan format integrasi resmi belum disediakan.</p>${A.table(['Indikator', 'Nilai'], baznas.map(([k, v]) => [esc(k), esc(v)]))}<div class="form-actions">${action('Unduh paket laporan UPZ XLSX', 'export-baznas-xlsx', 'sm primary')}${action('Unduh paket laporan UPZ CSV', 'export-baznas-csv', 'sm')}</div></section>${detail}`
   }
 
   function mustahikPageV5() {
@@ -3523,30 +3578,222 @@ render();
     return `${A.boxhead('Audit dan Arsip', 'Log aktivitas ditautkan dengan checksum berantai untuk memperlihatkan perubahan yang tidak konsisten pada prototype.')}<div class="cards">${A.stat('Status pemeriksaan', integrity.valid ? 'Konsisten' : 'Perlu audit', integrity.valid ? 'Hash chain demo cocok' : `${integrity.errors.length} entri bermasalah`)}${A.stat('Jumlah aktivitas', records.length, 'Urut terbaru')}${A.stat('Hash terakhir', integrity.head.slice(0, 16), 'SHA-256 · rantai tenant aktif')}${A.stat('Antrean sinkronisasi', db.syncQueue.length, nav.onLine ? 'Jaringan tersedia' : 'Mode offline')}</div><section class="card"><h3>Log aktivitas</h3>${A.table(['Waktu', 'Pengguna', 'Jenis', 'Detail', 'Hash'], records.map((x) => [esc(new Date(x.at).toLocaleString('id-ID')), esc(x.by), esc(x.type), esc(x.detail), `<span class="mono">${esc(x.hash || 'Belum ditautkan')}</span>`]))}</section><div class="alert warn">Rantai SHA-256 membantu mendeteksi perubahan yang tidak konsisten pada data lokal. Karena browser dan localStorage tetap berada di perangkat pengguna, ini belum immutable dan belum membuktikan identitas penanda tangan. Produksi wajib memindahkan rantai audit ke server dengan append-only storage, kunci tanda tangan yang dikelola server, kontrol akses, backup terpisah dan pemantauan.</div>`
   }
 
+  const dashboardCategories = ['Zakat Fitrah', 'Zakat Maal', 'Zakat Profesi', 'Fidyah', 'Kafarat', 'Infak/Sedekah']
+
+  function transactionCategoryChartRows(transactions, medium) {
+    const totals = Object.fromEntries([...dashboardCategories, 'Belum dipetakan'].map((category) => [category, 0]))
+    transactions.forEach((tx) => {
+      ;(Array.isArray(tx.lines) ? tx.lines : []).forEach((line) => {
+        if (line.type !== medium) return
+        const category = dashboardCategories.includes(line.category) ? line.category : 'Belum dipetakan'
+        totals[category] += Number(line.value || 0)
+      })
+    })
+    return dashboardCategories.map((name) => ({ name, value: totals[name] }))
+      .concat(totals['Belum dipetakan'] > 0 ? [{ name: 'Belum dipetakan', value: totals['Belum dipetakan'] }] : [])
+  }
+
+  function explicitDistributionBreakdown(distribution) {
+    const allocation = A.scoped('allocations').find((x) => x.id === distribution.allocationId)
+    const item = allocation?.items?.find((x) => x.mustahikId === distribution.mustahikId)
+    let details = Array.isArray(distribution.categoryBreakdown) ? distribution.categoryBreakdown
+      : Array.isArray(item?.categoryBreakdown) ? item.categoryBreakdown
+        : null
+    if (!details && distribution.category && distribution.type) {
+      details = [{
+        category: distribution.category,
+        type: distribution.type,
+        value: distribution.value ?? distribution.amount ?? (distribution.type === 'uang' ? distribution.money : distribution.rice),
+      }]
+    }
+    if (!details?.length) return null
+
+    const sums = { uang: 0, beras: 0 }
+    const normalized = []
+    for (const detail of details) {
+      const category = detail?.category
+      if (!dashboardCategories.includes(category)) return null
+      if (detail.type === 'uang' || detail.type === 'beras') {
+        const value = Number(detail.value ?? detail.amount ?? 0)
+        if (!Number.isFinite(value) || value < 0) return null
+        sums[detail.type] += value
+        normalized.push({ category, type: detail.type, value })
+      } else if (Object.prototype.hasOwnProperty.call(detail, 'money') || Object.prototype.hasOwnProperty.call(detail, 'rice')) {
+        const moneyValue = Number(detail.money || 0)
+        const riceValue = Number(detail.rice || 0)
+        if (!Number.isFinite(moneyValue) || !Number.isFinite(riceValue) || moneyValue < 0 || riceValue < 0) return null
+        sums.uang += moneyValue
+        sums.beras += riceValue
+        if (moneyValue > 0) normalized.push({ category, type: 'uang', value: moneyValue })
+        if (riceValue > 0) normalized.push({ category, type: 'beras', value: riceValue })
+      } else {
+        return null
+      }
+    }
+
+    // Rincian kategori hanya dianggap sah jika seluruh uang dan beras pada
+    // distribusi terjelaskan tepat. Rincian parsial tidak boleh ditebak.
+    const expectedMoney = Number(distribution.money || 0)
+    const expectedRice = Number(distribution.rice || 0)
+    if (Math.abs(sums.uang - expectedMoney) > 0.001 || Math.abs(sums.beras - expectedRice) > 0.001) return null
+    return normalized
+  }
+
+  function distributionCategoryChartRows(distributions, medium) {
+    const totals = Object.fromEntries([...dashboardCategories, 'Belum dipetakan'].map((category) => [category, 0]))
+    distributions.filter((x) => x.status === 'tersalurkan').forEach((distribution) => {
+      const details = explicitDistributionBreakdown(distribution)
+      const amount = Number(distribution[medium === 'uang' ? 'money' : 'rice'] || 0)
+      if (!details) {
+        totals['Belum dipetakan'] += amount
+        return
+      }
+      details.filter((x) => x.type === medium).forEach((detail) => {
+        totals[detail.category] += Number(detail.value || 0)
+      })
+    })
+    return dashboardCategories.map((name) => ({ name, value: totals[name] }))
+      .concat(totals['Belum dipetakan'] > 0 ? [{ name: 'Belum dipetakan', value: totals['Belum dipetakan'] }] : [])
+  }
+
+  function dashboardChartRows(metrics, status, medium) {
+    if (status === 'terverifikasi') {
+      // Hanya berita acara serah terima yang sudah berstatus terverifikasi
+      // setelah Bendahara menyelesaikan rekonsiliasi kas/rekening yang menjadi sumber grafik.
+      const verifiedDepositIds = new Set((metrics.reconciledDeposits || [])
+        .flatMap((deposit) => Array.isArray(deposit.transactionIds) ? deposit.transactionIds : []))
+      return transactionCategoryChartRows(metrics.t.filter((tx) => verifiedDepositIds.has(tx.id)), medium)
+    }
+    if (status === 'tersalurkan') return distributionCategoryChartRows(metrics.d || [], medium)
+    return transactionCategoryChartRows(metrics.t, medium)
+  }
+
   function dashboardV5() {
     const m = A.metrics()
     const txs = m.t
-    const chartType = state.filters.dashboardCategory || 'all'
-    const cats = ['Zakat Fitrah', 'Zakat Maal', 'Zakat Profesi', 'Fidyah', 'Kafarat', 'Infak/Sedekah']
-    const filtered = chartType === 'all' ? txs : txs.filter((x) => x.lines.some((l) => l.category === chartType))
-    const totals = cats.map((cat) => ({ name: cat, value: sum(filtered, (x) => sum(x.lines.filter((line) => line.category === cat && line.type === 'uang'), 'value')) }))
-    const max = Math.max(1, ...totals.map((x) => x.value))
+    const chartStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(state.filters.dashboardStatus) ? state.filters.dashboardStatus : 'tercatat'
+    const chartMedium = state.filters.dashboardMedium === 'beras' ? 'beras' : 'uang'
+    const chartRows = dashboardChartRows(m, chartStatus, chartMedium)
+    const max = Math.max(1, ...chartRows.map((x) => x.value))
     const role = activeUser()?.role
-    let roleHint = {
-      Admin: 'Kelola periode, parameter, akun, dan verifikasi mustahik. Data transaksi yang telah disahkan tidak dapat diubah.',
+    const roleHint = {
+      Admin: 'Kelola periode, parameter, akun, dan verifikasi Mustahik. Data transaksi yang telah disahkan tidak dapat diubah.',
       Muzakki: 'Kelola keluarga dan tenant, hitung zakat, lalu buat QR untuk jalur cepat ke meja Amil.',
       Operator: 'Catat transaksi walk-in sebagai Pending dan arahkan Muzakki membawa QR ke Amil.',
-      Amil: 'Buka shift, scan QR, pandu akad, validasi pembayaran dan terbitkan bukti setor.',
-      Bendahara: 'Rekonsiliasi serah terima dan rekening, susun jurnal dan distribusikan batch kepada Relawan.',
-      Relawan: 'Pilih batch dan konfirmasi penerimaan bantuan dengan QR Mustahik.',
-      Pengurus: 'Pantau laporan dan audit, lalu setujui rencana distribusi tanpa mengubah data operasional.',
+      Amil: 'Buka shift, scan QR, pandu akad, sahkan pembayaran menjadi Paid, lalu tutup shift untuk serah terima.',
+      Bendahara: 'Cocokkan setoran Amil melalui dua tahap rekonsiliasi, lalu kelola jurnal, alokasi dan batch penyaluran.',
+      Relawan: 'Lihat batch tugas, verifikasi identitas Mustahik, lalu catat penerimaan bantuan.',
+      Pengurus: 'Pantau penerimaan, rekonsiliasi dan audit; tinjau serta putuskan rencana alokasi tanpa mengubah transaksi operasional.',
     }[role]
-    const quick = { Admin: ['mustahik', 'Data Mustahik'], Muzakki: ['my-zis', 'Layanan Mandiri'], Operator: ['transactions', 'Input Transaksi'], Amil: ['transactions', 'Scan QR'], Bendahara: ['deposits', 'Rekonsiliasi'], Relawan: ['distribution', 'Batch Tugas'], Pengurus: ['reports', 'Laporan'] }[role]
+    const quick = {
+      Admin: ['mustahik', 'Data Mustahik'], Muzakki: ['my-zis', 'Layanan Mandiri'],
+      Operator: ['transactions', 'Input Transaksi'], Amil: ['transactions', 'Scan QR'],
+      Bendahara: ['deposits', 'Rekonsiliasi'], Relawan: ['distribution', 'Batch Tugas'],
+      Pengurus: ['reports', 'Laporan'],
+    }[role]
+    const workflows = {
+      Admin: {
+        intro: 'Persiapan dan pengawasan data tenant.',
+        steps: ['Atur profil lembaga, periode, tarif dan akun', 'Kelola master Muzakki serta verifikasi Mustahik', 'Pantau penerimaan dan hasil rekonsiliasi Bendahara', 'Tinjau laporan, koreksi, dan jejak audit'],
+      },
+      Muzakki: {
+        intro: 'Dari data keluarga sampai bukti pembayaran.',
+        steps: ['Lengkapi profil dan anggota keluarga yang ditanggung', 'Hitung zakat lalu buat rencana transaksi', 'Tunjukkan QR kepada Amil saat pembayaran', 'Simpan bukti setor dan pantau riwayat transaksi'],
+      },
+      Operator: {
+        intro: 'Pencatatan konter tanpa kewenangan mengesahkan pembayaran.',
+        steps: ['Pilih atau daftarkan data Muzakki', 'Input rincian zakat sebagai Pending', 'Serahkan QR/struk kepada Muzakki untuk dibawa ke Amil', 'Amil memindai QR, memandu akad, lalu mengesahkan pembayaran'],
+      },
+      Amil: {
+        intro: 'Pengesahan pembayaran terjadi di shift Amil; rekonsiliasi dilakukan Bendahara setelahnya.',
+        steps: ['Buka shift dan pastikan jadwal bertugas', 'Scan QR, cocokkan identitas/rincian, lalu pandu akad', 'Sahkan pembayaran menjadi Paid (belum terverifikasi Bendahara)', 'Tutup shift agar berita acara setoran dapat dibuat Bendahara'],
+      },
+      Bendahara: {
+        intro: 'Status Terverifikasi hanya tercapai setelah dua tahap pencocokan selesai.',
+        steps: ['Buka berita acara dari shift Amil yang sudah ditutup', 'Cocokkan uang dan beras fisik pada tahap pertama', 'Cocokkan mutasi rekening dan saldo logistik pada tahap kedua', 'Setelah cocok, berita acara berstatus Terverifikasi; lanjutkan jurnal dan alokasi', 'Serahkan batch yang disetujui kepada Relawan'],
+      },
+      Relawan: {
+        intro: 'Penyaluran dilakukan hanya untuk penerima pada batch tugas.',
+        steps: ['Buka batch yang ditugaskan kepada akun Relawan', 'Scan QR atau cari kode Mustahik di dalam batch', 'Serahkan bantuan sesuai rincian alokasi', 'Konfirmasi penerimaan agar status menjadi Tersalurkan'],
+      },
+      Pengurus: {
+        intro: 'Pengawasan dan persetujuan tanpa mengubah data operasional.',
+        steps: ['Tinjau berita acara dan status rekonsiliasi Bendahara', 'Periksa rincian serta dasar rencana alokasi', 'Setujui atau tolak pengajuan alokasi', 'Pantau realisasi penyaluran, laporan dan audit'],
+      },
+    }[role] || { intro: 'Alur operasional mengikuti kewenangan role aktif.', steps: ['Buka menu yang tersedia', 'Selesaikan tugas sesuai kewenangan', 'Periksa status dan riwayat proses'] }
+
     const tenantQueueLength = db.syncQueue.filter((event) => event.tenantId === currentTenantId()).length
     const connectionMode = window.SIZISNUR_API_BASE
       ? 'Sinkronisasi server terkonfigurasi'
       : (nav.onLine ? 'Mode lokal · tanpa server' : 'Tersimpan di perangkat ini')
-    return `${A.boxhead('Dashboard SiZisNur', `Tenant ${esc(A.tenant().name)} · ${esc(m.p?.name || 'Belum ada periode')} · Role ${esc(role)}`, action('Panduan role', 'open-help', 'primary'))}<section class="hero"><div class="hero-copy"><h2>Assalamu’alaikum, ${esc(activeUser().name.split(' ')[0])}</h2><p>${esc(roleHint)}</p><div class="actions">${actionFor(quick[1], 'quick-page', quick[0], 'primary')}${action('Evaluasi prototype', 'open-prototype', 'sm')}</div></div><aside class="hero-aside" aria-label="Status akun dan sinkronisasi"><div class="hero-aside-top"><div class="hero-role-block"><span class="hero-aside-kicker">ROLE AKTIF</span><span class="tag info hero-role-tag">${esc(role)}</span></div><div class="hero-connection" id="hero-connection-state" data-connection-state="${nav.onLine ? 'online' : 'offline'}"><span class="hero-connection-dot" aria-hidden="true"></span><div class="hero-connection-copy"><b id="offline-state" role="status" aria-live="polite">${nav.onLine ? 'Online' : 'Offline'}</b><small id="sync-mode-state">${esc(connectionMode)}</small></div></div></div><div class="hero-queue"><div class="hero-queue-copy"><span>Antrean lokal</span><small>Menunggu sinkronisasi</small></div><strong id="local-queue-count">${tenantQueueLength}</strong></div></aside></section><div class="cards">${A.stat('Uang tercatat', money(m.received), 'Semua transaksi periode')}${A.stat('Beras tercatat', kilos(m.rice), 'Satuan kilogram')}${A.stat('Uang diverifikasi Amil', money(m.verified), 'Sesudah scan dan akad')}${A.stat('Uang disalurkan', money(m.sent), 'Berdasarkan batch Relawan')}</div><div class="two-col"><section class="card"><div class="card-top"><h3>Grafik penerimaan per kategori</h3><select id="dashboard-category-filter"><option value="all">Semua kategori</option>${cats.map((x) => `<option value="${esc(x)}" ${chartType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>${totals.map((x) => `<div class="bar-row"><label>${esc(x.name)}</label><div class="bar"><i style="width:${(x.value / max) * 100}%"></i></div><b>${money(x.value)}</b></div>`).join('')}<p class="caption">Grafik diperbarui saat filter kategori diubah. Satuan uang dan beras tidak dicampur.</p></section><section class="card"><h3>Alur operasional terpantau</h3><div class="workflow-mini"><span>Persiapan Admin</span><i>→</i><span>Pending Muzakki / Operator</span><i>→</i><span>Scan & verifikasi Amil</span><i>→</i><span>Kas dan rekening Bendahara</span><i>→</i><span>Batch Relawan</span><i>→</i><span>Audit Pengurus</span></div><p class="caption">Pengurus mempunyai akses baca penuh dan persetujuan program. Perubahan data dilakukan lewat koreksi terkendali.</p></section></div><section class="card"><div class="card-top"><h3>Transaksi terbaru</h3>${canV5('transactions') ? actionFor('Buka transaksi', 'quick-page', 'transactions', 'sm') : ''}</div>${A.table(['Nomor', 'Muzakki', 'Jumlah', 'Status'], txs.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6).map((tx) => [esc(tx.serial), esc(A.person(tx.personId)?.name || 'Muzakki'), `${money(effectiveTotals(tx).money)} · ${kilos(effectiveTotals(tx).rice)}`, statusPill(tx.status)]))}</section>`
+    const registeredMuzakki = new Set(A.scoped('muzakki').filter((x) => x.active !== false).map((x) => x.personId || x.id)).size
+    const distributionBalance = flexibleBalance()
+    const verifiedMustahikCount = A.scoped('mustahiks').filter((x) => x.status === 'terverifikasi').length
+    const chartNote = chartStatus === 'terverifikasi'
+      ? 'Sumber: transaksi yang tercantum pada berita acara setoran berstatus Terverifikasi setelah rekonsiliasi Bendahara. Status Paid dari Amil saja belum cukup.'
+      : chartStatus === 'tersalurkan'
+        ? 'Sumber: konfirmasi distribusi berstatus Tersalurkan. Kategori hanya ditampilkan jika rincian kategori tersimpan lengkap; data lama tanpa rincian masuk Belum dipetakan.'
+        : 'Sumber: seluruh transaksi periode aktif yang belum dibatalkan/kedaluwarsa. Paid berarti pembayaran disahkan Amil, bukan lulus rekonsiliasi Bendahara.'
+    const formatChartValue = (value) => chartMedium === 'uang' ? money(value) : kilos(value)
+    const summaryStats = `<div class="cards dashboard-summary-cards">
+      ${A.stat('Total uang diterima tercatat', money(m.received), 'Akumulasi transaksi periode aktif')}
+      ${A.stat('Total beras diterima tercatat', kilos(m.rice), 'Dicatat dalam kilogram')}
+      ${A.stat('Total Muzakki terdaftar', registeredMuzakki, 'Registrasi aktif tenant')}
+      ${A.stat('Jiwa dibayarkan', `${Number(m.jiwa || 0).toLocaleString('id-ID')} jiwa`, 'Muzakki dan seluruh tanggungan pada transaksi')}
+      ${A.stat('Zakat tersalurkan', `<span class="stat-amount-pair"><span>${money(m.sent)}<small>Uang</small></span><span>${kilos(m.sentRice)}<small>Beras</small></span></span>`, 'Berdasarkan konfirmasi penyaluran Relawan')}
+    </div>`
+    const chart = `<section class="card dashboard-chart-card" data-chart-status="${esc(chartStatus)}" data-chart-medium="${esc(chartMedium)}">
+      <div class="card-top"><h3>Grafik Penerimaan per Kategori</h3>
+        <div class="chart-filters">
+          <label class="sr-only" for="dashboard-medium-filter">Jenis penerimaan</label>
+          <select id="dashboard-medium-filter" aria-label="Tampilkan jenis penerimaan">
+            <option value="uang" ${chartMedium === 'uang' ? 'selected' : ''}>Uang</option>
+            <option value="beras" ${chartMedium === 'beras' ? 'selected' : ''}>Beras</option>
+          </select>
+          <label class="sr-only" for="dashboard-status-filter">Status penerimaan</label>
+          <select id="dashboard-status-filter" aria-label="Filter status penerimaan">
+            <option value="tercatat" ${chartStatus === 'tercatat' ? 'selected' : ''}>Tercatat</option>
+            <option value="terverifikasi" ${chartStatus === 'terverifikasi' ? 'selected' : ''}>Terverifikasi</option>
+            <option value="tersalurkan" ${chartStatus === 'tersalurkan' ? 'selected' : ''}>Tersalurkan</option>
+          </select>
+        </div>
+      </div>
+      ${chartRows.map((x) => `<div class="bar-row" data-chart-category="${esc(x.name)}" data-chart-value="${Number(x.value || 0)}"><label>${esc(x.name)}</label><div class="bar"><i style="width:${(x.value / max) * 100}%"></i></div><b>${formatChartValue(x.value)}</b></div>`).join('')}
+      <p class="caption">${chartNote}</p>
+    </section>`
+    const distributionRows = [
+      ['Dana terverifikasi Bendahara', money(m.reconciled), kilos(m.reconciledRice)],
+      ['Rencana disetujui', money(m.allocated), kilos(m.allocatedRice)],
+      ['Realisasi penyaluran', money(m.sent), kilos(m.sentRice)],
+      ['Sisa dana terverifikasi', money(distributionBalance.money), kilos(distributionBalance.rice)],
+    ]
+    const distributionStatus = `<section class="card dashboard-distribution-card">
+      <h3>Status Distribusi</h3>
+      <div class="distribution-status-list">
+        ${distributionRows.map(([label, moneyValue, riceValue]) => `<div class="distribution-status-row"><span>${label}</span><b><span>${moneyValue}<small>Uang</small></span><span>${riceValue}<small>Beras</small></span></b></div>`).join('')}
+        <div class="distribution-status-row"><span>Mustahik diverifikasi</span><b>${verifiedMustahikCount} orang</b></div>
+      </div>
+      <p class="caption">Sisa dana/beras dihitung dari saldo hasil rekonsiliasi Bendahara dikurangi seluruh rencana alokasi aktif, termasuk draf dan pengajuan. Distribusi dihitung dari konfirmasi Relawan berstatus Tersalurkan.</p>
+    </section>`
+    const workflow = `<section class="card dashboard-workflow-card">
+      <div class="card-top"><h3>Alur untuk ${esc(role)}</h3><span class="tag info">${esc(role)}</span></div>
+      <p class="caption">${esc(workflows.intro)}</p>
+      <ol class="dashboard-workflow-steps">${workflows.steps.map((step, index) => `<li><span class="workflow-step-number">${index + 1}</span><span>${esc(step)}</span></li>`).join('')}</ol>
+    </section>`
+    return `${A.boxhead('Dashboard SiZisNur', `Tenant ${esc(A.tenant().name)} · ${esc(m.p?.name || 'Belum ada periode')} · Role ${esc(role)}`, action('Panduan role', 'open-help', 'primary'))}
+      <section class="hero"><div class="hero-copy"><h2>Assalamu’alaikum, ${esc(activeUser().name.split(' ')[0])}</h2><p>${esc(roleHint)}</p><div class="actions">${actionFor(quick[1], 'quick-page', quick[0], 'primary')}${action('Evaluasi prototype', 'open-prototype', 'sm')}</div></div>
+        <aside class="hero-aside" aria-label="Status akun dan sinkronisasi"><div class="hero-aside-top"><div class="hero-role-block"><span class="hero-aside-kicker">ROLE AKTIF</span><span class="tag info hero-role-tag">${esc(role)}</span></div>
+          <div class="hero-connection" id="hero-connection-state" data-connection-state="${nav.onLine ? 'online' : 'offline'}"><span class="hero-connection-dot" aria-hidden="true"></span><div class="hero-connection-copy"><b id="offline-state" role="status" aria-live="polite">${nav.onLine ? 'Online' : 'Offline'}</b><small id="sync-mode-state">${esc(connectionMode)}</small></div></div></div>
+          <div class="hero-queue"><div class="hero-queue-copy"><span>Antrean lokal</span><small>Menunggu sinkronisasi</small></div><strong id="local-queue-count">${tenantQueueLength}</strong></div>
+        </aside>
+      </section>
+      ${summaryStats}
+      <div class="two-col dashboard-primary-grid">${chart}${distributionStatus}</div>
+      <div class="two-col dashboard-secondary-grid">${workflow}
+        <section class="card"><div class="card-top"><h3>Transaksi Terbaru</h3>${canV5('transactions') ? actionFor('Buka transaksi', 'quick-page', 'transactions', 'sm') : ''}</div>
+          ${A.table(['Nomor', 'Muzakki', 'Uang', 'Beras', 'Status'], txs.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 6).map((tx) => [esc(tx.serial), esc(A.person(tx.personId)?.name || 'Muzakki'), money(effectiveTotals(tx).money), kilos(effectiveTotals(tx).rice), statusPill(tx.status, 'transaction')]))}
+        </section>
+      </div>`
   }
   A.set('dashboard', dashboardV5)
 
@@ -3664,7 +3911,7 @@ render();
     if (type === 'distribution') return [...heading, ['Tanggal', 'Batch', 'Mustahik', 'Uang IDR', 'Beras kg', 'Relawan'], ...m.distributions.map((x) => [x.deliveredAt, db.batches.find((b) => b.id === x.batchId)?.name || '', x.mustahikId, x.money, x.rice, A.who(x.deliveredBy)])]
     if (type === 'mustahik') return [...heading, ['Nomor', 'Nama', 'Status domisili', 'Daerah administratif', 'RW', 'RT', 'Wilayah penilaian (kolom H)', 'Asnaf'], ...A.scoped('mustahiks').map((x) => { const p = A.person(x.personId); const d = domicileParts(p, currentTenantId()); return [x.registrationNo || x.id, p?.name || '', d.status === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah', d.status === 'warga_daerah' ? d.area.name : '', d.rw?.name || '', d.rt?.name || '', x.region || '', x.finalStatus || x.asnaf || ''] })]
     if (type === 'receipt') return [...heading, ['Nomor', 'Waktu', 'Muzakki', 'Jenis', 'Status', 'Uang IDR', 'Beras kg'], ...m.txs.map((tx) => [tx.serial, tx.createdAt, A.person(tx.personId)?.name || 'Muzakki', tx.lines.map((x) => x.category).join(', '), tx.status, effectiveTotals(tx).money, effectiveTotals(tx).rice])]
-    return [...heading, ['Indikator', 'Nilai'], ['Jumlah transaksi', m.txs.length], ['Jumlah jiwa', sum(m.txs, 'jiwa')], ['Penerimaan uang IDR', m.received], ['Penerimaan beras kg', m.rice], ['Terverifikasi uang IDR', m.verified], ['Terverifikasi beras kg', m.verifiedRice], ['Distribusi uang IDR', m.sent], ['Distribusi beras kg', m.sentRice], ['Rekonsiliasi selesai', m.deposits.filter((x) => x.status === 'terverifikasi').length], [], ['Tingkat', 'Daerah', 'RW', 'RT', 'Muzakki', 'Mustahik', 'Total'], ...territoryReportRows().map((x) => [x.level, x.areaName, x.rwName, x.rtName, x.muzakki, x.mustahik, x.muzakki + x.mustahik])]
+    return [...heading, ['Indikator', 'Nilai'], ['Jumlah transaksi', m.txs.length], ['Jumlah jiwa', sum(m.txs, 'jiwa')], ['Penerimaan uang IDR', m.received], ['Penerimaan beras kg', m.rice], ['Disahkan Amil (Paid) uang IDR', m.verified], ['Disahkan Amil (Paid) beras kg', m.verifiedRice], ['Terverifikasi Bendahara uang IDR', m.reconciled], ['Terverifikasi Bendahara beras kg', m.reconciledRice], ['Distribusi uang IDR', m.sent], ['Distribusi beras kg', m.sentRice], ['Rekonsiliasi selesai', m.deposits.filter((x) => x.status === 'terverifikasi').length], [], ['Tingkat', 'Daerah', 'RW', 'RT', 'Muzakki', 'Mustahik', 'Total'], ...territoryReportRows().map((x) => [x.level, x.areaName, x.rwName, x.rtName, x.muzakki, x.mustahik, x.muzakki + x.mustahik])]
   }
   function reportCsv() {
     const rows = reportRows()
@@ -3862,7 +4109,7 @@ render();
         case 'receipt-png': { const tx = db.transactions.find((x) => x.id === id && (x.tenantId === currentTenantId() || (activeUser()?.role === 'Muzakki' && x.accountId === accountForUser()?.id))); if (!tx) throw new Error('Transaksi tidak ditemukan'); await downloadReceiptPng(tx); break }
         case 'receipt-pdf': { const tx = db.transactions.find((x) => x.id === id && (x.tenantId === currentTenantId() || (activeUser()?.role === 'Muzakki' && x.accountId === accountForUser()?.id))); if (!tx) throw new Error('Transaksi tidak ditemukan'); A.printWindow(`Bukti setor ${tx.serial}`, A.receiptHtml(tx), false); break }
         case 'receipt-thermal': { const tx = db.transactions.find((x) => x.id === id && (x.tenantId === currentTenantId() || (activeUser()?.role === 'Muzakki' && x.accountId === accountForUser()?.id))); if (!tx) throw new Error('Transaksi tidak ditemukan'); makeReceiptPrint(tx, true); break }
-        case 'muzakki-history': { const txs = A.scoped('transactions').filter((x) => x.personId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); A.modal('Riwayat transaksi Muzakki', A.table(['Tanggal', 'Nomor', 'Jenis', 'Uang', 'Beras', 'Status'], txs.map((x) => [esc(new Date(x.createdAt).toLocaleString('id-ID')), esc(x.serial), esc(x.lines.map((l) => l.category).join(', ')), money(effectiveTotals(x).money), kilos(effectiveTotals(x).rice), statusPill(x.status)]))); break }
+        case 'muzakki-history': { const txs = A.scoped('transactions').filter((x) => x.personId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); A.modal('Riwayat transaksi Muzakki', A.table(['Tanggal', 'Nomor', 'Jenis', 'Uang', 'Beras', 'Status'], txs.map((x) => [esc(new Date(x.createdAt).toLocaleString('id-ID')), esc(x.serial), esc(x.lines.map((l) => l.category).join(', ')), money(effectiveTotals(x).money), kilos(effectiveTotals(x).rice), statusPill(x.status, 'transaction')]))); break }
         case 'operator-person-new': if (!['Admin', 'Operator', 'Amil'].includes(activeUser()?.role)) throw new Error('Akses ditolak'); operatorPersonModal(); break
         case 'deposit-create': if (activeUser()?.role !== 'Bendahara') throw new Error('Hanya Bendahara yang dapat membuat berita acara'); openDepositBatchModal(); break
         case 'deposit-stage1-open': if (activeUser()?.role !== 'Bendahara') throw new Error('Akses baca saja'); depositStage1Modal(id); break
@@ -3940,8 +4187,12 @@ render();
     if (event.target.id === 'muzakki-tenant-switch') {
       try { switchTenant(event.target.value) } catch (error) { A.toast(error.message, 'error') }
     }
-    if (event.target.id === 'dashboard-category-filter') {
-      state.filters.dashboardCategory = event.target.value
+    if (event.target.id === 'dashboard-medium-filter') {
+      state.filters.dashboardMedium = event.target.value === 'beras' ? 'beras' : 'uang'
+      A.render()
+    }
+    if (event.target.id === 'dashboard-status-filter') {
+      state.filters.dashboardStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(event.target.value) ? event.target.value : 'tercatat'
       A.render()
     }
     if (event.target.id === 'report-period') { state.filters.reportPeriod = event.target.value; A.render() }

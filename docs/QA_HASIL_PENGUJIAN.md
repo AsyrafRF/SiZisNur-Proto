@@ -76,3 +76,15 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Panel status memiliki penyesuaian breakpoint desktop, tablet, dan ponsel serta label status yang diumumkan melalui `aria-live`.
 - Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per tenant.
 - Seluruh tujuh suite tes proyek lulus setelah perubahan dan HTML standalone dibuat ulang.
+
+
+## Pembaruan dashboard analitik — 13 November 2026
+
+- Ringkasan dashboard mengembalikan penerimaan uang/beras tercatat, Muzakki terdaftar, jiwa dibayarkan (Muzakki dan tanggungan), serta penyaluran uang/beras.
+- Grafik enam kategori memiliki filter media Uang/Beras dan status Tercatat/Terverifikasi/Tersalurkan; tidak ada lagi filter kategori dropdown.
+- Grafik Terverifikasi menggunakan transaksi yang tertaut pada berita acara setoran dengan status `terverifikasi`. `Paid` tetap berarti pembayaran disahkan Amil dan belum otomatis terverifikasi Bendahara.
+- Grafik Tersalurkan menggunakan record distribusi yang berstatus `tersalurkan`. Kategori hanya dipakai jika rincian kategori eksplisit dan jumlah rinciannya cocok dengan total uang serta beras; data tanpa rincian atau rincian tidak lengkap ditampilkan pada `Belum dipetakan`.
+- Panel Status Distribusi dan Transaksi Terbaru tersedia kembali. Alur dashboard berubah sesuai role aktif.
+- Tes baru mencakup skenario bahwa transaksi `paid` tanpa berita acara terverifikasi tidak masuk grafik Terverifikasi, dan distribusi lama tidak dipaksakan ke kategori tertentu.
+- Batasan tetap: data lokal prototype bukan sumber real-time lintas perangkat; status produksi harus divalidasi ulang di backend.
+
