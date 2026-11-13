@@ -120,7 +120,7 @@ for (const [uid, allowed, denied] of [
   ['US-AML', ['dashboard','transactions','schedule','muzakki','corrections','amil-guide','help'], ['allocation','deposits','users']],
   ['US-OPR', ['dashboard','transactions','muzakki','corrections','help'], ['allocation','deposits','users','amil-guide']],
   ['US-REL', ['dashboard','distribution','help'], ['transactions','allocation','deposits']],
-  ['US-MZK', ['dashboard','my-zis','help'], ['transactions','deposits','allocation']],
+  ['US-MZK', ['my-zis','help'], ['dashboard','transactions','deposits','allocation']],
 ]) {
   app.loginRef(uid);
   for (const page of allowed) {

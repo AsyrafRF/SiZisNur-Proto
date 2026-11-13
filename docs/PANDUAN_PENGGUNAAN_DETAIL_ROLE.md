@@ -21,7 +21,7 @@ Contoh tampilan pada panduan merupakan ilustrasi pengenal elemen menu, bukan tan
 ## Cakupan role
 
 - **Admin** — ringkasan, profil lembaga dan UPZ, akun dan peran, periode zakat, tarif dan rumus, Mustahik dan kelayakan, notifikasi, audit dan arsip, serta acuan workbook.
-- **Muzakki** — ringkasan, tenant dan profil, data keluarga tanggungan, kalkulator zakat, rencana transaksi dan QR, serta riwayat dan bukti transaksi.
+- **Muzakki** — Dashboard Zakat Saya yang hanya menampilkan status, jenis, nilai, verifikasi, dan riwayat zakat pribadi; tenant dan profil, data keluarga tanggungan, kalkulator, rencana transaksi dan QR tetap tersedia di bagian Layanan Mandiri.
 - **Operator** — ringkasan, data Muzakki Walk-in, input transaksi konter, struk digital dan cetak, serta pengajuan koreksi.
 - **Amil** — ringkasan, shift dan kehadiran, input konter saat tidak ada Operator, pemindaian QR dan verifikasi, bukti setor zakat, ketentuan dan akad, serta notifikasi.
 - **Bendahara** — ringkasan, serah terima dan rekonsiliasi, jurnal dan laporan keuangan, koreksi, alokasi, batch penyaluran, laporan, insentif, audit, dan acuan workbook.

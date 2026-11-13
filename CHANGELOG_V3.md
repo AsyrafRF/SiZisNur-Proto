@@ -1,3 +1,14 @@
+## 13 November 2026 — Dashboard pribadi Muzakki dan pemisahan dashboard panitia
+
+- Menghapus akses role Muzakki ke dashboard agregat panitia. Dashboard ringkasan penerimaan, grafik kategori, Status Distribusi, transaksi terbaru, dan angka agregat hanya tersedia bagi anggota panitia zakat.
+- Mengganti halaman awal Muzakki menjadi **Dashboard Zakat Saya** yang menampilkan status zakat periode aktif, total uang dan beras pribadi yang tercatat, jiwa/unit pada transaksi, rincian jenis zakat, dan status verifikasi Bendahara.
+- Menambahkan riwayat transaksi pribadi lintas periode dan tenant yang memang terhubung dengan membership akun tersebut. Transaksi dicocokkan lewat `accountId` atau pasangan `tenantId + personId`, bukan dengan seluruh transaksi tenant.
+- Menegaskan status personal: `Paid` berarti disahkan Amil; status Terverifikasi hanya ditampilkan bila transaksi tercantum pada berita acara setoran yang sudah berstatus `terverifikasi` setelah rekonsiliasi Bendahara.
+- Memindahkan pengelolaan tenant, profil, keluarga tanggungan, dan kalkulator ke bagian Layanan Mandiri yang dapat dibuka saat diperlukan agar fokus utama halaman adalah status zakat pribadi.
+- Memperketat pembukaan/unduhan struk untuk role Muzakki agar hanya transaksi yang terhubung dengan akun atau membership pribadinya yang dapat diakses, termasuk riwayat tenant lain yang terhubung.
+- Mengarahkan sesi Muzakki yang masih menunjuk ke halaman dashboard lama ke Dashboard Zakat Saya.
+- Menambahkan `tests/muzakki-dashboard.test.cjs` untuk pemeriksaan isolasi data, status berdasarkan berita acara, riwayat lintas periode, dan pemisahan akses role.
+
 ## 13 November 2026 — Dashboard penghimpunan, rekonsiliasi, dan penyaluran
 
 - Mengembalikan ringkasan dashboard: total uang dan beras tercatat, total Muzakki aktif terdaftar, serta total jiwa dari Muzakki beserta tanggungan dalam transaksi.

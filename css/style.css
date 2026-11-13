@@ -500,3 +500,45 @@ body.dark .landing-page {
   .dashboard-chart-card .bar-row label{width:90px;font-size:10px}
   .dashboard-chart-card .bar-row b{min-width:90px;font-size:10px}
 }
+
+/* Personal Muzakki dashboard: private, period-aware zakat summary. */
+.my-zis-dashboard{display:grid;gap:16px}
+.my-zis-dashboard-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 22px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(110deg,var(--panel),var(--soft))}
+.my-zis-dashboard-head .eyebrow{display:block;margin-bottom:7px;color:var(--main);font-size:9px;font-weight:850;letter-spacing:1.15px}
+.my-zis-dashboard-head h2{margin:0 0 5px;font-size:21px;letter-spacing:-.45px}
+.my-zis-dashboard-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.my-zis-tenant-control,.my-zis-tenant-picker{display:flex;align-items:center;gap:9px;min-width:0}
+.my-zis-tenant-picker label{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap}
+.my-zis-tenant-picker select{min-width:180px;max-width:260px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--text);padding:9px 11px;font-size:12px}
+.my-zis-summary-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.my-zis-summary-cards .stat{min-width:0}
+.my-zis-summary-cards .stat strong{font-size:clamp(16px,1.55vw,22px);overflow-wrap:anywhere}
+.my-zis-current-grid{align-items:stretch}
+.my-zis-status-card{display:flex;flex-direction:column;gap:13px}
+.my-zis-status-main{padding:15px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}
+.my-zis-status-main .caption{margin:8px 0 0;line-height:1.6}
+.my-zis-status-card>.caption{margin-top:auto;line-height:1.6}
+.my-zis-person-details{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.my-zis-person-details>div{display:grid;gap:5px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--soft);min-width:0}
+.my-zis-person-details span:not(.tag){font-size:10px;color:var(--muted)}
+.my-zis-person-details b{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.my-zis-tools{margin-top:18px;padding:0;overflow:hidden}
+.my-zis-tools>summary{cursor:pointer;list-style:none;padding:17px 20px;font-size:13px;font-weight:800;color:var(--main)}
+.my-zis-tools>summary::-webkit-details-marker{display:none}
+.my-zis-tools>summary:after{content:'＋';float:right;color:var(--muted);font-size:16px}
+.my-zis-tools[open]>summary:after{content:'−'}
+.my-zis-tools-content{display:grid;gap:15px;padding:0 15px 15px}
+.my-zis-tools-content>.card{margin:0;box-shadow:none;background:var(--soft)}
+@media(max-width:1050px){.my-zis-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .my-zis-dashboard-head{align-items:flex-start;flex-direction:column;padding:16px}
+ .my-zis-tenant-control,.my-zis-tenant-picker{width:100%;align-items:flex-start;flex-direction:column}
+ .my-zis-tenant-picker select{width:100%;max-width:none}
+ .my-zis-current-grid{grid-template-columns:1fr}
+}
+@media(max-width:460px){
+ .my-zis-summary-cards{grid-template-columns:1fr 1fr}
+ .my-zis-summary-cards .stat{padding:13px}
+ .my-zis-summary-cards .stat strong{font-size:17px}
+ .my-zis-person-details{grid-template-columns:1fr}
+}
