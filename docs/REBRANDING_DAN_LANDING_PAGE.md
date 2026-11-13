@@ -23,8 +23,8 @@ Semua modul lama **tetap dipertahankan**: tenant, akun/peran, dashboard, periode
 
 ## Catatan UAT
 1. Tanpa sesi aktif, halaman pertama yang muncul harus landing page SiZisNur.
-2. Klik masuk demo, pilih Amilin, catat transaksi, dan cek token QR.
-3. Ganti Bendahara dan verifikasi setoran; lalu Petugas/Pengurus untuk alokasi dan distribusi.
+2. Masuk demo sebagai Amil, buka shift, buat atau periksa transaksi Pending, lalu cek token QR.
+3. Ganti ke Bendahara untuk rekonsiliasi. Pengurus meninjau dan menyetujui alokasi, lalu Relawan mencatat distribusi.
 4. Coba Portal Publik dan verifikasi nomor transaksi/token QR baru.
 5. Coba Pengajuan Lembaga dari landing dan masuk dari tenant kedua.
 6. Uji browser mobile, mode tema gelap, reset data, serta penyimpanan dan refresh.
