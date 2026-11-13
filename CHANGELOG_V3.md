@@ -1,3 +1,13 @@
+## 13 November 2026 — Penyelarasan UI global Light/Dark Mode
+
+- Memperluas perbaikan dari alert ke komponen UI lain yang sebelumnya masih memakai warna tetap Light Mode.
+- Menyesuaikan badge status, label dan kontrol formulir, placeholder, tombol berbahaya, indikator progres, serta panel pemindaian QR Amil dan Relawan.
+- Memisahkan token warna aksen untuk teks dari warna tombol/latar sehingga tautan, tab aktif, dan aksen panduan tetap terbaca pada latar gelap.
+- Memperbaiki ilustrasi contoh menu dan panel hasil yang diharapkan pada seluruh panduan role.
+- Mempertahankan preview struk sebagai dokumen putih untuk cetak dan mempertahankan landing page sesuai desain yang telah disetujui.
+- Menambahkan `docs/TEMA_DARK_MODE.md` dan `tests/dark-ui-theme.test.cjs`.
+- Memperbarui cache service worker agar stylesheet baru dimuat sesudah deployment.
+
 # Changelog SiZisNur
 
 ## 13 November 2026 — Penyesuaian alert untuk dark mode seluruh halaman

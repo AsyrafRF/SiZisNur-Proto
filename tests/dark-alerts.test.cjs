@@ -3,16 +3,22 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'style.css'), 'utf8');
-const rootBlock = css.slice(css.lastIndexOf(':root {'));
-const darkBlockStart = css.lastIndexOf('body.dark {');
-const darkBlockEnd = css.indexOf('}', darkBlockStart);
+const alertMarker = '/* Accessible semantic alerts and toast messages across every application page. */';
+const alertSectionStart = css.indexOf(alertMarker);
+assert.ok(alertSectionStart >= 0, 'alert theme section must exist');
+const alertSection = css.slice(alertSectionStart);
+const rootBlockStart = alertSection.indexOf(':root {');
+const rootBlockEnd = alertSection.indexOf('}', rootBlockStart);
+const rootBlock = alertSection.slice(rootBlockStart, rootBlockEnd + 1);
+const darkBlockStart = alertSection.indexOf('body.dark {');
+const darkBlockEnd = alertSection.indexOf('}', darkBlockStart);
 assert.ok(darkBlockStart >= 0 && darkBlockEnd > darkBlockStart, 'dark theme alert tokens must exist');
-const darkBlock = css.slice(darkBlockStart, darkBlockEnd + 1);
+const darkBlock = alertSection.slice(darkBlockStart, darkBlockEnd + 1);
 
 function readTokens(block) {
   return Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;/g)].map((m) => [m[1], m[2].toLowerCase()]));
 }
-const light = readTokens(rootBlock.slice(0, rootBlock.indexOf('body.dark {')));
+const light = readTokens(rootBlock);
 const dark = readTokens(darkBlock);
 
 function luminance(hex) {

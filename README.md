@@ -113,10 +113,11 @@ node --check js/revision-v5.js
 node tests/workbook-rules.test.cjs
 node tests/role-guides.test.cjs
 node tests/dark-alerts.test.cjs
+node tests/dark-ui-theme.test.cjs
 python tools/build-standalone.py
 ```
 
-Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, role dan halaman, hash audit, alokasi, serta kontras warna alert/toast pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
+Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, role dan halaman, hash audit, alokasi, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
 
 ## 11. Struktur folder
 

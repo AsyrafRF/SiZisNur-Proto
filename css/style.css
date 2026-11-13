@@ -154,3 +154,240 @@ body.dark {
 .notice.warn { background: var(--notice-warning-bg); }
 .notice.error,
 .notice.danger { background: var(--notice-error-bg); }
+
+/* Global UI theme contrast pass — applies to all authenticated and public application screens. */
+:root {
+  --ui-accent-ink: #075c38;
+  --ui-label-ink: #526977;
+  --ui-danger-ink: #b54349;
+  --ui-danger-outline: #f1c5c5;
+  --ui-progress-track: #d8e6e7;
+  --ui-step-bg: #e9f5ef;
+  --ui-step-ink: #21734f;
+  --ui-success-bg: #f1faf5;
+  --ui-success-ink: #176447;
+  --ui-success-border: #cce5d8;
+  --ui-preview-bg: #ffffff;
+  --ui-preview-header: #f0f7f3;
+  --ui-preview-ink: #203d32;
+  --ui-preview-muted: #5c7066;
+  --ui-preview-border: #edf1ef;
+  --ui-scanner-bg: linear-gradient(135deg, #ffffff 0%, #f2faf7 100%);
+  --ui-scanner-border: #b9ddd2;
+  --ui-tag-neutral-bg: #e9edf0;
+  --ui-tag-neutral-ink: #52616e;
+  --ui-tag-ok-bg: #ddf3e9;
+  --ui-tag-ok-ink: #19704f;
+  --ui-tag-warn-bg: #fff2d9;
+  --ui-tag-warn-ink: #88600d;
+  --ui-tag-bad-bg: #fde9e9;
+  --ui-tag-bad-ink: #b54349;
+  --ui-tag-info-bg: #e5f0ff;
+  --ui-tag-info-ink: #306ca5;
+}
+
+body.dark {
+  color-scheme: dark;
+  --ui-accent-ink: #9be6c0;
+  --ui-label-ink: #b6cbce;
+  --ui-danger-ink: #ffb4b8;
+  --ui-danger-outline: #81464b;
+  --ui-progress-track: #2b424b;
+  --ui-step-bg: #173c30;
+  --ui-step-ink: #bcebd1;
+  --ui-success-bg: #173c30;
+  --ui-success-ink: #bcebd1;
+  --ui-success-border: #4baf7e;
+  --ui-preview-bg: #142d37;
+  --ui-preview-header: #203943;
+  --ui-preview-ink: #e4eff0;
+  --ui-preview-muted: #9eb6bc;
+  --ui-preview-border: #344d56;
+  --ui-scanner-bg: linear-gradient(135deg, #142d37 0%, #183b38 100%);
+  --ui-scanner-border: #416b5a;
+  --ui-tag-neutral-bg: #2a414a;
+  --ui-tag-neutral-ink: #d5e3e7;
+  --ui-tag-ok-bg: #173c30;
+  --ui-tag-ok-ink: #bcebd1;
+  --ui-tag-warn-bg: #3a2f1d;
+  --ui-tag-warn-ink: #ffe0a3;
+  --ui-tag-bad-bg: #402629;
+  --ui-tag-bad-ink: #ffc6c8;
+  --ui-tag-info-bg: #1c3850;
+  --ui-tag-info-ink: #c5e1ff;
+  --danger: #ff9ca3;
+}
+
+/* Preview mockups use theme tokens too, so secondary labels remain readable. */
+.manual-preview {
+  background: var(--ui-preview-bg);
+  color: var(--ui-preview-ink);
+}
+.manual-preview-top {
+  background: var(--ui-preview-header);
+  color: var(--ui-preview-muted);
+  border-color: var(--ui-preview-border);
+}
+.manual-preview-logo,
+.manual-preview-row b {
+  color: var(--ui-preview-ink);
+}
+.manual-preview-row {
+  border-color: var(--ui-preview-border);
+}
+.manual-preview-row span {
+  color: var(--ui-preview-muted);
+}
+
+/* Text accents, labels, and status chips must not inherit dark brand shades as foregrounds. */
+body.dark .workspace a:not(.btn),
+body.dark .public-body a:not(.btn),
+body.dark .auth-main a:not(.btn),
+body.dark .tab.active,
+body.dark .public-brand b,
+body.dark .callout-number,
+body.dark .logo-circle,
+body.dark .guide-arrow,
+body.dark .workflow-mini i,
+body.dark .manual-faq > summary:after {
+  color: var(--ui-accent-ink);
+}
+
+body.dark .field label,
+body.dark .volunteer-scan label {
+  color: var(--ui-label-ink);
+}
+
+body.dark input:not([type="checkbox"]):not([type="radio"]),
+body.dark select,
+body.dark textarea {
+  color: var(--text);
+  background-color: #122a33;
+  border-color: #44606b;
+  color-scheme: dark;
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+body.dark .search::placeholder {
+  color: #91aab1;
+  opacity: 1;
+}
+
+body.dark select option {
+  color: var(--text);
+  background: var(--panel);
+}
+
+body.dark .search {
+  color: var(--text);
+  background: #122a33;
+  border-color: #44606b;
+}
+
+body.dark .btn.danger {
+  color: var(--ui-danger-ink);
+  border-color: var(--ui-danger-outline);
+}
+
+body.dark .tag {
+  background: var(--ui-tag-neutral-bg);
+  color: var(--ui-tag-neutral-ink);
+}
+body.dark .tag.ok {
+  background: var(--ui-tag-ok-bg);
+  color: var(--ui-tag-ok-ink);
+}
+body.dark .tag.warn {
+  background: var(--ui-tag-warn-bg);
+  color: var(--ui-tag-warn-ink);
+}
+body.dark .tag.bad {
+  background: var(--ui-tag-bad-bg);
+  color: var(--ui-tag-bad-ink);
+}
+body.dark .tag.info {
+  background: var(--ui-tag-info-bg);
+  color: var(--ui-tag-info-ink);
+}
+
+body.dark .progress-track {
+  background: var(--ui-progress-track);
+}
+
+/* Scanner cards are working surfaces, not printable documents: make them follow the active theme. */
+body.dark .scanner-card,
+body.dark .volunteer-scan {
+  background: var(--ui-scanner-bg);
+  border-color: var(--ui-scanner-border);
+  color: var(--text);
+}
+body.dark .scanner-card .scan-inline input,
+body.dark .volunteer-scan select,
+body.dark .volunteer-scan input {
+  background: #122a33;
+  border-color: #44606b;
+  color: var(--text);
+}
+
+/* The detailed role guide uses the same readable semantic colors in both themes. */
+.manual-outcome {
+  background: var(--ui-success-bg);
+  border-color: var(--ui-success-border);
+  color: var(--ui-success-ink);
+}
+.manual-outcome b,
+.manual-outcome p {
+  color: var(--ui-success-ink);
+}
+body.dark .manual-eyebrow {
+  color: #9be6c0;
+}
+body.dark .manual-role-mark {
+  background: #18372e;
+  border-color: #315b4a;
+  color: #b9e4ce;
+}
+body.dark .manual-purpose b,
+body.dark .manual-module-no {
+  color: var(--ui-accent-ink);
+}
+body.dark .manual-step-no {
+  background: var(--ui-step-bg);
+  color: var(--ui-step-ink);
+}
+body.dark .manual-jump:hover {
+  color: var(--ui-accent-ink);
+  border-color: #4d8d70;
+}
+body.dark .manual-module[open] {
+  border-color: #436d5c;
+}
+body.dark .manual-preview {
+  background: var(--ui-preview-bg);
+  color: var(--ui-preview-ink);
+  border-color: var(--ui-preview-border);
+}
+body.dark .manual-preview-top {
+  background: var(--ui-preview-header);
+  color: var(--ui-preview-muted);
+  border-color: var(--ui-preview-border);
+}
+body.dark .manual-preview-logo,
+body.dark .manual-preview-row b {
+  color: var(--ui-preview-ink);
+}
+body.dark .manual-preview-content {
+  background: var(--ui-preview-bg);
+}
+body.dark .manual-preview-row {
+  border-color: var(--ui-preview-border);
+}
+body.dark .manual-preview-row span {
+  color: var(--ui-preview-muted);
+}
+
+/* Keep the landing page's approved brand presentation and white marketing canvas unchanged. */
+body.dark .landing-page {
+  color-scheme: light;
+}
