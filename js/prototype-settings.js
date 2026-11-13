@@ -35,6 +35,16 @@
   function activeDb() { return A.db }
   function bytes(value) { return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(value).length : unescape(encodeURIComponent(value)).length }
   function countOf(name) { return Array.isArray(activeDb()[name]) ? activeDb()[name].length : 0 }
+  function storedDatabaseBytes() {
+    // Read the already-persisted JSON length instead of serializing the full
+    // database every time the settings view renders. This keeps large imports
+    // from causing avoidable main-thread work when the page is opened.
+    try {
+      const stored = window.localStorage.getItem(A.DBKEY)
+      if (typeof stored === 'string') return bytes(stored)
+    } catch (_) { /* Fall back to measuring the in-memory database. */ }
+    return bytes(JSON.stringify(activeDb()))
+  }
   function niceBytes(size) {
     if (size < 1024) return `${size} byte`
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1).replace('.', ',')} KB`
@@ -206,8 +216,7 @@
   function renderSettings() {
     const db = activeDb()
     const report = integrityReport()
-    const serialized = JSON.stringify(db)
-    const storageSize = niceBytes(bytes(serialized))
+    const storageSize = niceBytes(storedDatabaseBytes())
     const mustahikCount = (db.mustahiks || []).length
     const collections = [
       ['Lembaga', 'tenants'], ['Akun lembaga', 'users'], ['Akun root', 'platformAdmins'],
@@ -229,37 +238,9 @@
       <section class="card proto-session-card"><div><h3>Preferensi & sesi demo</h3><p>Atur tampilan browser kembali ke tema terang atau akhiri sesi root saat selesai menggunakan konsol.</p></div><div class="actions"><button type="button" class="btn" data-proto-action="reset-theme">Kembalikan tema terang</button><button type="button" class="btn danger" data-proto-action="logout">Keluar dari sesi root</button></div></section>
       <div class="alert warn"><b>Catatan tentang dataset Mustahik.</b> Reset default memulihkan 129 record Mustahik dari seed bawaan tanpa normalisasi, penggantian nama, penghitungan ulang, atau pengacakan. Dokumentasi project menjelaskan bahwa record individu ini sintetis non-identifying untuk mereproduksi agregat workbook terverifikasi; file workbook Excel sumber tidak disertakan. Sebaliknya, tindakan Hapus Semua dan impor file akan mengosongkan/mengganti data tersebut sesuai pilihan Anda.</div>`
   }
-  function decorateRoot() {
-    if (!rootUser() || state.page !== 'platform-admin') return
-    const root = document.getElementById('app')
-    if (!root) return
-    const before = root.innerHTML
-    let html = before
-    const tabMarkup = `<button type="button" class="root-nav-btn ${state.platformTab === 'prototype-settings' ? 'active' : ''}" data-root-tab="prototype-settings"><span>◇</span>Pengaturan Prototype</button>`
-    if (!html.includes('data-root-tab="prototype-settings"')) html = html.replace('</nav>', `${tabMarkup}</nav>`)
-    else html = html.replace(/<button type="button" class="root-nav-btn [^"]*" data-root-tab="prototype-settings"/, `<button type="button" class="root-nav-btn ${state.platformTab === 'prototype-settings' ? 'active' : ''}" data-root-tab="prototype-settings"`)
-    if (state.platformTab === 'prototype-settings') {
-      html = html.replace(/<main class="root-content">[\s\S]*?<\/main>/, `<main class="root-content">${renderSettings()}</main>`)
-      html = html.replace(/(<header class="root-topbar">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, '$1Pengaturan Prototype$2')
-    }
-    if (html !== before) root.innerHTML = html
-  }
-  function renderRootWithSettings() {
-    const render = A.__baseRender || A.render
-    render()
-    decorateRoot()
-  }
-  const originalRender = A.render
-  A.set('render', () => { originalRender(); decorateRoot() })
-  // The root console has its own renderer; observe its DOM updates so the custom
-  // prototype tab stays available after tenant, user, and platform-setting actions.
-  const appRoot = document.getElementById('app')
-  if (appRoot && typeof MutationObserver !== 'undefined') {
-    const observer = new MutationObserver(() => {
-      if (rootUser() && state.page === 'platform-admin') Promise.resolve().then(decorateRoot)
-    })
-    observer.observe(appRoot, { childList: true, subtree: true })
-  }
+  // The platform console renders this page as a native root tab. Avoid DOM
+  // decoration or subtree observers here: replacing the root DOM from a
+  // MutationObserver can recursively retrigger itself and freeze the browser.
 
   function handleImportFile(file) {
     if (!rootUser()) throw new Error('Hanya Admin SiZisNur yang dapat mengimpor data.')
@@ -279,17 +260,8 @@
   }
 
   document.addEventListener('click', (event) => {
-    const tab = event.target.closest?.('[data-root-tab]')
-    if (tab && rootUser()) {
-      // The platform module handles the tab first; decorate again after its render.
-      Promise.resolve().then(decorateRoot)
-      return
-    }
     const button = event.target.closest?.('[data-proto-action]')
-    if (!button) {
-      if (rootUser() && event.target.closest?.('[data-root-action]')) Promise.resolve().then(decorateRoot)
-      return
-    }
+    if (!button) return
     if (!rootUser()) { A.toast('Hanya Admin SiZisNur yang dapat mengelola data prototype global.', 'error'); return }
     const action = button.dataset.protoAction
     try {

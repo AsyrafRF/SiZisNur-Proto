@@ -52,3 +52,10 @@ Penghapusan semua data akan mengosongkan koleksi Mustahik. Impor cadangan mengga
 - Kuota penyimpanan browser berbeda-beda. Jika penyimpanan menolak perubahan, modul mencoba memulihkan objek database sebelumnya dan menampilkan pesan kegagalan.
 - Reset dan hapus data melakukan reload halaman agar lapisan migrasi V5 membentuk kembali koleksi tambahan yang diperlukan.
 - Pengaturan ini hanya untuk prototype. Implementasi produksi memerlukan backup server, migrasi database terversi, audit yang tidak dapat diubah, otorisasi backend, dan pemulihan bencana yang teruji.
+
+
+## Perbaikan respons halaman (14 November 2026)
+
+Build sebelumnya memakai `MutationObserver` pada seluruh subtree `#app`, lalu mengganti kembali `innerHTML` dari callback observer untuk menyisipkan halaman Pengaturan Prototype. Pada browser yang terus mendeteksi perubahan DOM tersebut, callback dapat memicu perubahan baru berulang-ulang dan membuat tab Pengaturan Prototype tidak responsif. Versi perbaikan menghapus mekanisme observer/dekorasi DOM tersebut dan mendaftarkan Pengaturan Prototype sebagai tab native pada renderer konsol Admin SiZisNur. Pengukuran ukuran data juga membaca panjang JSON yang sudah tersimpan agar tidak melakukan serialisasi database penuh setiap kali halaman dirender.
+
+Service worker diberi nama cache baru agar deployment berikutnya meminta shell aplikasi terbaru. Setelah memperbarui hosting, tutup tab aplikasi lama lalu buka ulang URL SiZisNur; pada instalasi PWA, pastikan service worker baru sudah aktif.

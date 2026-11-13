@@ -171,3 +171,14 @@ Login, peran, database, notifikasi, audit dan antrean sync masih simulasi browse
 ### Perlindungan data dan validasi workbook
 
 Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook yang disalin. Dataset 129 mustahik dibuat sintetis untuk menguji komposisi agregat 21 Fakir, 103 Miskin, dan 5 Mualaf. Nama amil diganti kode anonim. Pengujian formula, hak akses, alokasi dan integritas audit dijelaskan pada `docs/QA_HASIL_PENGUJIAN.md`.
+
+
+## 14 November 2026 — Perbaikan freeze pada Pengaturan Prototype
+
+- Menghapus `MutationObserver` yang mengawasi seluruh subtree `#app` dan mengganti `innerHTML` dari callback-nya; pola ini dapat memicu siklus mutasi/render berulang pada browser.
+- Mendaftarkan **Pengaturan Prototype** sebagai tab native pada konsol Admin SiZisNur dan merender konten langsung melalui `rootContent()`.
+- Menghilangkan dekorasi DOM dan observer tambahan dari modul pengaturan agar navigasi masuk/keluar tab tidak menginisiasi render ulang tak berujung.
+- Mengoptimalkan informasi ukuran data dengan membaca panjang JSON yang sudah tersimpan, bukan menserialisasi ulang seluruh database pada setiap render halaman.
+- Memperbarui nama cache service worker agar deployment menggunakan berkas aplikasi terbaru.
+- Menambahkan pengujian navigasi tab root langsung serta pemeriksaan statis agar observer rekursif tidak kembali.
+- Seluruh 13 suite pengujian otomatis lulus. Chromium headless dicoba, tetapi proses browser pada lingkungan build tidak menyelesaikan `--dump-dom`; karena itu pengujian visual browser tidak diklaim berhasil.

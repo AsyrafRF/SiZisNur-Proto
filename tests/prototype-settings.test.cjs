@@ -50,6 +50,9 @@ const rootAccountId = 'PA-SIZISNUR-ROOT'
 assert.ok(settings, 'prototype settings module should be loaded')
 assert.ok(A.db.platformAdmins.some((item) => item.id === rootAccountId))
 assert.equal(A.db.mustahiks.length, 129)
+const prototypeSettingsSource = fs.readFileSync(path.join(root, 'js/prototype-settings.js'), 'utf8')
+assert.ok(!prototypeSettingsSource.includes('new MutationObserver('), 'settings page must not install a subtree observer that can recursively replace the root DOM')
+assert.ok(fs.readFileSync(path.join(root, 'js/platform-admin.js'), 'utf8').includes("if (tab === 'prototype-settings')"), 'prototype settings must be a native platform tab')
 const seedMustahiks = A.seed().mustahiks
 const seedHash = crypto.createHash('sha256').update(JSON.stringify(seedMustahiks)).digest('hex')
 assert.equal(seedHash, 'c2c2ea3fad8e7dc91cd0ed666deabcf743108b8447703af10034996759a9a2f5', 'Mustahik seed baseline must remain byte-for-byte stable')
@@ -72,9 +75,21 @@ assert.ok(!window.__SiZisNurTest.html().includes('data-action="reset-demo"'), 't
 A.login(rootAccountId, false)
 assert.equal(A.state.page, 'platform-admin')
 assert.ok(window.__SiZisNurTest.html().includes('data-root-tab="prototype-settings"'), 'root navigation should include prototype settings')
-A.state.platformTab = 'prototype-settings'
-A.render()
+// Exercise the real delegated root-tab navigation, not only direct state mutation.
+const clickRootTab = (tabName) => {
+  const tab = { dataset: { rootTab: tabName } }
+  const event = { target: { closest(selector) { return selector === '[data-root-tab]' ? tab : null } } }
+  for (const listener of eventListeners.click || []) listener(event)
+}
+clickRootTab('prototype-settings')
+assert.equal(A.state.platformTab, 'prototype-settings')
 let page = window.__SiZisNurTest.html()
+assert.ok(page.includes('Pengaturan Prototype'), 'native root navigation should render the settings page immediately')
+clickRootTab('overview')
+assert.equal(A.state.platformTab, 'overview')
+assert.ok(window.__SiZisNurTest.html().includes('Ringkasan'), 'leaving settings should return to overview without a DOM observer')
+clickRootTab('prototype-settings')
+page = window.__SiZisNurTest.html()
 for (const text of ['Pengaturan Prototype', 'Ekspor cadangan lengkap', 'Impor cadangan', 'Reset ke data bawaan', 'Hapus semua data simulasi', 'Pemeriksaan integritas sederhana']) {
   assert.ok(page.includes(text), `settings page should show ${text}`)
 }

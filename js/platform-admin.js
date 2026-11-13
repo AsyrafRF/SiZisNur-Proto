@@ -207,6 +207,12 @@
 
   function rootContent() {
     const tab = state.platformTab || 'overview'
+    if (tab === 'prototype-settings') {
+      const prototypeSettings = window.__SIZISNUR_PROTOTYPE_SETTINGS
+      return prototypeSettings?.renderSettings
+        ? prototypeSettings.renderSettings()
+        : '<section class="card"><h2>Pengaturan Prototype</h2><p>Modul pengaturan belum siap. Muat ulang halaman.</p></section>'
+    }
     if (tab === 'tenants') return state.selectedPlatformTenant ? tenantDetail(state.selectedPlatformTenant) : platformTenants()
     if (tab === 'applications') return platformApplications()
     if (tab === 'users') return platformUsers()
@@ -224,6 +230,7 @@
     const tabs = [
       ['overview','Ringkasan','◫'], ['tenants','Lembaga terdaftar','▦'], ['applications','Pengajuan lembaga','◷'],
       ['users','Akun pengguna lembaga','♙'], ['settings','Pengaturan sistem','⚙'], ['audit','Audit platform','⊙'], ['account','Akun root','◎'],
+      ['prototype-settings','Pengaturan Prototype','◇'],
     ]
     const counts = db.applications.filter((item) => item.status === 'menunggu').length
     root.innerHTML = `<div class="root-shell"><aside class="root-side"><div class="root-brand"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><div><b>SiZisNur</b><small>Platform Control Plane</small></div></div><div class="root-side-label">ADMINISTRASI GLOBAL</div><nav class="root-nav">${tabs.map(([key,label,icon]) => `<button type="button" class="root-nav-btn ${state.platformTab === key ? 'active' : ''}" data-root-tab="${key}"><span>${icon}</span>${label}${key === 'applications' && counts ? `<i>${counts}</i>` : ''}</button>`).join('')}</nav><div class="root-side-foot"><span class="status-dot"></span> Root scope · browser demo<br>Terpisah dari lembaga<br><small>© SiZisNur</small></div></aside><section class="root-workspace"><header class="root-topbar"><div><span class="root-eyebrow">KONSOL PLATFORM / ROOT</span><h1>${esc(tabs.find(([key]) => key === (state.platformTab || 'overview'))?.[1] || 'Ringkasan')}</h1></div><div class="root-top-actions"><span class="root-user-pill"><b>${esc(rootUser()?.name || 'Admin SiZisNur')}</b><small>${ROOT_ROLE}</small></span><button type="button" class="btn sm" data-root-action="theme">◐ Tema</button><button type="button" class="btn sm danger" data-root-action="logout">Keluar</button></div></header><main class="root-content">${rootContent()}</main><footer class="root-footer">SIMULASI LOKAL — data platform tersimpan pada browser ini. Belum ada autentikasi backend atau kontrol akses server.</footer></section></div><div id="modal-root"></div>`
