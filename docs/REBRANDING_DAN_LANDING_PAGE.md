@@ -6,14 +6,28 @@
 - Posisi: landing, favicon, login, sidebar.
 
 ## Kebutuhan yang tetap sama
-Semua modul lama **tetap dipertahankan**: tenant, akun/peran, dashboard, periode, aturan, jadwal amil, muzakki dan kartu, penerimaan multi-kategori, akad, QR & struk, setoran bendahara, survei mustahik, alokasi approval, distribusi, insentif, laporan, notifikasi, audit/arsip, dan portal publik.
+Semua modul lama **tetap dipertahankan**: lembaga, akun/peran, dashboard, periode, aturan, jadwal amil, muzakki dan kartu, penerimaan multi-kategori, akad, QR & struk, setoran bendahara, survei mustahik, alokasi approval, distribusi, insentif, laporan, notifikasi, audit/arsip, dan portal publik.
 
 ## Halaman depan
 - Beranda produk sebagai layar awal pengguna belum login.
 - Tombol *Masuk / Coba Demo* menuju login role simulasi.
 - *Portal publik* menuju rekap dan verifikasi QR tanpa identitas muzakki.
-- *Ajukan lembaga* membuka simulasi permohonan tenant.
+- *Ajukan lembaga* membuka simulasi permohonan lembaga.
 - Alur operasi dan klaim manfaat didasarkan pada dokumen elisitasi; bukan janji performa ataupun layanan yang sudah diproduksi.
+
+## Pembaruan copywriting landing page V5 (13 November 2026)
+
+Landing page kembali memakai susunan visual yang telah digunakan pada V3. Ilustrasi dashboard di hero, strip ringkasan, kartu manfaat, enam kartu fitur, susunan langkah, kartu aktor, ilustrasi multi-lembaga, CTA, dan footer dipertahankan. Tidak ada perubahan pada CSS atau sistem desain visual landing page.
+
+Copywriting diperbarui agar lebih berorientasi pada layanan yang tersedia dan tidak menonjolkan masalah awal pengembangan. Isi utama yang disampaikan adalah:
+
+- Layanan mandiri Muzakki untuk data keluarga, kalkulator zakat, histori, QR transaksi, dan bukti setor.
+- Transaksi mandiri maupun Walk-in berstatus Pending dan diverifikasi Amil melalui QR, akad, serta konfirmasi pembayaran.
+- Rekonsiliasi kas dan rekening, jurnal, serta laporan oleh Bendahara.
+- Persetujuan program oleh Pengurus dan pencatatan distribusi per batch oleh Relawan.
+- Pengelolaan data dan kelayakan Mustahik oleh Admin, serta dukungan multi-lembaga untuk masjid dan lembaga.
+
+Nilai uang dan kilogram yang ditampilkan pada ilustrasi dashboard merupakan data contoh, bukan angka operasional aktual.
 
 ## Kompatibilitas
 - Data demo versi sebelumnya di browser yang sama dibaca otomatis bila database baru belum tersedia.
@@ -23,11 +37,11 @@ Semua modul lama **tetap dipertahankan**: tenant, akun/peran, dashboard, periode
 
 ## Catatan UAT
 1. Tanpa sesi aktif, halaman pertama yang muncul harus landing page SiZisNur.
-2. Klik masuk demo, pilih Amilin, catat transaksi, dan cek token QR.
-3. Ganti Bendahara dan verifikasi setoran; lalu Petugas/Pengurus untuk alokasi dan distribusi.
+2. Masuk demo sebagai Amil, buka shift, buat atau periksa transaksi Pending, lalu cek token QR.
+3. Ganti ke Bendahara untuk rekonsiliasi. Pengurus meninjau dan menyetujui alokasi, lalu Relawan mencatat distribusi.
 4. Coba Portal Publik dan verifikasi nomor transaksi/token QR baru.
-5. Coba Pengajuan Lembaga dari landing dan masuk dari tenant kedua.
-6. Uji browser mobile, mode tema gelap, reset data, serta penyimpanan dan refresh.
+5. Coba Pengajuan Lembaga dari landing dan masuk dari lembaga kedua.
+6. Uji browser mobile, mode tema gelap, reset ke data bawaan melalui Pengaturan Prototype, serta penyimpanan dan refresh.
 
 
 ## Catatan migrasi pada V3 (4 November 2026)

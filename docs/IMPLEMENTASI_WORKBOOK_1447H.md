@@ -4,7 +4,7 @@
 
 V3 mengambil aturan dan angka agregat dari workbook **01. REKAPITULASI DATA ZAKAT 1447H_2026M R1 (Resmi - Tervalidasi)**. Identitas pribadi warga, nomor kontak, NIK, alamat, dan nama amil dari workbook tidak disalin ke prototype. Dataset uji mustahik dibuat sintetis dengan komposisi agregat yang sama.
 
-Rumus atau saldo yang tidak jelas tidak dibetulkan secara otomatis. Hal yang belum disahkan ditampilkan sebagai temuan/konfirmasi. Menu acuan workbook dibatasi ke tenant Masjid An-Nur; akun tenant demo lain tidak dapat melihat ringkasan workbook tersebut.
+Rumus atau saldo yang tidak jelas tidak dibetulkan secara otomatis. Hal yang belum disahkan ditampilkan sebagai temuan/konfirmasi. Menu acuan workbook dibatasi ke lembaga Masjid An-Nur; akun lembaga demo lain tidak dapat melihat ringkasan workbook tersebut.
 
 ## Rekap penerimaan
 

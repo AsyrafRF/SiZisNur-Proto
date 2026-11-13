@@ -1,50 +1,123 @@
-# Validasi teknis SiZisNur V3 — 4 November 2026
+# Hasil Pemeriksaan SiZisNur V5
 
-> Pengujian ini memeriksa sintaks JavaScript, logika formula workbook, perhitungan alokasi, dan render template halaman melalui Node VM dengan DOM stub. Ini bukan UAT resmi panitia, bukan pengujian browser lintas perangkat, dan bukan audit keamanan.
+Tanggal pembaruan: 14 November 2026
 
-## Hasil otomatis
+## Pemeriksaan statis
 
-Perintah:
-
-```bash
-node --check js/app.js
-node tests/workbook-rules.test.cjs
-```
-
-Hasil:
-
-| Skenario | Hasil |
+| Perintah | Hasil |
 |---|---|
-| Sintaks `js/app.js` | Lulus |
-| Database seed V3 | Lulus — versi 4 |
-| Dataset mustahik sintetis | Lulus — 129 data, 21 Fakir, 103 Miskin, 5 Mualaf |
-| Lima faktor skor mustahik | Lulus — wilayah, hunian, pernikahan, penghasilan, tanggungan |
-| Literal `4 ATAU LEBIH` vs angka 4 | Lulus — string mendapat skor 100, angka 4 mengikuti default 0 |
-| Ambang skor 240/241/360/361 | Lulus |
-| Jalur Mualaf dan final status R | Lulus — termasuk cabang Q=MUALAF + P=FAKIR → CUKUP LAYAK pada formula |
-| Render template Acuan Workbook, Mustahik, Alokasi, Insentif, Laporan | Lulus — tanpa pesan kesalahan render |
-| Visibilitas Acuan Workbook | Lulus — semua role tenant An-Nur dapat membuka; Admin Tenant B tidak dapat melihat data sumber An-Nur |
-| Tahap 1 | Lulus — Rp71.900.000 dan 274 paket / 685 kg |
-| Tahap 2 | Lulus — Rp76.387.500 dan 479,04 paket / 1.197,6 kg termasuk saldo agregat |
-| Total dua tahap | Lulus — Rp148.287.500 dan 1.882,6 kg |
-| Batas persetujuan gabungan workbook | Lulus — sesuai baseline agregat |
-| Pemisahan alokasi workbook dan ledger demo | Lulus — tidak mencampur Rp148,2875 juta baseline dengan saldo transaksi sampel |
-| Pencegahan penerima ganda pada alokasi fleksibel | Lulus — penerima yang sudah masuk rencana aktif dicadangkan |
-| Pencegahan rencana tahap duplikat | Lulus |
+| `node --check js/app.js` | Lulus |
+| `node --check js/revision-v5.js` | Lulus |
+| `node tests/workbook-rules.test.cjs` | Lulus |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 313 langkah, 61 ilustrasi UI |
+| `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
+| `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
+| `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
+| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per lembaga |
+| `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas lembaga/periode |
+| `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
+| `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
+| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per lembaga, alokasi kelebihan, dan aturan konfirmasi kafarat |
+| `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
-## Pemeriksaan tambahan
+## Cakupan yang diperiksa oleh test otomatis
 
-- File V3 memakai `localStorage` key baru `sizisnur_demo_database_v4`; tidak mengimpor data lokal V2.
-- Rencana Tahap 1/2 memakai dataset sintetis. Saldo demo transaksi tidak dipakai untuk menguji baseline workbook; persetujuan rencana workbook membandingkan total terhadap baseline sumber 1447H.
-- Saldo agregat Tahap 2 tetap tersimpan terpisah dan tidak menjadi item penyaluran per individu.
-- Cache row 16 (R=MISKIN) dibandingkan dengan formula R yang akan menghasilkan CUKUP LAYAK; perbedaan ini ditampilkan, bukan disamakan.
-- Nama warga dari workbook tidak disalin. Nama amil diganti kode anonim pada rincian kontribusi.
+- Schema demo V5 dan matriks akses tujuh role.
+- Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
+- Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
+- Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
+- Token tema UI global untuk badge status, label serta input form, aksi berbahaya, progres, panel pemindaian QR, preview panduan, panel hasil panduan, dan aksen teks pada dark mode.
+- Paginasi bersama pada seluruh tabel data, termasuk lembaga yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
+- Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
+- Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
+- Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
+- Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
+- Angka penerimaan workbook serta total alokasi Tahap 1 dan Tahap 2 sebesar Rp148.287.500 dan 1.882,6 kg.
+- Batas persetujuan dan reservasi Mustahik pada alokasi.
 
-## Belum diuji / belum disahkan
+## Batas hasil QA
 
-- UAT browser aktual pada Chrome/Edge/Firefox dan perangkat mobile pengguna.
-- UAT manual bersama panitia/pengurus dan tanda tangan persetujuan formula.
-- Kebenaran saldo P43/P49, selisih beras 0,6 kg, kode AL/FZ, hubungan metode insentif Q/R, dan anomali formula baris pertama.
-- Keamanan backend, autentikasi, multi-tenant server, enkripsi, backup, API, dan transaksi produksi.
+Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
 
-Prototype tetap berjalan lokal di browser. Jangan gunakan untuk penerimaan atau penyaluran zakat nyata sebelum backend, kontrol keamanan, rekonsiliasi, kebijakan, dan UAT diselesaikan.
+Tidak ada backend atau endpoint sinkronisasi yang disertakan. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
+
+Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
+
+
+## Pemeriksaan alert dan toast pada light/dark mode — 13 November 2026
+
+- Alert global memiliki warna teks eksplisit dan pasangan warna latar/teks untuk varian default, warn, danger, ok/success, info, serta light/neutral.
+- Toast memiliki palet terpisah untuk default, success, info, warning, dan error.
+- Tes otomatis `node tests/dark-alerts.test.cjs` memeriksa keberadaan token warna kedua tema dan rasio kontras teks terhadap latar minimal 4,5:1 (WCAG AA) untuk semua varian yang diuji.
+- Cakupan stylesheet global berlaku pada dashboard, form, modal, panduan role, laporan, halaman prototype, dan halaman lain yang menggunakan komponen `.alert` atau `.notice`.
+- Nama cache service worker dinaikkan agar stylesheet baru diambil sesudah deployment.
+
+
+## Pemeriksaan UI global pada light/dark mode — 13 November 2026
+
+- Memisahkan aksen teks dari warna utama tombol/latar agar teks tautan, tab aktif, aksen panduan, dan indikator tidak menggunakan hijau gelap yang kehilangan kontras di Dark Mode.
+- Memperbarui pasangan warna badge status, label dan kontrol form, placeholder, tombol berbahaya, indikator progres, panel scan Amil/Relawan, serta komponen panduan.
+- Mengubah preview ilustrasi menu pada panduan menjadi bidang gelap yang mengikuti tema aktif, dengan teks utama dan sekunder yang terbaca.
+- Panel hasil yang diharapkan memakai palet sukses semantik yang sama dengan Light/Dark Mode.
+- Preview struk tetap putih sebagai representasi dokumen cetak. Landing page yang telah disetujui tetap terisolasi dari tema dashboard.
+- Tes otomatis `node tests/dark-ui-theme.test.cjs` memvalidasi keberadaan selector dan rasio kontras token utama minimal 4,5:1.
+- Build standalone dibuat ulang dan cache service worker dinaikkan ke `sizisnur-shell-v5-20261113-dark-ui2`.
+
+
+## Pemeriksaan paginasi data — 13 November 2026
+
+- Semua tabel bersama `table()` / `A.table()` menggunakan ukuran halaman 10. Tabel dengan 10 baris atau kurang tidak menampilkan kontrol.
+- Tes helper mencakup 23 record yang terbagi menjadi 10 + 10 + 3, batas halaman, daftar kosong, dan batas tepat 10 baris.
+- Pencarian dan filter menghasilkan dataset baru yang dipaginasi dari hasil filter. Kontrol halaman memperbarui satu tabel tanpa memuat ulang halaman.
+- Daftar audit penuh diberikan ke tabel, tanpa pemotongan 150 record.
+- CSV/XLSX tetap mengekspor sumber data lengkap; PDF laporan dibuat dari seluruh `reportRows()` pada filter aktif.
+- `node tests/pagination.test.cjs` lulus, termasuk render HTML untuk halaman pertama/kedua, jumlah baris, daftar kosong, dan daftar pendek.
+- Uji browser interaktif/headless belum dapat diselesaikan pada lingkungan ini karena kebijakan lingkungan eksekusi memblokir navigasi browser ke file lokal dan server localhost. Uji klik paginasi, responsivitas pada perangkat nyata, dan UAT tetap perlu dilakukan di browser pengguna.
+
+
+## Perapian status Dashboard — 13 November 2026
+
+- Role aktif, status Online/Offline, mode penyimpanan lokal/server, serta antrean lokal kini ditampilkan dalam kelompok yang terpisah pada kartu hero Dashboard.
+- Status koneksi berubah mengikuti event browser `online` dan `offline`; jumlah antrean dihitung khusus lembaga aktif.
+- Panel status memiliki penyesuaian breakpoint desktop, tablet, dan ponsel serta label status yang diumumkan melalui `aria-live`.
+- Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per lembaga.
+- Seluruh tujuh suite tes proyek lulus setelah perubahan dan HTML standalone dibuat ulang.
+
+
+## Pembaruan dashboard analitik — 13 November 2026
+
+- Ringkasan dashboard mengembalikan penerimaan uang/beras tercatat, Muzakki terdaftar, jiwa dibayarkan (Muzakki dan tanggungan), serta penyaluran uang/beras.
+- Grafik enam kategori memiliki filter media Uang/Beras dan status Tercatat/Terverifikasi/Tersalurkan; tidak ada lagi filter kategori dropdown.
+- Grafik Terverifikasi menggunakan transaksi yang tertaut pada berita acara setoran dengan status `terverifikasi`. `Paid` tetap berarti pembayaran disahkan Amil dan belum otomatis terverifikasi Bendahara.
+- Grafik Tersalurkan menggunakan record distribusi yang berstatus `tersalurkan`. Kategori hanya dipakai jika rincian kategori eksplisit dan jumlah rinciannya cocok dengan total uang serta beras; data tanpa rincian atau rincian tidak lengkap ditampilkan pada `Belum dipetakan`.
+- Panel Status Distribusi dan Transaksi Terbaru tersedia kembali. Alur dashboard berubah sesuai role aktif.
+- Tes baru mencakup skenario bahwa transaksi `paid` tanpa berita acara terverifikasi tidak masuk grafik Terverifikasi, dan distribusi lama tidak dipaksakan ke kategori tertentu.
+- Batasan tetap: data lokal prototype bukan sumber real-time lintas perangkat; status produksi harus divalidasi ulang di backend.
+
+
+
+## Dashboard pribadi Muzakki — 13 November 2026
+
+- `node tests/muzakki-dashboard.test.cjs` lulus untuk sesi default Muzakki, larangan akses dashboard agregat, transaksi milik sendiri, status berita acara Bendahara, dan riwayat lintas periode.
+- Tes memastikan transaksi Muzakki lain pada lembaga yang sama tidak tampil di dashboard pribadi.
+- Tes mengganti status berita acara dari `terverifikasi` menjadi `kas_diterima` dan memastikan label menjadi Belum terverifikasi.
+- Status personal menggunakan relasi berita acara setoran sebagai bukti rekonsiliasi. Status transaksi `terverifikasi` tanpa berita acara terverifikasi tidak otomatis dianggap lulus rekonsiliasi.
+- Pembukaan dan unduhan struk untuk role Muzakki juga dibatasi pada transaksi yang terkait akun atau membership pribadi.
+
+
+## Pemulihan kalkulator dan pemisahan kelebihan pembayaran — 13 November 2026
+
+- Kalkulator bersama digunakan oleh form transaksi self-service Muzakki serta form konter Operator/Amil.
+- Admin mengelola tarif fitrah uang/beras, fidyah, biaya makan kafarat, nisab emas, harga emas, nisab profesi bulanan, dan kadar zakat pada setiap lembaga.
+- Kalkulasi otomatis mencakup fitrah, maal (harta bersih agregat dengan nisab/haul umum), profesi (mode bulanan/tahunan), fidyah, dan kafarat. Kasus kafarat bertahap memerlukan konfirmasi ketidakmampuan tahapan sebelumnya sebelum opsi 60 orang dihitung.
+- Kelebihan fitrah, maal, dan profesi dapat disimpan sebagai baris Infak/Sedekah dengan media yang sama. Bila belum dicentang, dialog konfirmasi muncul sebelum simpan. Kelebihan fidyah/kafarat ditampilkan tetapi tidak otomatis direklasifikasi.
+- Tes `node tests/transaction-calculator.test.cjs` mencakup nilai contoh Rp45.000 kewajiban dan Rp50.000 pembayaran yang menghasilkan Rp45.000 zakat dan Rp5.000 Infak/Sedekah bila pengguna menyetujui.
+- Semua test `tests/*.test.cjs` dan `node --check` lulus pada revisi ini. Build standalone dibuat ulang. Uji browser headless belum dinyatakan lulus; UAT interaktif di browser pengguna masih diperlukan.
+
+
+## Penyelarasan istilah antarmuka — 14 November 2026
+
+- Menggunakan **Lembaga** pada menu, judul halaman, label formulir, Portal Publik, konsol Admin SiZisNur, panduan, dan pesan validasi.
+- Menambahkan `docs/GLOSARIUM_TERMINOLOGI.md` untuk menyamakan istilah Admin Lembaga, Admin SiZisNur, dan Portal Publik.
+- Nama teknis internal seperti `tenantId`, `db.tenants`, rute/event internal, dan format identitas QR tetap dipertahankan untuk kompatibilitas.
+- Seluruh 12 suite pengujian yang tersedia lulus setelah ekspektasi teks antarmuka diperbarui. Build HTML standalone berhasil dibuat ulang.
