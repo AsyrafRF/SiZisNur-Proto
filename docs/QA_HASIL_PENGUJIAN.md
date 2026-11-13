@@ -67,3 +67,12 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - CSV/XLSX tetap mengekspor sumber data lengkap; PDF laporan dibuat dari seluruh `reportRows()` pada filter aktif.
 - `node tests/pagination.test.cjs` lulus, termasuk render HTML untuk halaman pertama/kedua, jumlah baris, daftar kosong, dan daftar pendek.
 - Uji browser interaktif/headless belum dapat diselesaikan pada lingkungan ini karena kebijakan lingkungan eksekusi memblokir navigasi browser ke file lokal dan server localhost. Uji klik paginasi, responsivitas pada perangkat nyata, dan UAT tetap perlu dilakukan di browser pengguna.
+
+
+## Perapian status Dashboard — 13 November 2026
+
+- Role aktif, status Online/Offline, mode penyimpanan lokal/server, serta antrean lokal kini ditampilkan dalam kelompok yang terpisah pada kartu hero Dashboard.
+- Status koneksi berubah mengikuti event browser `online` dan `offline`; jumlah antrean dihitung khusus tenant aktif.
+- Panel status memiliki penyesuaian breakpoint desktop, tablet, dan ponsel serta label status yang diumumkan melalui `aria-live`.
+- Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per tenant.
+- Seluruh tujuh suite tes proyek lulus setelah perubahan dan HTML standalone dibuat ulang.

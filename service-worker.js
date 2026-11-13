@@ -1,5 +1,5 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261113-tenant-territories1'
+const CACHE_NAME = 'sizisnur-shell-v5-20261113-dashboard-status1'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/app.js', './js/revision-v5.js', './js/qrcode.js',

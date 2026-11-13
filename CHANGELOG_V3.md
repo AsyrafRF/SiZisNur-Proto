@@ -1,3 +1,12 @@
+## 13 November 2026 — Perapian status Dashboard
+
+- Mengelompokkan status role, koneksi, mode penyimpanan/sinkronisasi, dan jumlah antrean lokal pada panel khusus di sisi kanan kartu hero Dashboard.
+- Memisahkan label Online/Offline dari keterangan mode lokal/server agar informasi tidak saling menempel atau bertumpuk.
+- Menampilkan indikator koneksi visual dengan pembaruan status real-time saat browser menerima event online/offline.
+- Menghitung antrean untuk tenant yang sedang aktif dan memperbarui angka setelah event sinkronisasi ditambahkan atau diakui server.
+- Menambahkan tata letak responsif untuk desktop, tablet, dan ponsel serta status aksesibel melalui `aria-live`.
+- Menambahkan `tests/dashboard-status.test.cjs`; seluruh suite pengujian lulus dan HTML standalone dibangun ulang.
+
 ## 13 November 2026 — Paginasi data 10 baris per halaman
 
 - Menambahkan paginasi terpusat pada seluruh tabel yang memakai helper `table()` / `A.table()`.

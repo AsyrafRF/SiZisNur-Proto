@@ -453,6 +453,7 @@
     }
     db.syncQueue.push({ id: newId('SQ'), tenantId: eventTenantId, type, schemaVersion: 5, createdAt: timestamp(), payload, records })
     A.persist()
+    updateConnectionBadge()
     trySync()
   }
   async function trySync() {
@@ -477,8 +478,25 @@
     } catch (_) { updateConnectionBadge() }
   }
   function updateConnectionBadge() {
+    const isOnline = Boolean(nav.onLine)
     const badge = $('offline-state')
-    if (badge) badge.textContent = nav.onLine ? (window.SIZISNUR_API_BASE ? 'Online · sinkronisasi terkonfigurasi' : `Online · lokal saja · antrean ${db.syncQueue.length}`) : `Offline · tersimpan lokal · antrean ${db.syncQueue.length}`
+    const connection = $('hero-connection-state')
+    const mode = $('sync-mode-state')
+    const queue = $('local-queue-count')
+    const tenantQueueLength = db.syncQueue.filter((event) => event.tenantId === currentTenantId()).length
+
+    if (badge) badge.textContent = isOnline ? 'Online' : 'Offline'
+    if (connection) {
+      const connectionState = isOnline ? 'online' : 'offline'
+      if (connection.dataset) connection.dataset.connectionState = connectionState
+      else if (typeof connection.setAttribute === 'function') connection.setAttribute('data-connection-state', connectionState)
+    }
+    if (mode) {
+      mode.textContent = window.SIZISNUR_API_BASE
+        ? 'Sinkronisasi server terkonfigurasi'
+        : (isOnline ? 'Mode lokal · tanpa server' : 'Tersimpan di perangkat ini')
+    }
+    if (queue) queue.textContent = String(tenantQueueLength)
   }
   window.addEventListener('online', () => { updateConnectionBadge(); trySync() })
   window.addEventListener('offline', updateConnectionBadge)
@@ -1325,7 +1343,11 @@
       Pengurus: 'Pantau laporan dan audit, lalu setujui rencana distribusi tanpa mengubah data operasional.',
     }[role]
     const quick = { Admin: ['mustahik', 'Data Mustahik'], Muzakki: ['my-zis', 'Layanan Mandiri'], Operator: ['transactions', 'Input Transaksi'], Amil: ['transactions', 'Scan QR'], Bendahara: ['deposits', 'Rekonsiliasi'], Relawan: ['distribution', 'Batch Tugas'], Pengurus: ['reports', 'Laporan'] }[role]
-    return `${A.boxhead('Dashboard SiZisNur', `Tenant ${esc(A.tenant().name)} · ${esc(m.p?.name || 'Belum ada periode')} · Role ${esc(role)}`, action('Panduan role', 'open-help', 'primary'))}<section class="hero"><div><h2>Assalamu’alaikum, ${esc(activeUser().name.split(' ')[0])}</h2><p>${esc(roleHint)}</p><div class="actions">${actionFor(quick[1], 'quick-page', quick[0], 'primary')}${action('Evaluasi prototype', 'open-prototype', 'sm')}</div></div><div class="hero-aside"><span class="tag info">${esc(role)}</span><b id="offline-state">${nav.onLine ? 'Online · lokal saja' : 'Offline · tersimpan lokal'}</b><small>Antrean lokal: ${db.syncQueue.length}</small></div></section><div class="cards">${A.stat('Uang tercatat', money(m.received), 'Semua transaksi periode')}${A.stat('Beras tercatat', kilos(m.rice), 'Satuan kilogram')}${A.stat('Uang diverifikasi Amil', money(m.verified), 'Sesudah scan dan akad')}${A.stat('Uang disalurkan', money(m.sent), 'Berdasarkan batch Relawan')}</div><div class="two-col"><section class="card"><div class="card-top"><h3>Grafik penerimaan per kategori</h3><select id="dashboard-category-filter"><option value="all">Semua kategori</option>${cats.map((x) => `<option value="${esc(x)}" ${chartType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>${totals.map((x) => `<div class="bar-row"><label>${esc(x.name)}</label><div class="bar"><i style="width:${(x.value / max) * 100}%"></i></div><b>${money(x.value)}</b></div>`).join('')}<p class="caption">Grafik diperbarui saat filter kategori diubah. Satuan uang dan beras tidak dicampur.</p></section><section class="card"><h3>Alur operasional terpantau</h3><div class="workflow-mini"><span>Persiapan Admin</span><i>→</i><span>Pending Muzakki / Operator</span><i>→</i><span>Scan & verifikasi Amil</span><i>→</i><span>Kas dan rekening Bendahara</span><i>→</i><span>Batch Relawan</span><i>→</i><span>Audit Pengurus</span></div><p class="caption">Pengurus mempunyai akses baca penuh dan persetujuan program. Perubahan data dilakukan lewat koreksi terkendali.</p></section></div><section class="card"><div class="card-top"><h3>Transaksi terbaru</h3>${canV5('transactions') ? actionFor('Buka transaksi', 'quick-page', 'transactions', 'sm') : ''}</div>${A.table(['Nomor', 'Muzakki', 'Jumlah', 'Status'], txs.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6).map((tx) => [esc(tx.serial), esc(A.person(tx.personId)?.name || 'Muzakki'), `${money(effectiveTotals(tx).money)} · ${kilos(effectiveTotals(tx).rice)}`, statusPill(tx.status)]))}</section>`
+    const tenantQueueLength = db.syncQueue.filter((event) => event.tenantId === currentTenantId()).length
+    const connectionMode = window.SIZISNUR_API_BASE
+      ? 'Sinkronisasi server terkonfigurasi'
+      : (nav.onLine ? 'Mode lokal · tanpa server' : 'Tersimpan di perangkat ini')
+    return `${A.boxhead('Dashboard SiZisNur', `Tenant ${esc(A.tenant().name)} · ${esc(m.p?.name || 'Belum ada periode')} · Role ${esc(role)}`, action('Panduan role', 'open-help', 'primary'))}<section class="hero"><div class="hero-copy"><h2>Assalamu’alaikum, ${esc(activeUser().name.split(' ')[0])}</h2><p>${esc(roleHint)}</p><div class="actions">${actionFor(quick[1], 'quick-page', quick[0], 'primary')}${action('Evaluasi prototype', 'open-prototype', 'sm')}</div></div><aside class="hero-aside" aria-label="Status akun dan sinkronisasi"><div class="hero-aside-top"><div class="hero-role-block"><span class="hero-aside-kicker">ROLE AKTIF</span><span class="tag info hero-role-tag">${esc(role)}</span></div><div class="hero-connection" id="hero-connection-state" data-connection-state="${nav.onLine ? 'online' : 'offline'}"><span class="hero-connection-dot" aria-hidden="true"></span><div class="hero-connection-copy"><b id="offline-state" role="status" aria-live="polite">${nav.onLine ? 'Online' : 'Offline'}</b><small id="sync-mode-state">${esc(connectionMode)}</small></div></div></div><div class="hero-queue"><div class="hero-queue-copy"><span>Antrean lokal</span><small>Menunggu sinkronisasi</small></div><strong id="local-queue-count">${tenantQueueLength}</strong></div></aside></section><div class="cards">${A.stat('Uang tercatat', money(m.received), 'Semua transaksi periode')}${A.stat('Beras tercatat', kilos(m.rice), 'Satuan kilogram')}${A.stat('Uang diverifikasi Amil', money(m.verified), 'Sesudah scan dan akad')}${A.stat('Uang disalurkan', money(m.sent), 'Berdasarkan batch Relawan')}</div><div class="two-col"><section class="card"><div class="card-top"><h3>Grafik penerimaan per kategori</h3><select id="dashboard-category-filter"><option value="all">Semua kategori</option>${cats.map((x) => `<option value="${esc(x)}" ${chartType === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>${totals.map((x) => `<div class="bar-row"><label>${esc(x.name)}</label><div class="bar"><i style="width:${(x.value / max) * 100}%"></i></div><b>${money(x.value)}</b></div>`).join('')}<p class="caption">Grafik diperbarui saat filter kategori diubah. Satuan uang dan beras tidak dicampur.</p></section><section class="card"><h3>Alur operasional terpantau</h3><div class="workflow-mini"><span>Persiapan Admin</span><i>→</i><span>Pending Muzakki / Operator</span><i>→</i><span>Scan & verifikasi Amil</span><i>→</i><span>Kas dan rekening Bendahara</span><i>→</i><span>Batch Relawan</span><i>→</i><span>Audit Pengurus</span></div><p class="caption">Pengurus mempunyai akses baca penuh dan persetujuan program. Perubahan data dilakukan lewat koreksi terkendali.</p></section></div><section class="card"><div class="card-top"><h3>Transaksi terbaru</h3>${canV5('transactions') ? actionFor('Buka transaksi', 'quick-page', 'transactions', 'sm') : ''}</div>${A.table(['Nomor', 'Muzakki', 'Jumlah', 'Status'], txs.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6).map((tx) => [esc(tx.serial), esc(A.person(tx.personId)?.name || 'Muzakki'), `${money(effectiveTotals(tx).money)} · ${kilos(effectiveTotals(tx).rice)}`, statusPill(tx.status)]))}</section>`
   }
   A.set('dashboard', dashboardV5)
 
