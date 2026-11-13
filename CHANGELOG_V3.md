@@ -1,4 +1,16 @@
+## 14 November 2026 — Admin SiZisNur (root/platform)
+
+- Menambahkan aktor **Admin SiZisNur** dengan akun demo `root@sizisnur.demo`, terpisah dari koleksi akun pengguna tenant.
+- Menambahkan konsol root untuk ringkasan platform, tenant terdaftar, pengajuan lembaga, akun tenant, pengaturan sistem, audit platform, dan profil root.
+- Menambahkan tindakan buat tenant + Admin awal, ubah metadata, aktifkan/tangguhkan tenant, tinjau pengajuan, dan aktifkan/nonaktifkan akun tenant.
+- Menambahkan pengaturan nama platform, email dukungan, buka/tutup pendaftaran tenant, status default tenant, pengumuman, dan mode pemeliharaan.
+- Menutup jalur verifikasi tenant publik lama; pengajuan baru masuk ke daftar tinjauan root.
+- Memblokir workspace tenant yang ditangguhkan atau saat mode pemeliharaan aktif.
+- Menambahkan test integrasi untuk pemisahan akun root, pembuatan tenant, audit, dan pembatasan akses.
+- Batas: autentikasi root, RBAC, audit immutable, dan isolasi tenant masih perlu ditegakkan pada backend sebelum produksi.
+
 ## 13 November 2026 — Dashboard pribadi Muzakki dan pemisahan dashboard panitia
+
 
 - Menghapus akses role Muzakki ke dashboard agregat panitia. Dashboard ringkasan penerimaan, grafik kategori, Status Distribusi, transaksi terbaru, dan angka agregat hanya tersedia bagi anggota panitia zakat.
 - Mengganti halaman awal Muzakki menjadi **Dashboard Zakat Saya** yang menampilkan status zakat periode aktif, total uang dan beras pribadi yang tercatat, jiwa/unit pada transaksi, rincian jenis zakat, dan status verifikasi Bendahara.

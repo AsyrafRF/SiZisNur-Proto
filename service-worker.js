@@ -1,8 +1,8 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261113-muzakki-private-dashboard1'
+const CACHE_NAME = 'sizisnur-shell-v5-20261114-platform-admin1'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
-  './js/app.js', './js/revision-v5.js', './js/qrcode.js',
+  './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/qrcode.js',
   './assets/favicon.png', './assets/sizisnur-logo-mark.png'
 ]
 self.addEventListener('install', (event) => {

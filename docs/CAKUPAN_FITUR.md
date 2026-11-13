@@ -4,8 +4,9 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 
 | Area | Status prototype | Yang dapat diuji | Yang belum menjadi layanan produksi |
 |---|---|---|---|
-| Actor dan akses | INTERAKTIF + SIMULASI | Tujuh role, menu dan aksi per role, batas akses UI, persetujuan Pengurus | Otorisasi server, MFA, password/OTP, audit izin dan pembatasan API |
-| Admin dan master | INTERAKTIF | Akun demo, role, tenant, periode, tarif, parameter, pendataan dan verifikasi Mustahik | Persetujuan platform sesungguhnya, versioning master bertanda tangan dan isolasi server |
+| Actor dan akses | INTERAKTIF + SIMULASI | Tujuh role tenant, akun **Admin SiZisNur** terpisah di `platformAdmins`, konsol root, menu dan aksi per role, batas akses UI | Otorisasi server, MFA, password/OTP, audit izin dan pembatasan API |
+| Admin tenant dan master | INTERAKTIF | Akun demo tenant, role, profil tenant, periode, tarif, parameter, pendataan dan verifikasi Mustahik | Versioning master bertanda tangan dan isolasi server |
+| Admin SiZisNur (root/platform) | INTERAKTIF + SIMULASI | Buat tenant + Admin awal, tinjau pengajuan, ubah metadata/status tenant, aktif/nonaktif akun tenant, pengaturan global, mode pemeliharaan, audit root | Password/MFA, RBAC server, approval ganda, audit immutable, proses onboarding/legal sesungguhnya |
 | Muzakki | INTERAKTIF + SIMULASI | Self-registration, multi-tenant, profil, Daerah/RT, keluarga, kalkulator dan pratinjau kewajiban pada form transaksi (fitrah/maal/profesi/fidyah/kafarat), alokasi kelebihan ke infak/sedekah dengan konfirmasi, satu transaksi aktif per tenant/periode, QR dan riwayat | Verifikasi kontak OTP, autentikasi, pengelolaan persetujuan privasi dan sinkronisasi multi-device |
 | Operator | INTERAKTIF | Walk-in, identitas Muzakki, kalkulasi otomatis fitrah/maal/profesi/fidyah/kafarat, pratinjau kewajiban dan kelebihan, pemisahan ke infak/sedekah serta konfirmasi sebelum menyimpan kelebihan yang belum dialokasikan, transaksi Pending dan QR | Integrasi loket dan printer khusus yang tervalidasi |
 | Amil | INTERAKTIF + SIMULASI | Input konter dengan kalkulator transaksi bersama Operator, buka/tutup shift, scan QR, ringkasan akad, verifikasi pembayaran, BSZ, cetak thermal | Validasi akad oleh otoritas agama, perangkat kasir dan printer tersertifikasi |
@@ -23,6 +24,14 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 | Offline-first | INTERAKTIF + SIMULASI | Cache shell PWA dan antrean perubahan pada browser | Backend sync, resolusi konflik, enkripsi lokal, autentikasi ulang dan jaminan transaksi offline |
 | Audit | INTERAKTIF + SIMULASI | Rantai SHA-256, pemeriksaan konsistensi, log per tenant | Append-only server, digital signature, WORM, backup terpisah dan audit independen |
 | Privasi dan legal | DOKUMENTASI | Checklist kesiapan rilis dan catatan risiko di halaman Evaluasi Prototype | Penilaian dampak privasi, perjanjian pemrosesan data, tinjauan hukum dan persetujuan BAZNAS |
+
+## Ruang kendali Admin SiZisNur
+
+Admin SiZisNur berada di luar tujuh role tenant. Akun demo `root@sizisnur.demo` (`PA-SIZISNUR-ROOT`) tersimpan di `platformAdmins` dengan `scope: platform` dan tanpa `tenantId`. Data akun root tidak dimasukkan ke koleksi `users` milik tenant.
+
+Konsol root menyediakan ringkasan platform, Tenant Terdaftar, Pengajuan Tenant, Akun Pengguna Tenant, Pengaturan Sistem, Audit Platform, dan Profil Root. Pengajuan publik hanya dapat diputuskan melalui konsol root; tenant yang ditangguhkan atau saat mode pemeliharaan aktif tidak dapat membuka workspace tenant. Detail dan skenario uji ada pada `ADMIN_SIZISNUR_ROOT.md`.
+
+Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `localStorage` dan JavaScript dapat dimodifikasi pemilik perangkat. Jangan anggap akun root demo sebagai superadmin aman sebelum autentikasi, MFA, RBAC server-side, isolasi tenant, dan audit append-only diterapkan.
 
 ## Aturan operasional yang sudah dimodelkan
 

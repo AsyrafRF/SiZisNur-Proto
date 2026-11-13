@@ -1,4 +1,4 @@
-# Matriks Implementasi Revisi Actor 12 November 2026
+# Matriks Implementasi Revisi Actor 14 November 2026
 
 Dokumen ini menjadi jejak keterlacakan dari butir revisi ke modul prototype. Status **interaktif** berarti dapat dicoba menggunakan data lokal browser. Status **simulasi** berarti kanal eksternal, kewenangan hukum, atau pengamanan server belum disediakan.
 
@@ -8,6 +8,10 @@ Dokumen ini menjadi jejak keterlacakan dari butir revisi ke modul prototype. Sta
 | Muzakki sebagai actor ketujuh | Akun self-service ditambahkan dan dapat mendaftar ke beberapa tenant. | `my-zis`, `accounts`, `muzakkiMemberships` | Verifikasi OTP dan identitas belum ada. |
 | Admin mengelola sistem, master dan Mustahik | Akun, role, tenant, periode, tarif, pengaturan serta verifikasi Mustahik tersedia untuk Admin. | `users`, `tenant`, `periods`, `settings`, `mustahik` | Otorisasi harus ditegakkan ulang di server. |
 | Admin tidak boleh mengubah transaksi terverifikasi | Tidak tersedia edit/hapus langsung. Koreksi harus diajukan dan diputuskan Bendahara. | `transactions`, `corrections` | Database browser masih dapat dimodifikasi langsung oleh pemilik perangkat. |
+| Admin SiZisNur sebagai aktor root terpisah | Akun root memiliki `scope: platform`, tidak memiliki `tenantId`, dan disimpan di `platformAdmins`, terpisah dari `users` tenant. | `js/platform-admin.js`, `platformAdmins`, `platformSettings`, `platformAudit` | Autentikasi dan otorisasi masih demo lokal; backend wajib menegakkan isolasi root/tenant. |
+| Kelola tenant dan pengajuan global | Root dapat membuat tenant + Admin awal, meninjau pengajuan publik, mengubah metadata dan status tenant. | Konsol root: Tenant, Pengajuan, Akun Tenant | Pemeriksaan legal dan onboarding nyata berada di luar prototype. |
+| Pengaturan root tingkat platform | Root dapat mengatur nama/email dukungan, buka/tutup pendaftaran, status default tenant, pengumuman, dan mode pemeliharaan. | `platformSettings` | Penyebaran pengumuman dan pemblokiran sesi di sini hanya berlaku dalam browser demo. |
+| Audit platform terpisah | Aksi root dicatat dalam daftar audit tersendiri, tidak tercampur dengan audit operasional tenant. | `platformAudit` | Log localStorage dapat diubah pengguna perangkat dan belum immutable. |
 | Operator walk-in membuat transaksi Pending | Form konter menghasilkan transaksi Pending dan QR/struk sementara. Operator tidak memverifikasi atau menerima kas. | `transactions`, `operator-new` | Printer fisik dan integrasi perangkat perlu diuji. |
 | Amil dapat merangkap fungsi Operator | Amil memperoleh fungsi input konter, tetapi Operator tidak memperoleh tindakan Amil. | `transactions`, `schedule` | Pemisahan tugas harus juga ditegakkan pada API. |
 | Shift Amil, scan QR, akad, pembayaran dan BSZ | Amil membuka/tutup shift, memindai token tenant, memeriksa rincian, mengonfirmasi akad dan penerimaan fisik, lalu mengesahkan. | `schedule`, `transactions`, struk | Konfirmasi akad adalah checkbox simulasi, bukan bukti syariah atau bukti kas. |
@@ -43,7 +47,7 @@ Dokumen ini menjadi jejak keterlacakan dari butir revisi ke modul prototype. Sta
 - Perubahan penting menambahkan catatan audit dan event ke antrean sinkronisasi lokal.
 - Dataset mustahik contoh tetap sintetis dan hasil workbook 1447H tidak ditimpa oleh pembaruan actor.
 
-Lihat `CAKUPAN_FITUR.md` untuk status interaktif/simulasi/belum, `SKENARIO_UAT.md` untuk pengujian manual, dan `LEGAL_READINESS.md` untuk checklist sebelum rilis.
+Akun demo root `root@sizisnur.demo` (tile **Admin SiZisNur**) tersedia pada halaman login. Lihat `ADMIN_SIZISNUR_ROOT.md` untuk cakupan konsol dan batas keamanan. Lihat `CAKUPAN_FITUR.md` untuk status interaktif/simulasi/belum, `SKENARIO_UAT.md` untuk pengujian manual, dan `LEGAL_READINESS.md` untuk checklist sebelum rilis.
 
 ### Aturan rincian kategori distribusi dashboard
 

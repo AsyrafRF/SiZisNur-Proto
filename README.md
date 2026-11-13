@@ -8,7 +8,7 @@
 
 Project awal merupakan prototype web statis SiZisNur dengan contoh tenant, dashboard, penerimaan zakat, data Muzakki dan Mustahik, setoran Bendahara, penyaluran, laporan, serta acuan angka workbook 1447H/2026M. Revisi 12–13 November 2026 mengubah pembagian actor menjadi tujuh peran dan menyelaraskan alur dari persiapan data sampai laporan akhir.
 
-Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan.
+Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan. Revisi 14 November menambahkan aktor **Admin SiZisNur** sebagai pengelola root platform yang terpisah dari tujuh role tenant.
 
 ## 2. Catatan pembaruan landing page
 
@@ -73,7 +73,19 @@ Rujukan resmi yang digunakan untuk nilai awal: [BAZNAS RI — zakat fitrah dan f
 | **Relawan** | Distribusi lapangan | Tampilan mobile-first, pilih batch tugas, scan QR Mustahik atau cari kode, lalu catat penerimaan satu kali untuk penerima yang ditugaskan. |
 | **Pengurus** | Oversight | Baca laporan dan data operasional, memantau arus kas, berita acara dan audit, serta menyetujui atau menolak program penyaluran. Persetujuan program adalah satu-satunya tindakan operasional yang diberikan selain akses baca. |
 
+**Admin SiZisNur (root/platform) bukan role kedelapan tenant dan tidak tergabung dalam `db.users`.** Akunnya disimpan dalam koleksi terpisah `db.platformAdmins`, memiliki `scope: platform`, dan tidak mempunyai `tenantId`. Konsol root mengelola registrasi dan status tenant, tinjauan pengajuan lembaga, metadata tenant, status akun pengguna lintas tenant, pengaturan global, pengumuman, mode pemeliharaan, serta audit platform. Admin tenant tetap bertanggung jawab atas tarif zakat, periode, data Muzakki/Mustahik, transaksi, dan kas lembaganya.
+
 Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan pengganti otorisasi server. Pemisahan tugas harus ditegakkan lagi pada API dan basis data saat pengembangan backend.
+
+### Akun demo root platform
+
+- **Nama/role:** Admin SiZisNur
+- **Email demo:** `root@sizisnur.demo`
+- **ID internal:** `PA-SIZISNUR-ROOT`
+- **Cara masuk:** pilih tile **Admin SiZisNur** pada halaman Masuk Demo atau pilih akun tersebut pada dropdown akun demonstrasi. Prototype ini belum meminta password/OTP.
+- **Konsol:** Ringkasan, Tenant Terdaftar, Pengajuan Tenant, Akun Pengguna Tenant, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
+
+Admin SiZisNur dapat membuat tenant beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan tenant, meninjau pengajuan publik, mengubah metadata tenant, serta mengaktifkan/nonaktifkan akun tenant. Tenant yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
 
 ## 8. Alur end-to-end yang diimplementasikan
 
@@ -114,7 +126,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 
 ## 10. Batasan dan keamanan yang wajib dipahami
 
-1. Tidak ada backend produksi, PostgreSQL, autentikasi sesungguhnya, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi tenant tingkat server. Akun demo tidak memakai password. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
+1. Tidak ada backend produksi, PostgreSQL, autentikasi sesungguhnya, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi tenant tingkat server. Akun demo tenant maupun root tidak memakai password. Akun root hanya dipisahkan secara struktur data dan UI pada browser; ini belum menjadi batas keamanan yang dapat dipercaya. Jangan mempublikasikan build demo dengan data nyata. Sebelum produksi, autentikasi root harus memakai kredensial terpisah, MFA wajib, otorisasi backend khusus platform, pembatasan jaringan/perangkat sesuai risiko, rate limit, pencatatan audit server append-only, serta proses pemulihan akun yang diawasi. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
 2. `localStorage` dapat dibaca dan diubah oleh pengguna perangkat. Hash audit SHA-256 pada browser bukan bukti immutable, bukan tanda tangan digital, dan bukan pengganti audit server append-only.
 3. Master wilayah administratif menggunakan relasi `areas` → `rws` → `rts`; identitas menyimpan `domicileStatus`, `areaId`, `rwId`, dan `rtId`, sedangkan snapshot keanggotaan tenant menyimpan atribut domisili tenant yang sama. Validasi relasi dijalankan di sisi aplikasi prototype, tetapi API produksi tetap wajib memverifikasi kepemilikan tenant dan parent-child di server. Antrean sinkronisasi hanya menyiapkan event dan record untuk endpoint yang belum disediakan. API produksi harus mengautentikasi pengguna, memeriksa tenant di server, menggunakan HTTPS, menerapkan idempotensi, validasi skema, penanganan konflik, dan mengembalikan `acknowledgedEventIds` sebelum event terkait dihapus dari antrean.
 4. Cache service worker hanya mencakup application shell. Offline belum menjamin semua proses kamera, data lintas perangkat, autentikasi, atau penyelesaian konflik. Operasi keuangan offline untuk rilis memerlukan desain transaksi lokal, enkripsi, idempotency key, kontrol perangkat, dan uji pemulihan.
@@ -135,6 +147,7 @@ Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, 
 ```bash
 node --check js/app.js
 node --check js/revision-v5.js
+node --check js/platform-admin.js
 node tests/workbook-rules.test.cjs
 node tests/role-guides.test.cjs
 node tests/dark-alerts.test.cjs
@@ -142,6 +155,7 @@ node tests/dark-ui-theme.test.cjs
 node tests/pagination.test.cjs
 node tests/tenant-territories.test.cjs
 node tests/transaction-calculator.test.cjs
+node tests/platform-admin.test.cjs
 python tools/build-standalone.py
 ```
 
@@ -154,9 +168,11 @@ index.html
 css/style.css
 js/app.js
 js/revision-v5.js
+js/platform-admin.js
 js/qrcode.js
 assets/
 docs/
+  ADMIN_SIZISNUR_ROOT.md
   CAKUPAN_FITUR.md
   DEPLOY_NETLIFY_VERCEL.md
   IMPLEMENTASI_WORKBOOK_1447H.md
