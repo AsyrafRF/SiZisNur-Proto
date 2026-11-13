@@ -1,3 +1,14 @@
+## 13 November 2026 — Paginasi data 10 baris per halaman
+
+- Menambahkan paginasi terpusat pada seluruh tabel yang memakai helper `table()` / `A.table()`.
+- Daftar dengan lebih dari 10 data ditampilkan 10 baris per halaman, lengkap dengan rentang data, jumlah total, nomor halaman, serta tombol Sebelumnya dan Selanjutnya.
+- Tabel dengan 10 data atau kurang tetap ditampilkan utuh tanpa kontrol paginasi.
+- Kontrol halaman memperbarui tabel yang dipilih saja dan mengikuti Light/Dark Mode serta tampilan mobile.
+- Paginasi berlaku juga untuk tabel dalam modal, hasil pencarian dan filter, termasuk daftar tenant yang terhubung pada akun Muzakki. Data sumber dan ekspor CSV/XLSX tetap menggunakan seluruh record.
+- Riwayat audit tidak lagi dibatasi 100 atau 150 record sebelum ditampilkan.
+- Cetak/PDF laporan dibangun dari seluruh hasil filter aktif, bukan hanya baris yang sedang terlihat di halaman tabel.
+- Menambahkan `docs/PAGINASI_DATA.md` dan `tests/pagination.test.cjs`, serta memperbarui cache service worker.
+
 ## 13 November 2026 — Penyelarasan UI global Light/Dark Mode
 
 - Memperluas perbaikan dari alert ke komponen UI lain yang sebelumnya masih memakai warna tetap Light Mode.

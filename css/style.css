@@ -391,3 +391,26 @@ body.dark .manual-preview-row span {
 body.dark .landing-page {
   color-scheme: light;
 }
+
+/* Consistent ten-row pagination for every shared data table. Colors inherit the active theme. */
+.table-component{width:100%;min-width:0}
+.table-component>.table-wrap{margin:0}
+.table-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 13px;margin-top:9px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text)}
+.table-page-summary{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text)}
+.table-page-summary b{font-variant-numeric:tabular-nums}
+.table-page-summary small{font-size:10px;color:var(--muted)}
+.table-page-controls,.table-page-numbers{display:flex;align-items:center;gap:5px}
+.table-page-numbers{gap:4px}
+.table-page-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:33px;height:32px;padding:0 9px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--text);font-size:11px;font-weight:700;line-height:1;white-space:nowrap}
+.table-page-btn:hover:not(:disabled){border-color:var(--main);color:var(--main)}
+.table-page-btn[aria-current="page"]{background:var(--main);border-color:var(--main);color:#fff}
+.table-page-btn:disabled{opacity:.38}
+.table-page-ellipsis{display:inline-flex;align-items:center;justify-content:center;min-width:15px;color:var(--muted);font-size:12px}
+@media(max-width:700px){
+ .table-pagination{align-items:flex-start;flex-direction:column;gap:9px}
+ .table-page-controls{width:100%;justify-content:space-between}
+ .table-page-numbers{flex:1;justify-content:center}
+ .table-page-btn{min-width:30px;height:31px;padding:0 7px}
+ .table-page-prev span,.table-page-next span{display:none}
+}
+@media print{.table-pagination{display:none!important}}

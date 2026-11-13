@@ -12,6 +12,7 @@ Tanggal pembaruan: 13 November 2026
 | `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 311 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
+| `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, tenant Muzakki, audit penuh, serta PDF laporan lengkap |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -21,6 +22,7 @@ Tanggal pembaruan: 13 November 2026
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
 - Token tema UI global untuk badge status, label serta input form, aksi berbahaya, progres, panel pemindaian QR, preview panduan, panel hasil panduan, dan aksen teks pada dark mode.
+- Paginasi bersama pada seluruh tabel data, termasuk tenant yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
@@ -54,3 +56,14 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Preview struk tetap putih sebagai representasi dokumen cetak. Landing page yang telah disetujui tetap terisolasi dari tema dashboard.
 - Tes otomatis `node tests/dark-ui-theme.test.cjs` memvalidasi keberadaan selector dan rasio kontras token utama minimal 4,5:1.
 - Build standalone dibuat ulang dan cache service worker dinaikkan ke `sizisnur-shell-v5-20261113-dark-ui2`.
+
+
+## Pemeriksaan paginasi data — 13 November 2026
+
+- Semua tabel bersama `table()` / `A.table()` menggunakan ukuran halaman 10. Tabel dengan 10 baris atau kurang tidak menampilkan kontrol.
+- Tes helper mencakup 23 record yang terbagi menjadi 10 + 10 + 3, batas halaman, daftar kosong, dan batas tepat 10 baris.
+- Pencarian dan filter menghasilkan dataset baru yang dipaginasi dari hasil filter. Kontrol halaman memperbarui satu tabel tanpa memuat ulang halaman.
+- Daftar audit penuh diberikan ke tabel, tanpa pemotongan 150 record.
+- CSV/XLSX tetap mengekspor sumber data lengkap; PDF laporan dibuat dari seluruh `reportRows()` pada filter aktif.
+- `node tests/pagination.test.cjs` lulus, termasuk render HTML untuk halaman pertama/kedua, jumlah baris, daftar kosong, dan daftar pendek.
+- Uji browser interaktif/headless belum dapat diselesaikan pada lingkungan ini karena kebijakan lingkungan eksekusi memblokir navigasi browser ke file lokal dan server localhost. Uji klik paginasi, responsivitas pada perangkat nyata, dan UAT tetap perlu dilakukan di browser pengguna.

@@ -18,7 +18,11 @@ Landing page V5 mempertahankan kembali komposisi visual dari landing page V3, te
 
 Alert kontekstual dan toast menggunakan token warna terpusat untuk tema terang dan gelap. Warna teks tidak lagi bergantung pada warna teks global halaman, sehingga peringatan berwarna kuning dan pesan kesalahan tetap terbaca saat dark mode aktif. Perbaikan berlaku lintas halaman, termasuk dashboard, formulir, modal, panduan, laporan, dan halaman evaluasi. Preferensi tema tetap dapat diubah melalui tombol **Tema**.
 
-## 4. Cara menjalankan
+## 4. Paginasi daftar data
+
+Seluruh tabel data yang menggunakan komponen tabel bersama menampilkan maksimal 10 baris per halaman. Aturan ini berlaku pada daftar Mustahik, Muzakki, tenant yang terhubung pada akun Muzakki, transaksi, rekonsiliasi, jurnal, koreksi, batch, distribusi, notifikasi, audit, laporan, dan tabel di dalam modal. Tabel berisi 10 baris atau kurang tetap ditampilkan tanpa kontrol halaman. Pencarian dan filter bekerja pada keseluruhan hasil, sedangkan CSV/XLSX dan cetak/PDF laporan tidak dibatasi oleh halaman yang sedang terlihat.
+
+## 5. Cara menjalankan
 
 1. Ekstrak ZIP project.
 2. Buka `index.html` di browser modern. Untuk cache offline dan izin kamera, jalankan melalui HTTPS atau server lokal.
@@ -36,7 +40,7 @@ Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan
 
 File mandiri yang memuat HTML, CSS, JavaScript, QR, dan logo tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`.
 
-## 5. Matriks actor dan tanggung jawab
+## 6. Matriks actor dan tanggung jawab
 
 | Actor | Fokus | Kewenangan prototype |
 |---|---|---|
@@ -50,7 +54,7 @@ File mandiri yang memuat HTML, CSS, JavaScript, QR, dan logo tersedia pada `stan
 
 Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan pengganti otorisasi server. Pemisahan tugas harus ditegakkan lagi pada API dan basis data saat pengembangan backend.
 
-## 6. Alur end-to-end yang diimplementasikan
+## 7. Alur end-to-end yang diimplementasikan
 
 ### A. Persiapan
 
@@ -78,7 +82,7 @@ Bendahara menyiapkan alokasi dari saldo yang sudah direkonsiliasi, atau dari per
 
 Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat difilter menurut periode dan jenis laporan serta diekspor ke CSV, XLSX, atau PDF melalui fungsi cetak browser. Paket CSV/XLSX UPZ disediakan sebagai bahan pelaporan bulanan, tetapi belum dikirim langsung ke BAZNAS. Log audit demo memakai rantai hash SHA-256 untuk membantu mendeteksi perubahan yang tidak konsisten.
 
-## 7. Modul tambahan
+## 8. Modul tambahan
 
 - **Data wilayah:** tenant menyimpan label Daerah. Profil Muzakki dan input Walk-in membedakan VPA dan Non VPA. RT hanya ditampilkan untuk VPA dan rekap jumlah Muzakki dapat dikelompokkan per RT.
 - **Kalkulator zakat:** tersedia pada halaman Muzakki untuk fitrah, maal, fidyah, kafarat, dan sedekah. Nilai tarif dan nisab adalah parameter demo yang perlu disahkan.
@@ -87,7 +91,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 - **Offline-first prototype:** service worker menyimpan shell aplikasi. Perubahan data masuk antrean sinkronisasi lokal. Pengiriman baru dicoba jika `window.SIZISNUR_API_BASE` disediakan. Tanpa backend yang sesuai, tidak ada sinkronisasi cloud.
 - **Ruang evaluasi prototype:** menginventarisasi aturan bisnis, kebijakan keuangan, syariah, integrasi dan keamanan yang belum disepakati.
 
-## 8. Batasan dan keamanan yang wajib dipahami
+## 9. Batasan dan keamanan yang wajib dipahami
 
 1. Tidak ada backend produksi, PostgreSQL, autentikasi sesungguhnya, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi tenant tingkat server. Akun demo tidak memakai password. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
 2. `localStorage` dapat dibaca dan diubah oleh pengguna perangkat. Hash audit SHA-256 pada browser bukan bukti immutable, bukan tanda tangan digital, dan bukan pengganti audit server append-only.
@@ -99,13 +103,13 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 8. Tarif zakat, nisab, lafaz akad, doa, formula distribusi, dan kebijakan mustahik perlu disahkan oleh pihak berwenang dan pembimbing agama. Teks akad hanya pengingat UI dan tidak mengesahkan ibadah.
 9. Revisi ini bukan audit hukum. Sebelum rilis, lakukan kajian atas UU 23/2011 tentang Pengelolaan Zakat, PP 14/2014, UU 27/2022 tentang Pelindungan Data Pribadi, peraturan turunannya, kebijakan BAZNAS terkait UPZ, dan ketentuan daerah yang relevan. Konsultasikan dengan penasihat hukum dan BAZNAS.
 
-## 9. Rujukan kebutuhan dan keputusan yang belum selesai
+## 10. Rujukan kebutuhan dan keputusan yang belum selesai
 
 Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
 
 Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
 
-## 10. Build dan pengujian
+## 11. Build dan pengujian
 
 ```bash
 node --check js/app.js
@@ -114,12 +118,13 @@ node tests/workbook-rules.test.cjs
 node tests/role-guides.test.cjs
 node tests/dark-alerts.test.cjs
 node tests/dark-ui-theme.test.cjs
+node tests/pagination.test.cjs
 python tools/build-standalone.py
 ```
 
 Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, role dan halaman, hash audit, alokasi, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
 
-## 11. Struktur folder
+## 12. Struktur folder
 
 ```text
 index.html
