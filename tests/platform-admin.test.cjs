@@ -62,6 +62,11 @@ assert.ok(app.html().includes('Ringkasan Platform'))
 assert.ok(app.html().includes('Tenant terdaftar'))
 assert.ok(app.html().includes('Pengaturan sistem'))
 assert.ok(app.html().includes('Audit platform'))
+bridge.state.platformTab = 'tenants'
+bridge.state.selectedPlatformTenant = 'TN-ANNUR'
+bridge.render()
+assert.ok(app.html().includes('Tampilkan tenant pada Portal Publik'))
+assert.ok(app.html().includes('publicPortalEnabled'))
 
 const initialTenantCount = db.tenants.length
 const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
@@ -70,9 +75,12 @@ const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
 })
 assert.equal(db.tenants.length, initialTenantCount + 1)
 assert.equal(db.users.filter((item) => item.tenantId === created.id && item.role === 'Admin').length, 1)
+assert.equal(created.publicPortalEnabled, true, 'active tenants are publicly listed by default')
 assert.ok(db.platformAudit.some((item) => item.type === 'TENANT_CREATED' && item.detail.includes('Lembaga Uji Root')))
 assert.equal(JSON.stringify(window.__SIZISNUR_PLATFORM_ADMIN.tenantMetrics(created.id)), JSON.stringify({ users: 1, admins: 1, transactions: 0, pending: 0, verified: 0 }))
 
+bridge.state.platformTab = 'overview'
+bridge.state.selectedPlatformTenant = null
 bridge.render()
 assert.ok(app.html().includes('Lembaga Uji Root'), 'New tenant should be visible in platform overview')
 

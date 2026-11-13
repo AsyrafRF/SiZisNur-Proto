@@ -8,7 +8,7 @@
 
 Project awal merupakan prototype web statis SiZisNur dengan contoh tenant, dashboard, penerimaan zakat, data Muzakki dan Mustahik, setoran Bendahara, penyaluran, laporan, serta acuan angka workbook 1447H/2026M. Revisi 12–13 November 2026 mengubah pembagian actor menjadi tujuh peran dan menyelaraskan alur dari persiapan data sampai laporan akhir.
 
-Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan. Revisi 14 November menambahkan aktor **Admin SiZisNur** sebagai pengelola root platform yang terpisah dari tujuh role tenant.
+Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan. Revisi 14 November menambahkan aktor **Admin SiZisNur** sebagai pengelola root platform yang terpisah dari tujuh role tenant, lalu memperluas Portal Publik untuk seluruh tenant aktif dan menambahkan verifikasi QR publik dengan kamera.
 
 ## 2. Catatan pembaruan landing page
 
@@ -190,3 +190,13 @@ tools/build-standalone.py
 CHANGELOG_V3.md
 README.md
 ```
+
+
+## Portal Publik multi-tenant dan verifikasi QR
+
+- Buka **Portal Publik** dari landing page atau layar masuk; login tenant tidak diperlukan.
+- Direktori menampilkan tenant dengan status `aktif` dan opsi tampil publik diaktifkan. Admin SiZisNur dapat mengatur visibilitas melalui **Tenant Terdaftar → Detail → Tampilkan tenant pada Portal Publik**.
+- Setiap tenant menampilkan angka agregat penghimpunan dan penyaluran. Nama Muzakki/Mustahik, kontak, alamat rumah, identitas petugas, dan nominal transaksi individual tidak ditampilkan.
+- Untuk memeriksa struk fisik, tekan **Scan QR dengan kamera** dan izinkan akses kamera. Hasil valid berarti pembayaran telah disahkan Amil; hasil Pending masih belum tervalidasi. Token/nomor seri juga dapat dimasukkan secara manual.
+- Kamera memerlukan HTTPS atau localhost dan dukungan `BarcodeDetector`. Browser yang belum mendukung API pemindai harus memakai input manual.
+- Untuk penjelasan aturan status, privasi, dan batasan produksi, baca `docs/PORTAL_PUBLIK_TRANSPARANSI_DAN_QR.md`.

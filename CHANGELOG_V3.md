@@ -1,3 +1,16 @@
+## 14 November 2026 — Portal Publik Multi-Tenant dan Scan QR Publik
+
+- Mengganti portal khusus Masjid An-Nur menjadi direktori seluruh tenant aktif yang diizinkan tampil pada portal publik.
+- Menambahkan ringkasan transparansi agregat global dan per tenant: penghimpunan uang/beras, transaksi yang disahkan, rincian kategori agregat, serta realisasi penyaluran.
+- Membatasi portal agar tidak menampilkan nama Muzakki, Mustahik, kontak, alamat rumah, akun, petugas, atau nominal transaksi perorangan.
+- Menambahkan kontrol `publicPortalEnabled` pada detail tenant di konsol Admin SiZisNur; tenant aktif baru tampil secara default, sedangkan tenant ditangguhkan atau disembunyikan tidak ditampilkan.
+- Menambahkan verifikasi QR lintas tenant berdasarkan kecocokan `tenantId + transactionId + serial`, dukungan input manual, dan penanganan serial ambigu.
+- Menambahkan status publik: valid setelah disahkan Amil, belum tervalidasi bila masih Pending/tercatat, dan tidak valid bila dibatalkan/ditolak/kedaluwarsa.
+- Menambahkan scan QR kamera menggunakan `getUserMedia` dan `BarcodeDetector`; input manual tetap tersedia sebagai fallback untuk browser/perangkat yang belum mendukung API pemindai.
+- Menambahkan dokumentasi `PORTAL_PUBLIK_TRANSPARANSI_DAN_QR.md`, checklist QA, dan `tests/public-portal.test.cjs`.
+- Seluruh suite test otomatis lulus; pemeriksaan visual Chromium headless tidak dapat diselesaikan di lingkungan build ini.
+- Batas: data tetap lokal browser; portal belum menjadi API publik cloud dan pemindaian kamera memerlukan HTTPS/localhost serta dukungan browser.
+
 ## 14 November 2026 — Admin SiZisNur (root/platform)
 
 - Menambahkan aktor **Admin SiZisNur** dengan akun demo `root@sizisnur.demo`, terpisah dari koleksi akun pengguna tenant.

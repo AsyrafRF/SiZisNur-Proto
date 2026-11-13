@@ -117,6 +117,7 @@
       return [
         `<b>${esc(tenant.name)}</b><div class="tiny mono">${esc(tenant.id)}</div><small>${esc(tenant.email || 'Email belum diatur')}</small>`,
         badge(tenant.status),
+        badge(tenant.publicPortalEnabled !== false ? 'Tampil publik' : 'Privat'),
         `${fmt(metrics.admins)} Admin / ${fmt(metrics.users)} akun`,
         `${fmt(metrics.transactions)} transaksi`,
         `<div class="actions"><button class="btn sm" type="button" data-root-action="tenant-detail" data-id="${esc(tenant.id)}">Detail</button><button class="btn sm" type="button" data-root-action="tenant-toggle" data-id="${esc(tenant.id)}">${tenant.status === 'aktif' ? 'Tangguhkan' : 'Aktifkan'}</button></div>`,
@@ -124,7 +125,7 @@
     })
     return `${A.boxhead('Tenant Terdaftar', 'Lihat seluruh lembaga yang menggunakan SiZisNur dan kendalikan status aksesnya.', '<button class="btn primary" type="button" data-root-action="tenant-create">＋ Tambah tenant</button>')}
       <div class="alert warn">Menangguhkan tenant akan memblokir sesi pengguna tenant pada prototype ini. Data operasionalnya tidak dihapus.</div>
-      <section class="card">${A.table(['Nama tenant','Status','Pengguna','Transaksi','Aksi'], rows, 'Belum ada tenant.')}</section>`
+      <section class="card">${A.table(['Nama tenant','Status','Portal publik','Pengguna','Transaksi','Aksi'], rows, 'Belum ada tenant.')}</section>`
   }
 
   function tenantDetail(tenantId) {
@@ -141,6 +142,7 @@
           ${A.fld('Nomor telepon','phone',tenant.phone || '','tel')}${A.fld('Wilayah / daerah','daerah',tenant.daerah || '','text')}
           ${A.fld('Jenis UPZ','upzType',tenant.upzType || '','text')}${A.fld('Wilayah BAZNAS tujuan','baznasArea',tenant.baznasArea || '','text')}
           ${A.textarea('Alamat','address',tenant.address || '')}
+          <label class="check full"><input type="checkbox" name="publicPortalEnabled" value="yes" ${tenant.publicPortalEnabled !== false ? 'checked' : ''}> Tampilkan tenant pada Portal Publik dan izinkan ringkasan transparansi agregat</label>
         </div><div class="form-actions"><button class="btn primary" type="submit">Simpan profil tenant</button></div></form>
           <div class="mini-list"><div class="mini-item"><span>Status</span>${badge(tenant.status)}</div><div class="mini-item"><span>Jumlah pengguna</span><b>${fmt(metrics.users)}</b></div><div class="mini-item"><span>Admin tenant</span><b>${fmt(metrics.admins)}</b></div></div>
         </section>
@@ -284,7 +286,7 @@
     if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail) throw new Error('Nama tenant, nama Admin, dan email Admin wajib diisi.')
     if (db.users.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail) || db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun lain.')
     const id = A.id('TN')
-    const tenant = { id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, createdAt: A.now() }
+    const tenant = { id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
     db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
@@ -362,8 +364,8 @@
           const tenant = db.tenants.find((item) => item.id === id)
           if (!tenant) throw new Error('Tenant tidak ditemukan.')
           if (!String(data.name || '').trim()) throw new Error('Nama tenant wajib diisi.')
-          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim() })
-          writeRootAudit('TENANT_PROFILE', `Metadata tenant ${tenant.id} diperbarui.`)
+          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim(), publicPortalEnabled: data.publicPortalEnabled === 'yes' })
+          writeRootAudit('TENANT_PROFILE', `Metadata tenant ${tenant.id} diperbarui. Portal publik: ${tenant.publicPortalEnabled ? 'tampil' : 'disembunyikan'}.`)
           state.modal = null; A.toast('Profil tenant diperbarui.'); break
         }
         case 'application-review': {

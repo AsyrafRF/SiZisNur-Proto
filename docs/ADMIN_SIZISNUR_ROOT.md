@@ -67,3 +67,10 @@ Sebelum produksi, minimal implementasikan:
 6. Workflow onboarding legal untuk tenant: verifikasi badan/lembaga, penanggung jawab, kontak, dokumen, persetujuan layanan, serta proses deaktivasi dan ekspor data.
 
 Pengujian otomatis `tests/platform-admin.test.cjs` memeriksa pemisahan akun root, konsol, pembuatan tenant, pencatatan audit, dan pemblokiran tenant yang ditangguhkan. Tes ini tidak menggantikan penetration test, review backend, atau UAT browser.
+
+
+## Pengaturan visibilitas Portal Publik
+
+Pada **Tenant Terdaftar → Detail Tenant**, Admin SiZisNur dapat menyalakan atau mematikan opsi **Tampilkan tenant pada Portal Publik**. Tenant aktif dipublikasikan secara default. Tenant berstatus ditangguhkan tidak tampil, sekalipun opsi publikasinya aktif. Setiap perubahan visibilitas tercatat pada Audit Platform.
+
+Portal publik hanya menampilkan ringkasan agregat. Admin root tidak mengubah transaksi tenant; angka yang tampil berasal dari transaksi yang sudah disahkan Amil dan catatan penyaluran berstatus selesai. Rincian identitas Muzakki/Mustahik tidak dipublikasikan.
