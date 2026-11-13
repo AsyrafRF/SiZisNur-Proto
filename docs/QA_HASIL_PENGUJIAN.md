@@ -9,12 +9,14 @@ Tanggal pembaruan: 13 November 2026
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
 | `node tests/workbook-rules.test.cjs` | Lulus |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 311 langkah, 61 ilustrasi UI |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
 
 - Schema demo V5 dan matriks akses tujuh role.
 - Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
+- Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.

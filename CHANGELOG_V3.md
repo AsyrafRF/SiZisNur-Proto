@@ -1,5 +1,14 @@
 # Changelog SiZisNur
 
+## 13 November 2026 — Panduan penggunaan rinci untuk tujuh role
+
+- Memperluas panduan Admin, Muzakki, Operator, Amil, Bendahara, Relawan, dan Pengurus mengikuti pola tutorial langkah demi langkah dari referensi SILAM.
+- Mempertahankan diagram alur dan formulir bantuan/feedback yang sudah ada.
+- Menambahkan checklist persiapan, 61 tutorial menu, 311 langkah bernomor, 61 ilustrasi pengenal tampilan, hasil yang diharapkan, peringatan, FAQ, serta navigasi cepat ke setiap menu.
+- Menyelaraskan panduan dengan menu dan kewenangan yang benar-benar tersedia pada prototype, termasuk penjelasan batas role dan fitur simulasi.
+- Menambahkan `docs/PANDUAN_PENGGUNAAN_DETAIL_ROLE.md` dan tes otomatis `tests/role-guides.test.cjs`.
+- Tidak mengubah visual landing page yang sudah disetujui.
+
 ## 13 November 2026 — Penyesuaian copywriting landing page
 
 - Mengembalikan komposisi visual landing page yang digunakan pada V3: navigasi, hero dengan ilustrasi dashboard, floating labels, strip ringkasan, tiga kartu manfaat, enam kartu fitur, diagram alur, visual tujuh aktor, ilustrasi multi-tenant, CTA dan footer.
