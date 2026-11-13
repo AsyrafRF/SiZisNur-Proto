@@ -17,6 +17,7 @@ revision = (ROOT / 'js' / 'revision-v5.js').read_text(encoding='utf-8')
 logo = data_uri(ROOT / 'assets' / 'sizisnur-logo-mark.png', 'image/png')
 favicon = data_uri(ROOT / 'assets' / 'favicon.png', 'image/png')
 app = app.replace('assets/sizisnur-logo-mark.png', logo)
+revision = revision.replace('assets/sizisnur-logo-mark.png', logo)
 if re.search(r'</script\s*>', qr + app + revision, flags=re.I):
     raise SystemExit('Unsafe </script> sequence found in source; refusing to inline.')
 
@@ -26,8 +27,8 @@ html = f'''<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b7a4b">
-  <meta name="description" content="SiZisNur Prototype revisi tujuh aktor untuk pengelolaan ZIS, verifikasi QR, rekonsiliasi dan distribusi. Simulasi lokal, bukan layanan produksi.">
-  <title>SiZisNur — Prototype Revisi 7 Aktor</title>
+  <meta name="description" content="SiZisNur membantu layanan mandiri Muzakki, penerimaan ZIS, verifikasi QR, rekonsiliasi dan distribusi untuk masjid dan komunitas. Prototype simulasi, bukan layanan produksi.">
+  <title>SiZisNur — Platform Pengelolaan Zakat, Infak & Sedekah</title>
   <link rel="icon" href="{favicon}" type="image/png">
   <style>
 {css}

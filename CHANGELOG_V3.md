@@ -1,5 +1,12 @@
 # Changelog SiZisNur
 
+## 13 November 2026 — Penyesuaian copywriting landing page
+
+- Mengembalikan komposisi visual landing page yang digunakan pada V3: navigasi, hero dengan ilustrasi dashboard, floating labels, strip ringkasan, tiga kartu manfaat, enam kartu fitur, diagram alur, visual tujuh aktor, ilustrasi multi-tenant, CTA dan footer.
+- Memperbarui copywriting agar berfokus pada layanan mandiri Muzakki, QR transaksi dan verifikasi Amil, rekonsiliasi Bendahara, distribusi per batch, laporan, dan pemisahan tugas tujuh aktor.
+- Tidak mengubah stylesheet atau sistem desain visual landing page.
+- Memperbarui title dan meta description halaman.
+
 ## 13 November 2026 — Revisi Actor 7 Peran (lapisan V5)
 
 Pembaruan dilakukan dengan mempertahankan acuan workbook 1447H/2026M dan data mustahik sintetis.

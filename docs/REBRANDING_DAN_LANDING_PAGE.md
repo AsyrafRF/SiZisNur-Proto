@@ -15,6 +15,20 @@ Semua modul lama **tetap dipertahankan**: tenant, akun/peran, dashboard, periode
 - *Ajukan lembaga* membuka simulasi permohonan tenant.
 - Alur operasi dan klaim manfaat didasarkan pada dokumen elisitasi; bukan janji performa ataupun layanan yang sudah diproduksi.
 
+## Pembaruan copywriting landing page V5 (13 November 2026)
+
+Landing page kembali memakai susunan visual yang telah digunakan pada V3. Ilustrasi dashboard di hero, strip ringkasan, kartu manfaat, enam kartu fitur, susunan langkah, kartu aktor, ilustrasi multi-tenant, CTA, dan footer dipertahankan. Tidak ada perubahan pada CSS atau sistem desain visual landing page.
+
+Copywriting diperbarui agar lebih berorientasi pada layanan yang tersedia dan tidak menonjolkan masalah awal pengembangan. Isi utama yang disampaikan adalah:
+
+- Layanan mandiri Muzakki untuk data keluarga, kalkulator zakat, histori, QR transaksi, dan bukti setor.
+- Transaksi mandiri maupun Walk-in berstatus Pending dan diverifikasi Amil melalui QR, akad, serta konfirmasi pembayaran.
+- Rekonsiliasi kas dan rekening, jurnal, serta laporan oleh Bendahara.
+- Persetujuan program oleh Pengurus dan pencatatan distribusi per batch oleh Relawan.
+- Pengelolaan data dan kelayakan Mustahik oleh Admin, serta dukungan multi-tenant untuk masjid dan lembaga.
+
+Nilai uang dan kilogram yang ditampilkan pada ilustrasi dashboard merupakan data contoh, bukan angka operasional aktual.
+
 ## Kompatibilitas
 - Data demo versi sebelumnya di browser yang sama dibaca otomatis bila database baru belum tersedia.
 - Data tidak disinkronkan antarperangkat.
