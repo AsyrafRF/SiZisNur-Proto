@@ -290,7 +290,9 @@
     db.tenants.push(tenant)
     db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
-    if (template) db.rules.push({ ...template, tenantId: id, source: 'Salinan parameter awal lembaga; Admin lembaga wajib meninjau dan mengesahkan.', weights: { ...(template.weights || {}) } })
+    db.rules.push(template
+      ? { ...template, tenantId: id, source: 'Salinan parameter awal lembaga; Admin lembaga wajib meninjau dan mengesahkan.', weights: { ...(template.weights || {}) } }
+      : { tenantId: id, moneyRate: 50000, riceRate: 2.5, rounding: 50000, weights: { fakir: 50, miskin: 35, mualaf: 15 }, scoreThreshold: null, monthlyIncentive: 0, method: 'Belum ditetapkan', source: 'Parameter awal sistem; wajib ditinjau dan disahkan Admin lembaga.', nisabGoldGram: 85, goldPricePerGram: 0, professionNisabMonthly: 0, fidyahRate: 65000, kafaratRate: 0, kafaratMealRate: 0, zakatRate: 2.5 })
     db.periods.push({ id: A.id('PR'), tenantId: id, name: 'Periode zakat pertama (Draf)', status: 'draf', openedAt: null, closedAt: null })
     writeRootAudit('TENANT_CREATED', `Lembaga ${tenant.name} dibuat dengan Admin awal ${adminName}. Status: ${status}.`)
     return tenant

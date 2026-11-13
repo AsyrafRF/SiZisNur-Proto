@@ -41,7 +41,7 @@ Nilai uang dan kilogram yang ditampilkan pada ilustrasi dashboard merupakan data
 3. Ganti ke Bendahara untuk rekonsiliasi. Pengurus meninjau dan menyetujui alokasi, lalu Relawan mencatat distribusi.
 4. Coba Portal Publik dan verifikasi nomor transaksi/token QR baru.
 5. Coba Pengajuan Lembaga dari landing dan masuk dari lembaga kedua.
-6. Uji browser mobile, mode tema gelap, reset data, serta penyimpanan dan refresh.
+6. Uji browser mobile, mode tema gelap, reset ke data bawaan melalui Pengaturan Prototype, serta penyimpanan dan refresh.
 
 
 ## Catatan migrasi pada V3 (4 November 2026)

@@ -1,8 +1,8 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261114-lembaga1'
+const CACHE_NAME = 'sizisnur-shell-v5-20261114-prototype-settings-2'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
-  './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/qrcode.js',
+  './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/public-portal.js', './js/prototype-settings.js', './js/qrcode.js',
   './assets/favicon.png', './assets/sizisnur-logo-mark.png'
 ]
 self.addEventListener('install', (event) => {

@@ -10,7 +10,7 @@
 
 Project awal merupakan prototype web statis SiZisNur dengan contoh lembaga, dashboard, penerimaan zakat, data Muzakki dan Mustahik, setoran Bendahara, penyaluran, laporan, serta acuan angka workbook 1447H/2026M. Revisi 12–13 November 2026 mengubah pembagian actor menjadi tujuh peran dan menyelaraskan alur dari persiapan data sampai laporan akhir.
 
-Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan. Revisi 14 November menambahkan aktor **Admin SiZisNur** sebagai pengelola root platform yang terpisah dari tujuh role lembaga, lalu memperluas Portal Publik untuk seluruh lembaga aktif dan menambahkan verifikasi QR publik dengan kamera.
+Pembaruan ini mempertahankan modul dan angka workbook yang sudah ada, lalu menambahkan alur mandiri Muzakki, transaksi Pending yang diverifikasi Amil, serah terima kas multi-tahap, koreksi terkendali, batch distribusi, panduan tiap role, dukungan, laporan UPZ, dan evaluasi keputusan yang masih memerlukan persetujuan stakeholder. Revisi 13 November mengembalikan kalkulasi otomatis ke form transaksi Muzakki, Operator, dan Amil serta menambahkan pemisahan kelebihan pembayaran dan konfirmasi sebelum simpan. Revisi 14 November menambahkan aktor **Admin SiZisNur** sebagai pengelola root platform yang terpisah dari tujuh role lembaga, memperluas Portal Publik untuk seluruh lembaga aktif, menambahkan verifikasi QR publik dengan kamera, serta menyediakan **Pengaturan Prototype** untuk ekspor/impor, reset, penghapusan data simulasi, dan pemeriksaan integritas.
 
 ## 2. Catatan pembaruan landing page
 
@@ -36,13 +36,19 @@ Seluruh tabel data yang menggunakan komponen tabel bersama menampilkan maksimal 
 
    Buka `http://localhost:8000/`.
 4. Pilih **Masuk / Coba Demo** dan pilih akun role yang tersedia. Login prototype tidak menggunakan password atau OTP.
-5. Gunakan **Reset Data Demo** untuk mengembalikan data awal bila menu tersebut tersedia pada akun demo.
+5. Untuk menyiapkan ulang simulasi, masuk sebagai **Admin SiZisNur** (`root@sizisnur.demo`) lalu buka tab **Pengaturan Prototype**. Di sana tersedia ekspor/impor cadangan JSON, reset ke data bawaan, hapus semua data, dan pemeriksaan integritas. Reset/hapus memerlukan frasa konfirmasi.
 
 Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan harus menunggu verifikasi nomor HP/email agar data tidak dapat diambil hanya dengan memasukkan kontak milik orang lain.
 
-File mandiri yang memuat HTML, CSS, JavaScript, QR, dan logo tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`.
+File mandiri yang memuat HTML, CSS, JavaScript, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md`.
 
-## 6. Kalkulasi otomatis transaksi zakat
+## 6. Pengaturan Prototype
+
+Aktor Admin SiZisNur memiliki tab **Pengaturan Prototype** untuk mengekspor dan mengimpor cadangan JSON database V5, reset ke seed terbaru, menghapus semua data simulasi, memeriksa relasi dasar, mengembalikan tema, dan keluar dari sesi root. Reset dan hapus data menggunakan frasa konfirmasi. Hapus semua data akan mengosongkan Mustahik; akun Admin SiZisNur tetap dipertahankan agar konsol root dapat diakses kembali. Lihat `docs/PENGATURAN_PROTOTYPE.md` untuk format cadangan, batas impor, perlindungan data, dan cara menjalankan.
+
+**Catatan Mustahik:** array Mustahik tidak diubah dalam pembaruan akun contoh dan reset mengambil kembali seed yang dipertahankan. Catatan implementasi workbook pada project menyebut record individual yang ada sebagai data sintetis non-identifying untuk mereproduksi agregat workbook terverifikasi; workbook Excel sumber tidak disertakan di dalam arsip ini.
+
+## 7. Kalkulasi otomatis transaksi zakat
 
 Form transaksi **Muzakki (self-service)** dan form konter **Operator/Amil** memakai komponen kalkulator yang sama. Pratinjau memperlihatkan estimasi kewajiban, jumlah pembayaran, kekurangan, dan kelebihan. Perubahan jenis, jumlah jiwa/hari/kasus, nilai harta atau penghasilan, haul, serta jenis kafarat memperbarui estimasi.
 
@@ -63,7 +69,7 @@ Kafarat tidak dipatok dengan satu nominal universal: kalkulasi bergantung pada j
 
 Rujukan resmi yang digunakan untuk nilai awal: [BAZNAS RI — zakat fitrah dan fidyah 1447 H/2026 M](https://baznas.go.id/news-show/Ramadan_2026,_BAZNAS_RI_Tetapkan_Zakat_Fitrah_Rp50_Ribu/3708), [nisab dan kadar zakat penghasilan 2026](https://www.baznas.go.id/zakatpenghasilan), [kalkulator zakat BAZNAS](https://baznas.go.id/kalkulatorzakat), dan [penjelasan kafarat BAZNAS](https://baznas.go.id/artikel-show/Mengenal-Arti-Kafarat/232). Tarif tetap dapat disesuaikan Admin lembaga sesuai ketetapan wilayah.
 
-## 7. Matriks actor dan tanggung jawab
+## 8. Matriks actor dan tanggung jawab
 
 | Actor | Fokus | Kewenangan prototype |
 |---|---|---|
@@ -89,7 +95,7 @@ Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan peng
 
 Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, serta mengaktifkan/nonaktifkan akun lembaga. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
 
-## 8. Alur end-to-end yang diimplementasikan
+## 9. Alur end-to-end yang diimplementasikan
 
 ### A. Persiapan
 
@@ -117,7 +123,7 @@ Bendahara menyiapkan alokasi dari saldo yang sudah direkonsiliasi, atau dari per
 
 Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat difilter menurut periode dan jenis laporan serta diekspor ke CSV, XLSX, atau PDF melalui fungsi cetak browser. Paket CSV/XLSX UPZ disediakan sebagai bahan pelaporan bulanan, tetapi belum dikirim langsung ke BAZNAS. Log audit demo memakai rantai hash SHA-256 untuk membantu mendeteksi perubahan yang tidak konsisten.
 
-## 9. Modul tambahan
+## 10. Modul tambahan
 
 - **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Contoh data demo: Masjid An-Nur / Perumahan Villa Pesona Asri memiliki RW 11 dengan RT 01–06; Masjid Al-Hikmah / Kompleks Buana Citra memiliki RW 1 (RT 01–10) dan RW 2 (RT 01–05). Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
 - **Kalkulator zakat:** tersedia pada halaman Muzakki dan menjadi pratinjau wajib saat transaksi pada halaman Muzakki, Operator, serta Amil. Mendukung fitrah, maal, profesi, fidyah, kafarat, dan sedekah; tarif dan nisab mengikuti parameter lembaga.
@@ -126,7 +132,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 - **Offline-first prototype:** service worker menyimpan shell aplikasi. Perubahan data masuk antrean sinkronisasi lokal. Pengiriman baru dicoba jika `window.SIZISNUR_API_BASE` disediakan. Tanpa backend yang sesuai, tidak ada sinkronisasi cloud.
 - **Ruang evaluasi prototype:** menginventarisasi aturan bisnis, kebijakan keuangan, syariah, integrasi dan keamanan yang belum disepakati.
 
-## 10. Batasan dan keamanan yang wajib dipahami
+## 11. Batasan dan keamanan yang wajib dipahami
 
 1. Tidak ada backend produksi, PostgreSQL, autentikasi sesungguhnya, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi lembaga tingkat server. Akun demo lembaga maupun root tidak memakai password. Akun root hanya dipisahkan secara struktur data dan UI pada browser; ini belum menjadi batas keamanan yang dapat dipercaya. Jangan mempublikasikan build demo dengan data nyata. Sebelum produksi, autentikasi root harus memakai kredensial terpisah, MFA wajib, otorisasi backend khusus platform, pembatasan jaringan/perangkat sesuai risiko, rate limit, pencatatan audit server append-only, serta proses pemulihan akun yang diawasi. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
 2. `localStorage` dapat dibaca dan diubah oleh pengguna perangkat. Hash audit SHA-256 pada browser bukan bukti immutable, bukan tanda tangan digital, dan bukan pengganti audit server append-only.
@@ -138,13 +144,13 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 8. Tarif zakat, nisab, lafaz akad, doa, formula distribusi, dan kebijakan mustahik perlu disahkan oleh pihak berwenang dan pembimbing agama. Teks akad hanya pengingat UI dan tidak mengesahkan ibadah. Atribut Daerah/RW/RT administratif pada identitas Mustahik tetap terpisah dari `mustahik.region` (kolom H wilayah penilaian survei); kolom H dan formula skor workbook 1447H tidak diubah oleh fitur master wilayah.
 9. Revisi ini bukan audit hukum. Sebelum rilis, lakukan kajian atas UU 23/2011 tentang Pengelolaan Zakat, PP 14/2014, UU 27/2022 tentang Pelindungan Data Pribadi, peraturan turunannya, kebijakan BAZNAS terkait UPZ, dan ketentuan daerah yang relevan. Konsultasikan dengan penasihat hukum dan BAZNAS.
 
-## 11. Rujukan kebutuhan dan keputusan yang belum selesai
+## 12. Rujukan kebutuhan dan keputusan yang belum selesai
 
 Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
 
 Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
 
-## 12. Build dan pengujian
+## 13. Build dan pengujian
 
 ```bash
 node --check js/app.js
@@ -163,7 +169,7 @@ python tools/build-standalone.py
 
 Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, role dan halaman, hash audit, alokasi, master Daerah/RW/RT per lembaga, validasi relasi lintas lembaga, pemisahan domisili administratif dari kolom H penilaian, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
 
-## 13. Struktur folder
+## 14. Struktur folder
 
 ```text
 index.html

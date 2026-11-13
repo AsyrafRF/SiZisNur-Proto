@@ -83,6 +83,19 @@
 
 # Changelog SiZisNur
 
+## 14 November 2026 — Pengaturan Prototype dan perapian dataset bawaan
+
+- Menambahkan tab **Pengaturan Prototype** khusus Admin SiZisNur pada konsol root.
+- Menyediakan ekspor cadangan JSON lengkap, impor dengan validasi schema V5 dan konfirmasi, reset ke seed terbaru, hapus semua data simulasi, pemeriksaan integritas relasi dasar, pengaturan tema, dan keluar dari sesi root.
+- Reset/hapus data memerlukan frasa konfirmasi; penghapusan total mempertahankan satu akun Admin SiZisNur dan pengaturan platform default agar konsol dapat digunakan kembali.
+- Import menormalkan koleksi opsional, memastikan akun root aktif dan tetap berada pada `platformAdmins`, serta tidak mengizinkan root masuk ke koleksi `users` lembaga.
+- Kegagalan penyimpanan lokal memicu rollback objek database sebelumnya, bukan membiarkannya dalam kondisi setengah terganti.
+- Merapikan label akun pendataan dan dataset akun contoh non-Mustahik. Array `mustahiks` tidak diubah; mutasi startup yang menghapus kolom RT Mustahik juga sudah dihilangkan.
+- Reset mengembalikan seed Mustahik yang ada pada project; hapus semua data mengosongkan Mustahik dan impor mengikuti file cadangan.
+- Menambahkan `docs/PENGATURAN_PROTOTYPE.md` serta `tests/prototype-settings.test.cjs` untuk menguji ekspor/impor, reset, hapus data, akses root, dan baseline dataset Mustahik.
+- Menambahkan styling responsif halaman pengaturan dan memperbarui cache service worker.
+
+
 ## 13 November 2026 — Penyesuaian alert untuk dark mode seluruh halaman
 
 - Menyatukan palet alert semantik untuk pesan umum, peringatan, kesalahan, keberhasilan, informasi, dan catatan netral melalui token warna global.

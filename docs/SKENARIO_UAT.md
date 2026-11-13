@@ -6,7 +6,7 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 
 1. Jalankan `index.html` melalui server lokal untuk menguji PWA dan kamera. Kamera hanya tersedia pada browser/perangkat yang mendukung izin kamera dan BarcodeDetector.
 2. Pilih **Masuk / Coba Demo**, lalu masuk sesuai role.
-3. Pastikan data demo belum diubah. Gunakan **Reset Data Demo** untuk mengulang skenario bila opsi tersedia.
+3. Pastikan data demo belum diubah. Untuk mengulang dari kondisi awal, login sebagai **Admin SiZisNur** lalu buka **Pengaturan Prototype → Reset ke data bawaan**. Ekspor cadangan terlebih dahulu bila perubahan sebelumnya masih diperlukan.
 4. Sebelum skenario transaksi mandiri, login sebagai Admin untuk memeriksa tarif fitrah, fidyah, biaya makan kafarat, nisab maal, harga emas, nisab profesi, dan kadar zakat pada menu Tarif & Konfigurasi Perhitungan. Ubah hanya lembaga uji, lalu kembali login sebagai role yang sedang diuji.
 5. Catat hasil, browser, perangkat, tanggal, dan temuan yang memerlukan keputusan stakeholder.
 

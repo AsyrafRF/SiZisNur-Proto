@@ -48,16 +48,16 @@
   db.rules ||= []
   const demoMuzakki = db.users.find((u) => u.id === 'US-MZK')
   if (demoMuzakki) {
-    demoMuzakki.name = 'Muzakki Demo'
+    demoMuzakki.name = 'Muzakki Demo 01'
     demoMuzakki.role = 'Muzakki'
     demoMuzakki.accountId = 'ACC-MZK-01'
     demoMuzakki.personId = 'PS-01'
   }
   if (!db.users.some((u) => u.id === 'US-REL')) db.users.push({ id: 'US-REL', tenantId: 'TN-ANNUR', name: 'Relawan Demo', role: 'Relawan', email: 'relawan@demo.invalid', active: true })
   const oldAdmin = db.users.find((u) => u.id === 'US-PTG')
-  if (oldAdmin) { oldAdmin.name = 'Admin Data Mustahik Demo'; oldAdmin.email = 'admin.data@demo.invalid'; oldAdmin.role = 'Admin' }
+  if (oldAdmin) { oldAdmin.name = 'Admin Pendataan'; oldAdmin.email = 'admin.data@demo.invalid'; oldAdmin.role = 'Admin' }
   if (!db.accounts.some((x) => x.id === 'ACC-MZK-01')) db.accounts.push({
-    id: 'ACC-MZK-01', userId: 'US-MZK', displayName: 'Muzakki Demo', phone: '080000000101', email: 'muzakki@demo.invalid', consentAt: null,
+    id: 'ACC-MZK-01', userId: 'US-MZK', displayName: 'Muzakki Demo 01', phone: '081200000101', email: 'muzakki01@demo.invalid', consentAt: null,
   })
   if (!db.households.some((x) => x.accountId === 'ACC-MZK-01')) db.households.push(
     { id: 'HH-001', accountId: 'ACC-MZK-01', name: 'Ahmad Santoso', relation: 'Kepala keluarga' },
@@ -201,7 +201,7 @@
     } else Object.assign(person, { domicileStatus: 'non_daerah', areaId: null, rwId: null, rtId: null })
     delete person.rt; delete person.regionType; delete person.regionName
   })
-  db.mustahiks.forEach((mustahik) => { delete mustahik.rt })
+  // Keep the workbook-backed Mustahik records unchanged; RT/source fields remain part of the baseline dataset.
   db.muzakkiMemberships.forEach((member) => {
     const person = db.persons.find((x) => x.id === member.personId && x.tenantId === member.tenantId)
     if (person) mirrorMembershipDomicile(member, person)
