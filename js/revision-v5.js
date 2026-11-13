@@ -212,9 +212,13 @@
   window.__SIZISNUR_REFRESH_DOMICILE = refreshDomicileControls
   db.rules.forEach((r) => {
     r.nisabGoldGram ??= 85
-    r.goldPricePerGram ??= 1500000
-    r.fidyahRate ??= 30000
+    // Demo starter value only, derived from the 2026 income nisab; Admin must replace it with the gold price used for maal by this tenant.
+    r.goldPricePerGram ??= 1078608.56
+    r.professionNisabMonthly ??= 7640144
+    r.fidyahRate ??= 65000
     r.kafaratRate ??= 0
+    r.kafaratMealRate ??= Number(r.kafaratRate || 0)
+    r.zakatRate ??= 2.5
   })
   db.audit.slice().reverse().forEach((entry) => {
     if (!entry.hash) {
@@ -789,11 +793,250 @@
       <section class="card"><div class="card-top"><h3>Tenant yang terhubung</h3>${action('Gabung tenant lain', 'tenant-join', 'sm')}</div>${A.table(['Tenant', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section>
       <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan tenant pada prototype</label>${formButton('Simpan profil')}</form></section>
       <section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Data keluarga membantu menghitung kewajiban zakat fitrah dan jumlah jiwa yang ditanggung.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section></div>
-      <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter tenant yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Nilai harta (khusus maal, Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.fld('Jumlah jiwa / hari', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.fld('Harga emas per gram (Rp)', 'goldPrice', A.rule()?.goldPricePerGram || 1500000, 'text', 'inputmode="numeric" data-format="idr"')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
+      <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter tenant yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['profesi', 'Zakat profesi'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Harta bersih (maal) / penghasilan profesi (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.sel('Periode penghasilan profesi', 'calcProfessionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}${A.fld('Jumlah jiwa / hari / kasus', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.sel('Status haul untuk zakat maal', 'calcHaul', [['no', 'Belum / tidak mencapai haul'], ['yes', 'Sudah mencapai haul satu tahun']], 'no')}${A.sel('Jenis kafarat', 'calcKafaratType', [['yamin', 'Melanggar sumpah (memberi makan 10 orang)'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}${A.sel('Tahapan kafarat 60 orang', 'calcKafaratFeeding', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Tidak mampu tahapan sebelumnya; hitung opsi memberi makan 60 orang']], 'no')}${A.fld('Harga emas acuan per gram (Rp)', 'goldPrice', Math.round(A.rule()?.goldPricePerGram || 1078609), 'text', 'inputmode="numeric" data-format="idr" min="1" required')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
       <div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>
     </div></details>`
     return `${A.boxhead('Dashboard Zakat Saya', `Laporan pribadi ${esc(tenantLabel(currentTenantId()))} · ${esc(period?.name || 'Tidak ada periode aktif')}`, '')}${personalDashboard}${accountTools}`
   }
+
+  const TRANSACTION_CATEGORIES = [
+    ['Zakat Fitrah', 'Zakat fitrah'], ['Zakat Maal', 'Zakat maal'], ['Zakat Profesi', 'Zakat profesi'],
+    ['Fidyah', 'Fidyah'], ['Kafarat', 'Kafarat'], ['Infak/Sedekah', 'Infak / sedekah'],
+  ]
+
+  function estimateZakat(category, type, units, assetsValue = 0, haulComplete = 'no', kafaratType = 'yamin', rule = A.rule(), options = {}) {
+    const cfg = rule || {}
+    const count = Math.max(1, Number(units || 1))
+    const goldPrice = Math.max(0, Number(cfg.goldPricePerGram ?? 1078608.56))
+    const nisabGold = Math.max(0, Number(cfg.nisabGoldGram ?? 85))
+    const nisabAnnual = goldPrice * nisabGold
+    const nisabMonthly = nisabAnnual / 12
+    const professionNisabMonthly = Math.max(0, Number(cfg.professionNisabMonthly ?? nisabMonthly))
+    const professionNisabAnnual = professionNisabMonthly * 12
+    const zakatRate = Math.max(0, Number(cfg.zakatRate ?? 2.5)) / 100
+    const assets = Math.max(0, Number(assetsValue || 0))
+    let due = 0
+    let detail = ''
+    let eligible = false
+    let meals = 0
+    let selectedType = type === 'beras' ? 'beras' : 'uang'
+
+    switch (category) {
+      case 'Zakat Fitrah':
+        due = count * (selectedType === 'beras' ? Number(cfg.riceRate ?? 2.5) : Number(cfg.moneyRate ?? 45000))
+        eligible = true
+        detail = `${count} jiwa × tarif fitrah tenant`
+        break
+      case 'Zakat Maal':
+        selectedType = 'uang'
+        eligible = haulComplete === 'yes' && assets >= nisabAnnual
+        due = eligible ? assets * zakatRate : 0
+        detail = `Nisab ${money(nisabAnnual)} (85 gram emas × harga acuan); wajib bila harta bersih mencapai nisab dan haul satu tahun terpenuhi`
+        break
+      case 'Zakat Profesi': {
+        selectedType = 'uang'
+        const annualIncome = options.professionPeriod === 'annual'
+        const professionNisab = annualIncome ? professionNisabAnnual : professionNisabMonthly
+        eligible = assets >= professionNisab
+        due = eligible ? assets * zakatRate : 0
+        detail = `${annualIncome ? 'Akumulasi penghasilan setahun' : 'Penghasilan bulanan'} dibandingkan nisab ${annualIncome ? 'tahunan' : 'bulanan'} ${money(professionNisab)}${annualIncome ? '' : ' (nisab tahunan ÷ 12)'}; kadar ${Number(cfg.zakatRate ?? 2.5)}%`
+        break
+      }
+      case 'Fidyah':
+        selectedType = 'uang'
+        due = count * Number(cfg.fidyahRate ?? 65000)
+        eligible = true
+        detail = `${count} hari puasa × tarif fidyah tenant per hari`
+        break
+      case 'Kafarat': {
+        selectedType = 'uang'
+        const isYamin = kafaratType === 'yamin'
+        const needsPriorStageConfirmation = ['puasa', 'zihar'].includes(kafaratType)
+        const feedingConfirmed = isYamin || options.kafaratFeedingConfirmed === 'yes'
+        const mealCount = isYamin ? 10 : (needsPriorStageConfirmation && feedingConfirmed ? 60 : 0)
+        meals = count * mealCount
+        const mealRate = Number(cfg.kafaratMealRate ?? cfg.kafaratRate ?? 0)
+        due = meals * mealRate
+        eligible = mealCount > 0 && mealRate > 0
+        detail = isYamin
+          ? `${count} kasus × 10 porsi makan × ${money(mealRate)} per orang (opsi kafarat sumpah)`
+          : needsPriorStageConfirmation && feedingConfirmed
+            ? `${count} kasus × 60 porsi makan × ${money(mealRate)} per orang; opsi ini dipilih setelah tidak mampu menunaikan tahapan sebelumnya`
+            : 'Opsi memberi makan 60 orang baru dihitung bila tidak mampu menunaikan tahapan sebelumnya. Pastikan kondisi kasus sesuai dan konsultasikan kepada pembimbing agama.'
+        break
+      }
+      default:
+        selectedType = 'uang'
+        due = 0
+        eligible = false
+        detail = 'Infak/sedekah bersifat sukarela, tidak memiliki nilai kewajiban minimum.'
+    }
+
+    const splitExcessEligible = ['Zakat Fitrah', 'Zakat Maal', 'Zakat Profesi'].includes(category) && due > 0
+    return {
+      category, type: selectedType, count, due: Math.max(0, due), detail, eligible,
+      nisabAnnual, nisabMonthly, professionNisabAnnual, professionNisabMonthly, meals, splitExcessEligible,
+      unitLabel: selectedType === 'beras' ? 'kg' : 'Rp',
+      note: category === 'Kafarat' && Number(cfg.kafaratMealRate ?? cfg.kafaratRate ?? 0) <= 0
+        ? 'Tarif biaya makan kafarat belum diatur Admin tenant; nominal belum dapat dihitung.'
+        : category === 'Kafarat' && ['puasa', 'zihar'].includes(kafaratType) && options.kafaratFeedingConfirmed !== 'yes'
+          ? 'Jumlah 60 orang tidak otomatis dihitung. Pilih konfirmasi tahapan hanya setelah dipastikan tidak mampu menunaikan tahapan kafarat sebelumnya.'
+          : '',
+    }
+  }
+
+  function transactionFormEstimate(data, rules = A.rule()) {
+    const category = data.category || 'Zakat Fitrah'
+    const type = category === 'Zakat Fitrah' && data.type === 'beras' ? 'beras' : 'uang'
+    const units = Math.max(1, Number(data.jiwa || 1))
+    const assets = toNumber(data.assetsValue || 0)
+    const estimate = estimateZakat(category, type, units, assets, data.haulComplete || 'no', data.kafaratType || 'yamin', rules, { professionPeriod: data.professionPeriod || 'monthly', kafaratFeedingConfirmed: data.kafaratFeedingConfirmed || 'no' })
+    const paid = type === 'beras' ? toKg(data.value || 0) : toNumber(data.value || 0)
+    const excess = estimate.due > 0 ? Math.max(0, paid - estimate.due) : 0
+    const shortfall = estimate.due > 0 ? Math.max(0, estimate.due - paid) : 0
+    return { ...estimate, type, paid, excess, shortfall }
+  }
+
+  function transactionCalculatorFields(prefix, units = 1, defaultValue = '45.000') {
+    return `<div class="grid-form transaction-calculator-fields">
+      ${A.sel('Jenis pembayaran', 'category', TRANSACTION_CATEGORIES, 'Zakat Fitrah')}
+      <div data-calc-field="media">${A.sel('Media pembayaran', 'type', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}</div>
+      <div data-calc-field="quantity">${A.fld('Jumlah jiwa', 'jiwa', units, 'number', 'min="1" step="1" required')}</div>
+      <div data-calc-field="assets" hidden>${A.fld('Harta bersih yang menjadi objek zakat (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}</div>
+      <div data-calc-field="profession-period" hidden>${A.sel('Periode penghasilan profesi', 'professionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}</div>
+      <div data-calc-field="haul" hidden>${A.sel('Apakah harta sudah dimiliki satu tahun (haul)?', 'haulComplete', [['no', 'Belum / tidak'], ['yes', 'Ya, sudah mencapai haul']], 'no')}</div>
+      <div data-calc-field="kafarat" hidden>${A.sel('Jenis kafarat', 'kafaratType', [['yamin', 'Melanggar sumpah — opsi memberi makan 10 orang'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}</div>
+      <div data-calc-field="kafarat-stage" hidden>${A.sel('Apakah tidak mampu menunaikan tahapan kafarat sebelumnya?', 'kafaratFeedingConfirmed', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Ya, tidak mampu; hitung opsi memberi makan 60 orang']], 'no')}</div>
+      <div data-calc-field="amount">${A.fld('Nominal dibayarkan (Rp) / beras (kg)', 'value', defaultValue, 'text', 'inputmode="decimal" data-format="idr" required')}</div>
+    </div>
+    <div id="${esc(prefix)}-calculation-preview" class="alert light transaction-calculation-preview" aria-live="polite">Kewajiban akan dihitung otomatis mengikuti jenis pembayaran dan tarif tenant.</div>
+    <label class="check transaction-excess-check" data-calc-field="excess" hidden><input type="checkbox" name="autoExcess" value="yes"> Jika pembayaran zakat melebihi kewajiban, pisahkan kelebihannya sebagai infak/sedekah sesuai media pembayaran.</label>`
+  }
+
+  function updateTransactionPreview(form) {
+    if (!form || !['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form)) return
+    const data = Object.fromEntries(new FormData(form).entries())
+    let result
+    try { result = transactionFormEstimate(data) } catch (error) { return }
+    const category = data.category || 'Zakat Fitrah'
+    const isFitrah = category === 'Zakat Fitrah'
+    const isMaal = category === 'Zakat Maal'
+    const isProfession = category === 'Zakat Profesi'
+    const isKafarat = category === 'Kafarat'
+    const isFidyah = category === 'Fidyah'
+    const isAssetBased = isMaal || isProfession
+    const countWrap = form.querySelector('[data-calc-field="quantity"]')
+    const countLabel = countWrap?.querySelector('label')
+    if (countLabel) countLabel.textContent = isFitrah ? 'Jumlah jiwa' : isFidyah ? 'Jumlah hari puasa yang ditinggalkan' : isKafarat ? 'Jumlah kasus kafarat' : 'Jumlah unit'
+    if (countWrap) countWrap.hidden = isAssetBased || category === 'Infak/Sedekah'
+    const assetsWrap = form.querySelector('[data-calc-field="assets"]')
+    const haulWrap = form.querySelector('[data-calc-field="haul"]')
+    const professionPeriodWrap = form.querySelector('[data-calc-field="profession-period"]')
+    const kafaratWrap = form.querySelector('[data-calc-field="kafarat"]')
+    const kafaratStageWrap = form.querySelector('[data-calc-field="kafarat-stage"]')
+    const mediaWrap = form.querySelector('[data-calc-field="media"]')
+    const excessWrap = form.querySelector('[data-calc-field="excess"]')
+    if (assetsWrap) assetsWrap.hidden = !isAssetBased
+    if (haulWrap) haulWrap.hidden = !isMaal
+    if (professionPeriodWrap) professionPeriodWrap.hidden = !isProfession
+    const assetsInput = form.elements.assetsValue
+    if (assetsInput) { const label = assetsInput.closest('.field')?.querySelector('label'); if (label) label.textContent = isMaal ? 'Harta bersih yang menjadi objek zakat (Rp)' : (data.professionPeriod === 'annual' ? 'Akumulasi penghasilan satu tahun (Rp)' : 'Total penghasilan bulanan (Rp)') }
+    if (kafaratWrap) kafaratWrap.hidden = !isKafarat
+    if (kafaratStageWrap) kafaratStageWrap.hidden = !isKafarat || data.kafaratType === 'yamin'
+    if (mediaWrap) mediaWrap.hidden = !isFitrah
+    if (excessWrap) excessWrap.hidden = !result.splitExcessEligible
+    const amount = form.elements.value
+    if (amount) {
+      amount.dataset.format = result.type === 'beras' ? 'kg' : 'idr'
+      const amountLabel = amount.closest('.field')?.querySelector('label')
+      if (amountLabel) amountLabel.textContent = result.type === 'beras' ? 'Beras dibayarkan (kg)' : 'Nominal dibayarkan (Rp)'
+    }
+    const preview = form.querySelector('.transaction-calculation-preview')
+    if (!preview) return
+    const dueText = result.type === 'beras' ? kilos(result.due) : money(result.due)
+    const paidText = result.type === 'beras' ? kilos(result.paid) : money(result.paid)
+    let body = `<b>Perhitungan otomatis — ${esc(category)}</b><p>${esc(result.detail)}</p><div class="mini-list"><div class="mini-item"><span>Kewajiban / estimasi</span><b>${dueText}</b></div><div class="mini-item"><span>Nilai yang dibayarkan</span><b>${paidText}</b></div>`
+    if (isFitrah) {
+      const moneyDue = estimateZakat('Zakat Fitrah', 'uang', result.count).due
+      const riceDue = estimateZakat('Zakat Fitrah', 'beras', result.count).due
+      body += `<div class="mini-item"><span>Kewajiban bila seluruhnya uang</span><b>${money(moneyDue)}</b></div><div class="mini-item"><span>Kewajiban bila seluruhnya beras</span><b>${kilos(riceDue)}</b></div>`
+    }
+    if (result.shortfall > 0.001) body += `<div class="mini-item"><span>Masih kurang dari kewajiban</span><b>${result.type === 'beras' ? kilos(result.shortfall) : money(result.shortfall)}</b></div>`
+    if (result.excess > 0.001) body += `<div class="mini-item"><span>Kelebihan dari kewajiban</span><b>${result.type === 'beras' ? kilos(result.excess) : money(result.excess)}</b></div>`
+    body += '</div>'
+    const splitChecked = Boolean(form.elements.autoExcess?.checked && result.excess > 0.001)
+    const categoryRecorded = splitChecked ? result.due : result.paid
+    const infakRecorded = splitChecked ? result.excess : 0
+    const categoryRecordedText = result.type === 'beras' ? kilos(categoryRecorded) : money(categoryRecorded)
+    const totalRecordedText = result.type === 'beras' ? `Rp0 dan ${kilos(result.paid)}` : `${money(result.paid)} dan 0 kg`
+    body += `<div class="mini-list transaction-allocation-preview"><div class="mini-item"><span>Masuk kategori ${esc(category)}</span><b>${categoryRecordedText}</b></div>${infakRecorded > 0 ? `<div class="mini-item"><span>Masuk Infak/Sedekah</span><b>${result.type === 'beras' ? kilos(infakRecorded) : money(infakRecorded)}</b></div>` : ''}<div class="mini-item"><span>Total semua kategori</span><b>${totalRecordedText}</b></div></div>`
+    if ((isMaal && data.haulComplete !== 'yes') || (isMaal && result.nisabAnnual > toNumber(data.assetsValue || 0))) body += '<small>Belum memenuhi nisab dan/atau haul pada data yang diinput; periksa kembali komponen harta serta masa kepemilikan.</small>'
+    else if (isProfession && toNumber(data.assetsValue || 0) < (data.professionPeriod === 'annual' ? result.professionNisabAnnual : result.professionNisabMonthly)) body += `<small>${data.professionPeriod === 'annual' ? 'Akumulasi penghasilan setahun' : 'Penghasilan bulanan'} belum mencapai nisab ${data.professionPeriod === 'annual' ? 'tahunan' : 'bulanan'}; zakat profesi tidak terhitung wajib berdasarkan parameter ini.</small>`
+    if (result.note) body += `<p>${esc(result.note)}</p>`
+    if (result.excess > 0.001 && result.splitExcessEligible) body += '<p class="caption">Kelebihan zakat dapat dialihkan ke infak/sedekah setelah dikonfirmasi.</p>'
+    else if (result.excess > 0.001) body += '<p class="caption">Ada pembayaran di atas estimasi kewajiban. Kelebihan kategori ini tidak otomatis dialihkan; perlakuannya perlu dikonfirmasi kepada pengelola.</p>'
+    body += '<small>Estimasi mengikuti parameter tenant. Untuk penetapan ibadah, verifikasi kondisi harta, haul, jenis kafarat, dan keputusan syariah setempat.</small>'
+    preview.innerHTML = body
+  }
+
+  function setTransactionAmount(form) {
+    if (!form || !['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form)) return
+    const category = form.elements.category?.value || 'Zakat Fitrah'
+    const type = category === 'Zakat Fitrah' && form.elements.type?.value === 'beras' ? 'beras' : 'uang'
+    if (form.elements.type) form.elements.type.value = type
+    const data = Object.fromEntries(new FormData(form).entries())
+    data.type = type
+    let estimate
+    try { estimate = transactionFormEstimate(data) } catch { estimate = null }
+    const amount = form.elements.value
+    if (amount) {
+      amount.dataset.format = type === 'beras' ? 'kg' : 'idr'
+      if (estimate && estimate.due > 0) amount.value = String(estimate.due)
+      else if (['Infak/Sedekah', 'Kafarat', 'Zakat Maal', 'Zakat Profesi'].includes(category)) amount.value = ''
+      formatInputValue(amount)
+    }
+    updateTransactionPreview(form)
+  }
+
+  function transactionPaymentFromData(data, rules = A.rule()) {
+    const result = transactionFormEstimate(data, rules)
+    if (!Number.isFinite(result.paid) || result.paid <= 0) throw new Error('Nominal yang dibayarkan harus lebih besar dari nol')
+    const splitExcess = result.splitExcessEligible && data.autoExcess === 'yes' && result.excess > 0.001
+    const zakatLineValue = splitExcess ? result.due : result.paid
+    const lines = [{ category: result.category, type: result.type, value: zakatLineValue }]
+    if (splitExcess) lines.push({ category: 'Infak/Sedekah', type: result.type, value: result.excess })
+    return { lines, type: result.type, value: result.paid, estimate: result, excessAllocated: splitExcess ? result.excess : 0 }
+  }
+
+  function maybeConfirmExcess(form, data) {
+    if (data.autoExcess === 'yes' || form.dataset.excessConfirmed === 'yes') return false
+    const result = transactionFormEstimate(data)
+    if (!result.splitExcessEligible || result.excess <= 0.001) return false
+    const amount = result.type === 'beras' ? kilos(result.excess) : money(result.excess)
+    const amountUnit = result.type === 'beras' ? 'beras' : 'uang'
+    const overlay = document.createElement('div')
+    overlay.className = 'excess-confirm-backdrop'
+    overlay.innerHTML = `<section class="excess-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="excess-confirm-title"><h3 id="excess-confirm-title">Konfirmasi kelebihan pembayaran</h3><p>Total yang kamu bayarkan melebihi jumlah kewajiban yang harus dibayarkan sebesar <b>${esc(amount)}</b> (${amountUnit}). Apakah kamu mau memasukkan selebihnya ke infak/sedekah?</p><div class="actions"><button type="button" class="btn" data-excess-action="cancel">Tidak, kembali ke formulir</button><button type="button" class="btn primary" data-excess-action="accept">Ya, pisahkan ke infak/sedekah</button></div></section>`
+    overlay.__transactionForm = form
+    document.body.appendChild(overlay)
+    overlay.querySelector('[data-excess-action="accept"]')?.focus()
+    return true
+  }
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-excess-action]')
+    if (!button) return
+    const overlay = button.closest('.excess-confirm-backdrop')
+    const form = overlay?.__transactionForm
+    if (!overlay || !form) return
+    const accept = button.dataset.excessAction === 'accept'
+    overlay.remove()
+    if (!accept) return
+    const checkbox = form.elements.autoExcess
+    if (checkbox) checkbox.checked = true
+    form.dataset.excessConfirmed = 'yes'
+    form.requestSubmit()
+  })
 
   function openSelfTransaction() {
     const account = accountForUser()
@@ -803,12 +1046,16 @@
     if (oneTxPerTenantPeriod(account.id, currentTenantId(), period.id)) throw new Error('Satu akun hanya dapat membuat satu transaksi per tenant dalam satu periode')
     const householdCount = householdForUser().length || 1
     const rules = A.rule()
-    A.modal('Buat rencana transaksi zakat', `<form data-v5-form="self-transaction"><div class="grid-form">${A.sel('Jenis zakat', 'category', [['Zakat Fitrah', 'Zakat fitrah'], ['Zakat Maal', 'Zakat maal'], ['Zakat Profesi', 'Zakat profesi'], ['Fidyah', 'Fidyah'], ['Kafarat', 'Kafarat'], ['Infak/Sedekah', 'Infak / sedekah']], 'Zakat Fitrah')}${A.sel('Media pembayaran', 'type', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Jumlah jiwa / unit', 'jiwa', householdCount, 'number', 'min="1" required')}${A.fld('Nominal (Rp) atau jumlah beras (kg)', 'value', householdCount * (rules?.moneyRate || 45000), 'text', 'inputmode="decimal" data-format="idr" required')}${A.sel('Kirim notifikasi', 'channel', [['app', 'Notifikasi aplikasi'], ['email', 'Email (simulasi)'], ['whatsapp', 'WhatsApp (simulasi)']], 'app')}</div><div class="alert light">Untuk fitrah, jumlah awal dihitung dari jumlah anggota keluarga dan tarif tenant. Periksa kembali nominal sebelum disimpan.</div>${A.textarea('Catatan untuk Amil (opsional)', 'note', '')}<label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami bahwa transaksi masih Pending dan pembayaran baru sah tercatat setelah diperiksa Amil</label>${formButton('Simpan dan tampilkan QR')}</form>`, true)
+    const defaultFitrah = householdCount * (rules?.moneyRate || 45000)
+    A.modal('Buat rencana transaksi zakat', `<form data-v5-form="self-transaction">
+      ${transactionCalculatorFields('self', householdCount, String(defaultFitrah))}
+      ${A.sel('Kirim notifikasi', 'channel', [['app', 'Notifikasi aplikasi'], ['email', 'Email (simulasi)'], ['whatsapp', 'WhatsApp (simulasi)']], 'app')}
+      ${A.textarea('Catatan untuk Amil (opsional)', 'note', '')}
+      <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami bahwa transaksi masih Pending dan pembayaran baru sah tercatat setelah diperiksa Amil</label>
+      ${formButton('Simpan dan terbitkan QR')}
+    </form>`, true)
     const form = document.querySelector('[data-v5-form="self-transaction"]')
-    if (form) {
-      form.addEventListener('change', (event) => setSelfTransactionAmount(form, event.target.name === 'type'))
-      setSelfTransactionAmount(form)
-    }
+    if (form) { form.dataset.defaultFitrahCount = String(householdCount); setTransactionAmount(form) }
   }
   function joinTenantModal() {
     const available = db.tenants.filter((t) => !memberForUser(activeUser().id, t.id))
@@ -849,12 +1096,8 @@
     if (!account || !member || !period) throw new Error('Akun, tenant, atau periode belum siap')
     if (d.confirm !== 'yes') throw new Error('Konfirmasi transaksi wajib dicentang')
     if (oneTxPerTenantPeriod(account.id, currentTenantId(), period.id, member.personId)) throw new Error('Satu transaksi aktif per tenant dan periode telah dibuat')
+    const payment = transactionPaymentFromData(d)
     const jiwa = Math.max(1, Math.floor(Number(d.jiwa || 1)))
-    const type = d.category === 'Fidyah' ? 'uang' : d.type
-    let value = type === 'uang' ? toNumber(d.value || 0) : toKg(d.value || 0)
-    if (d.category === 'Zakat Fitrah') value = jiwa * (type === 'beras' ? Number(A.rule()?.riceRate || 2.5) : Number(A.rule()?.moneyRate || 45000))
-    if (d.category === 'Fidyah') value = jiwa * Number(A.rule()?.fidyahRate || 30000)
-    if (!Number.isFinite(value) || value <= 0) throw new Error('Nominal wajib lebih besar dari nol')
     const person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     if (!person) throw new Error('Lengkapi profil Muzakki pada tenant ini terlebih dahulu')
     const seq = db.transactions.filter((x) => x.tenantId === currentTenantId()).length + 1
@@ -862,12 +1105,13 @@
       id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial: `MS-${String(seq).padStart(6, '0')}`,
       personId: person.id, accountId: account.id, accountUserId: activeUser().id, recordedBy: activeUser().id,
       handledBy: null, operatorId: null, assignedAmilId: null, source: 'self-service', jiwa,
-      lines: [{ category: d.category, type, value }], createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      lines: payment.lines, paymentEstimate: { due: payment.estimate.due, paid: payment.value, excessAllocated: payment.excessAllocated, method: 'tenant-calculator' },
+      createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending', note: d.note || '',
     }
     db.transactions.push(tx)
-    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, accountId: account.id, channel: d.channel || 'app', status: 'lokal', date: dateToday(), subject: `Terima kasih ${person.name}`, message: `Terima kasih telah menunaikan zakat melalui ${A.tenant().name}. Terdaftar ${householdForUser().length} anggota keluarga. Total ${money(effectiveTotals(tx).money)} dan ${kilos(effectiveTotals(tx).rice)}. Tunjukkan QR kepada petugas Amil ${A.tenant().name}.` })
-    A.aud('TRANSAKSI_PENDING', `Muzakki membuat ${tx.serial} dari layanan mandiri`)
+    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, accountId: account.id, channel: d.channel || 'app', status: 'lokal', date: dateToday(), subject: `Terima kasih ${person.name}`, message: `Terima kasih telah menunaikan ${payment.estimate.category} melalui ${A.tenant().name}. Total ${money(effectiveTotals(tx).money)} dan ${kilos(effectiveTotals(tx).rice)}. Tunjukkan QR kepada petugas Amil ${A.tenant().name}.` })
+    A.aud('TRANSAKSI_PENDING', `Muzakki membuat ${tx.serial} dari layanan mandiri${payment.excessAllocated ? `; kelebihan ${payment.excessAllocated} dialihkan ke infak/sedekah` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
     A.persist()
@@ -1299,59 +1543,34 @@
     A.login(userId, false)
     A.toast('Akun Muzakki berhasil dibuat. Lengkapi data keluarga sebelum membuat transaksi.', 'success')
   }
-  function setOperatorAmount(form, resetForType = false) {
-    if (!form || form.dataset.v5Form !== 'operator-transaction') return
-    const amount = form.elements.value
-    const type = form.elements.type?.value || 'uang'
-    const category = form.elements.category?.value || 'Zakat Fitrah'
-    const jiwa = Math.max(1, Math.floor(Number(form.elements.jiwa?.value || 1)))
-    if (!amount) return
-    amount.dataset.format = type === 'uang' ? 'idr' : 'kg'
-    if (category === 'Zakat Fitrah') {
-      const rule = A.rule()
-      const rate = type === 'uang' ? Number(rule?.moneyRate || 45000) : Number(rule?.riceRate || 2.5)
-      amount.value = String(jiwa * rate)
-    } else if (resetForType) {
-      amount.value = type === 'uang' ? '45000' : '2.5'
-    }
-    formatInputValue(amount)
-  }
-
-  function setSelfTransactionAmount(form, resetForType = false) {
-    if (!form || form.dataset.v5Form !== 'self-transaction') return
-    const amount = form.elements.value
-    const type = form.elements.type?.value || 'uang'
-    const category = form.elements.category?.value || 'Zakat Fitrah'
-    const count = Math.max(1, Math.floor(Number(form.elements.jiwa?.value || 1)))
-    if (!amount) return
-    amount.dataset.format = type === 'uang' ? 'idr' : 'kg'
-    const rule = A.rule()
-    if (category === 'Zakat Fitrah') {
-      const rate = type === 'uang' ? Number(rule?.moneyRate || 45000) : Number(rule?.riceRate || 2.5)
-      amount.value = String(count * rate)
-    } else if (category === 'Fidyah') {
-      if (form.elements.type) form.elements.type.value = 'uang'
-      amount.dataset.format = 'idr'
-      amount.value = String(count * Number(rule?.fidyahRate || 30000))
-    } else if (resetForType) {
-      amount.value = ''
-    }
-    formatInputValue(amount)
-  }
+  function setOperatorAmount(form) { setTransactionAmount(form) }
+  function setSelfTransactionAmount(form) { setTransactionAmount(form) }
 
   function openOperatorTransactionModal() {
     const period = currentPeriod()
     if (!period) throw new Error('Tenant belum membuka periode zakat')
     const people = A.scoped('persons').map((x) => [x.id, `${x.name} · ${x.phone || x.email || 'tanpa kontak'}`])
-    A.modal('Input transaksi konter', `<form data-v5-form="operator-transaction"><div class="grid-form">${A.sel('Muzakki terdaftar (opsional)', 'personId', [['', 'Input data baru'], ...people], '')}${A.fld('Nama lengkap', 'name', '', 'text', 'required')}${A.fld('Nomor HP', 'phone', '', 'tel')}${A.fld('Email', 'email', '', 'email')}<div data-domicile-fields>${domicileFieldMarkup(null, currentTenantId())}</div>${A.textarea('Alamat lengkap', 'address', '')}${A.sel('Jenis zakat', 'category', [['Zakat Fitrah', 'Zakat fitrah'], ['Zakat Maal', 'Zakat maal'], ['Zakat Profesi', 'Zakat profesi'], ['Fidyah', 'Fidyah'], ['Kafarat', 'Kafarat'], ['Infak/Sedekah', 'Infak / sedekah']], 'Zakat Fitrah')}${A.sel('Media pembayaran', 'type', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Jumlah jiwa / unit', 'jiwa', 1, 'number', 'min="1" required')}${A.fld('Nominal uang (Rp) / berat (kg)', 'value', '45.000', 'text', 'inputmode="decimal" data-format="idr" required')}</div><div class="alert light">Transaksi konter disimpan sebagai Pending. Operator tidak menerima uang dan tidak mengesahkan pembayaran. Muzakki diarahkan ke meja Amil untuk scan QR.</div>${A.textarea('Catatan (opsional)', 'note', '')}${formButton('Simpan dan terbitkan QR')}</form>`, true)
+    A.modal('Input transaksi konter', `<form data-v5-form="operator-transaction">
+      <div class="grid-form">
+        ${A.sel('Muzakki terdaftar (opsional)', 'personId', [['', 'Input data baru'], ...people], '')}
+        ${A.fld('Nama lengkap', 'name', '', 'text', 'required')}${A.fld('Nomor HP', 'phone', '', 'tel')}${A.fld('Email', 'email', '', 'email')}
+        <div data-domicile-fields>${domicileFieldMarkup(null, currentTenantId())}</div>${A.textarea('Alamat lengkap', 'address', '')}
+      </div>
+      ${transactionCalculatorFields('operator', 1, String(A.rule()?.moneyRate || 45000))}
+      <div class="alert light">Transaksi konter disimpan sebagai Pending. Operator tidak menerima uang dan tidak mengesahkan pembayaran. Muzakki diarahkan ke meja Amil untuk scan QR.</div>
+      ${A.textarea('Catatan (opsional)', 'note', '')}${formButton('Simpan dan terbitkan QR')}
+    </form>`, true)
+    const form = document.querySelector('[data-v5-form="operator-transaction"]')
+    if (form) { form.dataset.defaultFitrahCount = '1'; setTransactionAmount(form) }
   }
+
   function submitOperatorTransaction(d) {
     if (!['Operator', 'Amil'].includes(activeUser()?.role)) throw new Error('Hanya Operator atau Amil yang dapat membuat transaksi konter')
     const period = currentPeriod()
     if (!period || ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())) throw new Error('Periode tidak menerima transaksi baru')
     const jiwa = Math.max(1, Math.floor(Number(d.jiwa || 1)))
-    const value = d.type === 'uang' ? toNumber(d.value) : toKg(d.value)
-    if (!Number.isInteger(jiwa) || jiwa < 1 || value <= 0) throw new Error('Jumlah jiwa dan nominal harus lebih besar dari nol')
+    if (!Number.isInteger(jiwa) || jiwa < 1) throw new Error('Jumlah jiwa / hari / kasus harus bilangan bulat positif')
+    const payment = transactionPaymentFromData(d)
     let person = d.personId ? db.persons.find((x) => x.id === d.personId && x.tenantId === currentTenantId()) : null
     if (d.personId && !person) throw new Error('Muzakki tidak ditemukan pada tenant aktif')
     const isNewPerson = !person
@@ -1369,10 +1588,16 @@
     }
     const owner = activeUser(), seq = db.transactions.filter((x) => x.tenantId === currentTenantId()).length + 1
     const serial = `${owner.role === 'Amil' ? 'AM' : 'OP'}-${String(seq).padStart(6, '0')}`
-    const tx = { id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial, personId: person.id, recordedBy: owner.id, handledBy: null, operatorId: owner.id, assignedAmilId: null, jiwa, lines: [{ category: d.category, type: d.type, value }], source: 'counter', createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), status: 'pending', note: d.note || '' }
+    const tx = {
+      id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial, personId: person.id,
+      recordedBy: owner.id, handledBy: null, operatorId: owner.id, assignedAmilId: null, jiwa,
+      lines: payment.lines, paymentEstimate: { due: payment.estimate.due, paid: payment.value, excessAllocated: payment.excessAllocated, method: 'tenant-calculator' },
+      source: 'counter', createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      status: 'pending', note: d.note || '',
+    }
     db.transactions.push(tx)
     db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, channel: 'app', status: 'lokal', date: dateToday(), subject: `Konfirmasi rencana zakat ${serial}`, message: `${person.name}, terima kasih telah mendaftar di ${A.tenant().name}. Tunjukkan QR ini kepada Amil.` })
-    A.aud('TRANSAKSI_PENDING', `${owner.role} membuat transaksi konter ${serial} sebagai Pending`)
+    A.aud('TRANSAKSI_PENDING', `${owner.role} membuat transaksi konter ${serial} sebagai Pending${payment.excessAllocated ? `; kelebihan ${payment.excessAllocated} dialihkan ke infak/sedekah` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
     A.persist()
@@ -2034,12 +2259,17 @@
   document.addEventListener('input', (event) => {
     const field = event.target
     if (field?.dataset?.format) formatInputValue(field)
+    if (field?.form && ['self-transaction', 'operator-transaction'].includes(field.form.dataset.v5Form)) updateTransactionPreview(field.form)
   })
   document.addEventListener('change', (event) => {
-    if (['type', 'category', 'jiwa'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'operator-transaction') {
+    if (event.target.name === 'autoExcess' && ['self-transaction', 'operator-transaction'].includes(event.target.form?.dataset?.v5Form)) updateTransactionPreview(event.target.form)
+    if (event.target.name === 'kafaratType' && ['self-transaction', 'operator-transaction'].includes(event.target.form?.dataset?.v5Form) && event.target.form.elements.kafaratFeedingConfirmed) event.target.form.elements.kafaratFeedingConfirmed.value = 'no'
+    if (['type', 'category', 'jiwa', 'assetsValue', 'haulComplete', 'kafaratType', 'kafaratFeedingConfirmed', 'professionPeriod'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'operator-transaction') {
+      if (event.target.name === 'category' && event.target.form.elements.jiwa) event.target.form.elements.jiwa.value = event.target.value === 'Zakat Fitrah' ? (event.target.form.dataset.defaultFitrahCount || '1') : '1'
       setOperatorAmount(event.target.form, event.target.name === 'type')
     }
-    if (['type', 'category', 'jiwa'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'self-transaction') {
+    if (['type', 'category', 'jiwa', 'assetsValue', 'haulComplete', 'kafaratType', 'kafaratFeedingConfirmed', 'professionPeriod'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'self-transaction') {
+      if (event.target.name === 'category' && event.target.form.elements.jiwa) event.target.form.elements.jiwa.value = event.target.value === 'Zakat Fitrah' ? (event.target.form.dataset.defaultFitrahCount || '1') : '1'
       setSelfTransactionAmount(event.target.form, event.target.name === 'type')
     }
     const domicileForm = event.target.form
@@ -2109,6 +2339,7 @@
     const d = formData(form)
     const id = form.dataset.id
     try {
+      if (['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form) && maybeConfirmExcess(form, d)) return
       switch (form.dataset.v5Form) {
         case 'muzakki-register': submitMuzakkiRegistration(d); return
         case 'self-profile': selfProfileSave(d); break
@@ -2301,16 +2532,14 @@
           break
         }
         case 'zakat-calc': {
+          const categoryMap = { fitrah: 'Zakat Fitrah', maal: 'Zakat Maal', profesi: 'Zakat Profesi', fidyah: 'Fidyah', kafarat: 'Kafarat', sedekah: 'Infak/Sedekah' }
+          const category = categoryMap[d.calcType] || 'Zakat Fitrah'
           const rules = A.rule()
-          const count = Math.max(1, Number(d.calcCount || 1))
-          let value = 0, detail = ''
-          if (d.calcType === 'fitrah') { value = count * (d.calcMedia === 'beras' ? rules.riceRate : rules.moneyRate); detail = `${count} jiwa × tarif fitrah tenant` }
-          else if (d.calcType === 'maal') { const nisab = Number(rules.nisabGoldGram || 85) * toNumber(d.goldPrice || rules.goldPricePerGram || 1500000); value = toNumber(d.assetsValue || 0) >= nisab ? toNumber(d.assetsValue) * 0.025 : 0; detail = `Nisab ilustratif ${money(nisab)}. Tarif simulasi 2,5 persen` }
-          else if (d.calcType === 'fidyah') { value = count * Number(rules.fidyahRate || 30000); detail = `${count} hari × tarif fidyah tenant` }
-          else if (d.calcType === 'kafarat') { value = count * Number(rules.kafaratRate || 0); detail = 'Tarif perlu ditetapkan pembimbing dan pengurus' }
-          else { value = toNumber(d.assetsValue || 0); detail = 'Infak atau sedekah sesuai kemampuan' }
+          const customGoldPrice = d.goldPrice?.trim() ? toNumber(d.goldPrice) : Number(rules.goldPricePerGram || 0)
+          const customRule = { ...rules, goldPricePerGram: customGoldPrice }
+          const estimate = estimateZakat(category, d.calcMedia || 'uang', d.calcCount, toNumber(d.assetsValue || 0), d.calcHaul || 'no', d.calcKafaratType || 'yamin', customRule, { professionPeriod: d.calcProfessionPeriod || 'monthly', kafaratFeedingConfirmed: d.calcKafaratFeeding || 'no' })
           const target = $('zakat-calc-result')
-          if (target) target.innerHTML = `<b>Estimasi: ${d.calcMedia === 'beras' && d.calcType === 'fitrah' ? kilos(value) : money(value)}</b><p>${esc(detail)}</p><small>Perhitungan edukatif. Nisab dan tarif perlu verifikasi kebijakan tenant.</small>`
+          if (target) target.innerHTML = `<b>Estimasi kewajiban: ${estimate.type === 'beras' ? kilos(estimate.due) : money(estimate.due)}</b><p>${esc(estimate.detail)}</p>${estimate.note ? `<p>${esc(estimate.note)}</p>` : ''}<small>Parameter mengikuti tarif tenant. Pastikan nisab, haul, kategori harta, serta jenis kafarat telah diverifikasi.</small>`
           return
         }
         default: return
@@ -2333,6 +2562,10 @@
     if (actionButton) actionButton.click()
     else A.toast('Buka menu Acuan Workbook untuk menyiapkan tahap', 'info')
   })
+
+  window.__SIZISNUR_CALCULATE_ZAKAT = (category, type, units, assets, haul, kafaratType, rules, options) => estimateZakat(category, type, units, assets, haul, kafaratType, rules || A.rule(), options || {})
+  window.__SIZISNUR_TRANSACTION_PAYMENT = (data, rules) => transactionPaymentFromData(data, rules || A.rule())
+  window.__SIZISNUR_TRANSACTION_FORM_FIELDS = (prefix, units, defaultValue) => transactionCalculatorFields(prefix, units, defaultValue)
 
   // Keep the old legacy action for receipt printing compatible while upgrading its output.
   const legacyShowReceipt = A.showReceipt

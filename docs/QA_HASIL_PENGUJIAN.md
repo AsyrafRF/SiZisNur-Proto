@@ -9,10 +9,15 @@ Tanggal pembaruan: 13 November 2026
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
 | `node tests/workbook-rules.test.cjs` | Lulus |
-| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 311 langkah, 61 ilustrasi UI |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 313 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, tenant Muzakki, audit penuh, serta PDF laporan lengkap |
+| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per tenant |
+| `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas tenant/periode |
+| `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
+| `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean tenant dan role tervalidasi |
+| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per tenant, alokasi kelebihan, dan aturan konfirmasi kafarat |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -98,3 +103,13 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Tes mengganti status berita acara dari `terverifikasi` menjadi `kas_diterima` dan memastikan label menjadi Belum terverifikasi.
 - Status personal menggunakan relasi berita acara setoran sebagai bukti rekonsiliasi. Status transaksi `terverifikasi` tanpa berita acara terverifikasi tidak otomatis dianggap lulus rekonsiliasi.
 - Pembukaan dan unduhan struk untuk role Muzakki juga dibatasi pada transaksi yang terkait akun atau membership pribadi.
+
+
+## Pemulihan kalkulator dan pemisahan kelebihan pembayaran — 13 November 2026
+
+- Kalkulator bersama digunakan oleh form transaksi self-service Muzakki serta form konter Operator/Amil.
+- Admin mengelola tarif fitrah uang/beras, fidyah, biaya makan kafarat, nisab emas, harga emas, nisab profesi bulanan, dan kadar zakat pada setiap tenant.
+- Kalkulasi otomatis mencakup fitrah, maal (harta bersih agregat dengan nisab/haul umum), profesi (mode bulanan/tahunan), fidyah, dan kafarat. Kasus kafarat bertahap memerlukan konfirmasi ketidakmampuan tahapan sebelumnya sebelum opsi 60 orang dihitung.
+- Kelebihan fitrah, maal, dan profesi dapat disimpan sebagai baris Infak/Sedekah dengan media yang sama. Bila belum dicentang, dialog konfirmasi muncul sebelum simpan. Kelebihan fidyah/kafarat ditampilkan tetapi tidak otomatis direklasifikasi.
+- Tes `node tests/transaction-calculator.test.cjs` mencakup nilai contoh Rp45.000 kewajiban dan Rp50.000 pembayaran yang menghasilkan Rp45.000 zakat dan Rp5.000 Infak/Sedekah bila pengguna menyetujui.
+- Semua test `tests/*.test.cjs` dan `node --check` lulus pada revisi ini. Build standalone dibuat ulang. Uji browser headless belum dinyatakan lulus; UAT interaktif di browser pengguna masih diperlukan.

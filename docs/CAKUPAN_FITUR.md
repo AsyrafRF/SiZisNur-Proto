@@ -6,9 +6,9 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 |---|---|---|---|
 | Actor dan akses | INTERAKTIF + SIMULASI | Tujuh role, menu dan aksi per role, batas akses UI, persetujuan Pengurus | Otorisasi server, MFA, password/OTP, audit izin dan pembatasan API |
 | Admin dan master | INTERAKTIF | Akun demo, role, tenant, periode, tarif, parameter, pendataan dan verifikasi Mustahik | Persetujuan platform sesungguhnya, versioning master bertanda tangan dan isolasi server |
-| Muzakki | INTERAKTIF + SIMULASI | Self-registration, multi-tenant, profil, Daerah/RT, keluarga, kalkulator, satu transaksi aktif per tenant/periode, QR dan riwayat | Verifikasi kontak OTP, autentikasi, pengelolaan persetujuan privasi dan sinkronisasi multi-device |
-| Operator | INTERAKTIF | Walk-in, identitas Muzakki, nominal berformat IDR/kg, transaksi Pending dan QR | Integrasi loket dan printer khusus yang tervalidasi |
-| Amil | INTERAKTIF + SIMULASI | Buka/tutup shift, scan QR, ringkasan akad, verifikasi pembayaran, BSZ, cetak thermal | Validasi akad oleh otoritas agama, perangkat kasir dan printer tersertifikasi |
+| Muzakki | INTERAKTIF + SIMULASI | Self-registration, multi-tenant, profil, Daerah/RT, keluarga, kalkulator dan pratinjau kewajiban pada form transaksi (fitrah/maal/profesi/fidyah/kafarat), alokasi kelebihan ke infak/sedekah dengan konfirmasi, satu transaksi aktif per tenant/periode, QR dan riwayat | Verifikasi kontak OTP, autentikasi, pengelolaan persetujuan privasi dan sinkronisasi multi-device |
+| Operator | INTERAKTIF | Walk-in, identitas Muzakki, kalkulasi otomatis fitrah/maal/profesi/fidyah/kafarat, pratinjau kewajiban dan kelebihan, pemisahan ke infak/sedekah serta konfirmasi sebelum menyimpan kelebihan yang belum dialokasikan, transaksi Pending dan QR | Integrasi loket dan printer khusus yang tervalidasi |
+| Amil | INTERAKTIF + SIMULASI | Input konter dengan kalkulator transaksi bersama Operator, buka/tutup shift, scan QR, ringkasan akad, verifikasi pembayaran, BSZ, cetak thermal | Validasi akad oleh otoritas agama, perangkat kasir dan printer tersertifikasi |
 | Bendahara | INTERAKTIF + SIMULASI | Berita acara shift tertutup, kas aktual, rekening/logistik tahap dua, selisih, jurnal uang/beras, koreksi, alokasi dan batch | Bank feed, rekonsiliasi otomatis rekening, approval tambahan/dual-control server dan kebijakan akuntansi final |
 | Relawan | INTERAKTIF + SIMULASI | UI mobile-first, QR atau kode, batch yang ditugaskan, cegah pencatatan ganda | Bukti tanda tangan digital, foto/GPS, mode konflik offline terjamin |
 | Pengurus | INTERAKTIF + SIMULASI | Baca laporan, transaksi, kas, jurnal, koreksi, audit dan menyetujui program penyaluran | E-signature sah, dasbor lintas tenant terpusat dan notifikasi approval |
@@ -38,6 +38,15 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 10. Relawan hanya dapat mencatat penerima yang termasuk batch tugasnya. Pencatatan penerima pada alokasi yang sama dicegah jika sudah ada distribusi.
 11. Koreksi transaksi memakai mekanisme permintaan dan keputusan Bendahara. Data transaksi sumber tidak ditimpa.
 12. Nilai uang dan beras dipisahkan dengan satuan `Rp` dan `kg`, termasuk pada jurnal.
+
+
+## Kalkulasi transaksi dan perlakuan kelebihan
+
+1. Tarif dan parameter disimpan pada konfigurasi `rules` masing-masing tenant. Admin dapat mengubah tarif fitrah uang/beras, fidyah, biaya makan kafarat, nisab emas, harga emas acuan dan kadar zakat maal/profesi. Perubahan berlaku untuk transaksi baru; histori transaksi tidak dihitung ulang.
+2. Zakat maal dihitung 2,5% dari harta bersih jika nilai harta mencapai nisab (default 85 gram emas) dan haul satu tahun dinyatakan terpenuhi. Zakat profesi dihitung 2,5% dari penghasilan bulanan jika mencapai nisab tahunan dibagi 12; untuk penghasilan yang tidak mencapai nisab bulanan tersedia mode akumulasi setahun dibanding nisab tahunan. Komponen harta dan dasar haul tetap harus diverifikasi.
+3. Kalkulasi maal pada prototype saat ini menerima satu agregat harta bersih dengan nisab/haul umum; kategori khusus seperti pertanian, peternakan dan jenis usaha khusus perlu rumus tersendiri sebelum produksi. Fidyah dihitung per hari dengan tarif yang diatur tenant. Kafarat dibedakan menurut jenis kasus; untuk kasus bertahap, opsi makan 60 orang baru dihitung setelah pengguna mengonfirmasi tidak mampu menunaikan tahapan sebelumnya. Penghitungan ini tidak menggantikan tahapan yang harus dipenuhi. Biaya makan kafarat sengaja bernilai 0 sampai Admin mengatur dan mengesahkannya.
+4. Bila pembayaran fitrah, maal atau profesi melebihi estimasi kewajiban, pengguna dapat mencentang alokasi kelebihan ke infak/sedekah. Jika belum dicentang, aplikasi meminta konfirmasi sebelum transaksi disimpan. Fidyah dan kafarat tidak otomatis dipisahkan.
+5. Kelebihan yang dialihkan disimpan sebagai baris transaksi terpisah `Infak/Sedekah` dengan media yang sama agar rincian kategori tetap terbaca.
 
 ## Keputusan yang masih memerlukan stakeholder
 
