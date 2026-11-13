@@ -54,6 +54,117 @@ body.dark .manual-welcome{background:linear-gradient(120deg,#163a32,#1b302d);bor
 @media(max-width:800px){.manual-ready-grid{grid-template-columns:1fr}.manual-section-head{align-items:flex-start}.manual-welcome{padding:20px}.manual-role-mark{min-width:88px;min-height:88px;font-size:13px}.manual-jump-list{gap:6px}.manual-module>summary{padding:13px}.manual-module-body{padding:0 14px 16px}}
 @media(max-width:540px){.manual-welcome{align-items:flex-start;flex-direction:column}.manual-role-mark{min-height:0;min-width:0;padding:7px 12px;border-radius:99px}.manual-welcome h2{font-size:20px}.manual-section-head{flex-direction:column}.manual-module>summary{align-items:flex-start;gap:9px}.manual-module-no{flex-basis:31px;height:31px}.manual-module-meta{margin-left:auto;font-size:9px}.manual-module-title b{font-size:12px}.manual-module-title small{display:none}.manual-steps li{grid-template-columns:28px minmax(0,1fr);gap:9px}.manual-step-no{width:27px;height:27px}.manual-preview-row{grid-template-columns:1fr;gap:3px}.manual-preview-row b{text-align:left}.manual-jump{max-width:100%;white-space:normal}}
 
+/* Accessible semantic alerts and toast messages across every application page. */
+:root {
+  --alert-default-bg: #e7f5f1;
+  --alert-default-text: #17443d;
+  --alert-default-border: #0d746b;
+  --alert-warn-bg: #fff6e7;
+  --alert-warn-text: #704b12;
+  --alert-warn-border: #d99b2b;
+  --alert-danger-bg: #fff0ef;
+  --alert-danger-text: #8f3033;
+  --alert-danger-border: #d65c5c;
+  --alert-ok-bg: #e6f5ec;
+  --alert-ok-text: #176447;
+  --alert-ok-border: #2b9a68;
+  --alert-info-bg: #eaf3ff;
+  --alert-info-text: #234e74;
+  --alert-info-border: #5b91c5;
+  --alert-light-bg: #f0f5f6;
+  --alert-light-text: #344c57;
+  --alert-light-border: #90a6af;
+  --notice-bg: #152f38;
+  --notice-text: #f5fbfc;
+  --notice-success-bg: #176448;
+  --notice-info-bg: #245777;
+  --notice-warning-bg: #80551a;
+  --notice-error-bg: #a03d3d;
+}
+
+body.dark {
+  --alert-default-bg: #153f3f;
+  --alert-default-text: #d7eeeb;
+  --alert-default-border: #429c91;
+  --alert-warn-bg: #3a2f1d;
+  --alert-warn-text: #ffe0a3;
+  --alert-warn-border: #c8953e;
+  --alert-danger-bg: #402629;
+  --alert-danger-text: #ffc6c8;
+  --alert-danger-border: #d36e73;
+  --alert-ok-bg: #173c30;
+  --alert-ok-text: #bcebd1;
+  --alert-ok-border: #4baf7e;
+  --alert-info-bg: #1c3850;
+  --alert-info-text: #c5e1ff;
+  --alert-info-border: #6fa6d6;
+  --alert-light-bg: #203943;
+  --alert-light-text: #d5e3e7;
+  --alert-light-border: #6d8994;
+  --notice-bg: #193641;
+  --notice-text: #f5fbfc;
+  --notice-success-bg: #174b38;
+  --notice-info-bg: #1d4562;
+  --notice-warning-bg: #5d4218;
+  --notice-error-bg: #653038;
+}
+
+.alert {
+  color: var(--alert-default-text);
+  background: var(--alert-default-bg);
+  border-color: var(--alert-default-border);
+}
+.alert.warn,
+.alert.warning {
+  color: var(--alert-warn-text);
+  background: var(--alert-warn-bg);
+  border-color: var(--alert-warn-border);
+}
+.alert.danger,
+.alert.error {
+  color: var(--alert-danger-text);
+  background: var(--alert-danger-bg);
+  border-color: var(--alert-danger-border);
+}
+.alert.ok,
+.alert.success {
+  color: var(--alert-ok-text);
+  background: var(--alert-ok-bg);
+  border-color: var(--alert-ok-border);
+}
+.alert.info {
+  color: var(--alert-info-text);
+  background: var(--alert-info-bg);
+  border-color: var(--alert-info-border);
+}
+.alert.light,
+.alert.neutral {
+  color: var(--alert-light-text);
+  background: var(--alert-light-bg);
+  border-color: var(--alert-light-border);
+}
+.alert :where(strong, b, em, small, code) {
+  color: inherit;
+}
+.alert a {
+  color: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notice {
+  color: var(--notice-text);
+  background: var(--notice-bg);
+  border: 1px solid transparent;
+}
+.notice.success { background: var(--notice-success-bg); }
+.notice.info { background: var(--notice-info-bg); }
+.notice.warning,
+.notice.warn { background: var(--notice-warning-bg); }
+.notice.error,
+.notice.danger { background: var(--notice-error-bg); }
+
   </style>
 </head>
 <body>

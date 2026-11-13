@@ -1,5 +1,15 @@
 # Changelog SiZisNur
 
+## 13 November 2026 — Penyesuaian alert untuk dark mode seluruh halaman
+
+- Menyatukan palet alert semantik untuk pesan umum, peringatan, kesalahan, keberhasilan, informasi, dan catatan netral melalui token warna global.
+- Menetapkan warna teks eksplisit pada setiap alert agar tidak mewarisi teks putih dari `body.dark` saat latarnya tetap berwarna terang.
+- Menyediakan pasangan latar, teks, dan border yang sesuai untuk light mode maupun dark mode. Perubahan berlaku pada halaman dashboard, form, modal, panduan role, laporan, halaman prototype, dan komponen alert lain yang memakai class `.alert`.
+- Menyamakan toast/notifikasi sementara agar varian success, info, warning, dan error tetap memiliki kontras yang jelas pada kedua tema.
+- Memperbarui nama cache service worker supaya browser mengambil stylesheet terbaru setelah deployment.
+- Menambahkan pemeriksaan otomatis kontras warna minimum WCAG AA untuk pasangan warna teks/latar alert dan toast.
+
+
 ## 13 November 2026 — Panduan penggunaan rinci untuk tujuh role
 
 - Memperluas panduan Admin, Muzakki, Operator, Amil, Bendahara, Relawan, dan Pengurus mengikuti pola tutorial langkah demi langkah dari referensi SILAM.
