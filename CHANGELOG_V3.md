@@ -1,3 +1,11 @@
+## 15 November 2026 — Perapian Struk Thermal 80 mm Bergaya POS
+
+- Mengganti tampilan cetak thermal yang sebelumnya memakai kartu struk digital dengan layout satu kolom bergaya POS: tipografi monospace, header rata tengah, metadata label/nilai sejajar, rincian kategori/media ringkas, dan total uang/beras rata kanan.
+- Menambahkan pemisah ASCII, jarak vertikal yang lebih rapat, QR Code 30 mm, token QR yang dapat dibaca manual, serta footer simulasi yang lebih ringkas.
+- Mempertahankan seluruh data transaksi dan aturan status yang sama dengan struk digital: nomor/ID, tanggal, Muzakki, sumber, status, batas QR, rincian multi-jenis/multi-media, dasar harta, total uang/beras, dan penonaktifan QR untuk transaksi batal/kedaluwarsa/ditolak.
+- Format Cetak / Simpan PDF dan pratinjau digital tidak diubah. Thermal tetap menggunakan dialog cetak browser dengan CSS 80 mm; ini bergaya POS/ESC-POS, bukan pengiriman perintah ESC/POS mentah ke printer.
+- Memperbarui `tests/receipt-printing.test.cjs` untuk menguji layout monospace, alignment metadata, separator ASCII, ukuran QR, rincian transaksi campuran, total, token dan disclaimer.
+
 ## 15 November 2026 — Penyatuan Modul Input Transaksi (Operator/Amil, Muzakki, dan Formulir Publik)
 
 - Menyatukan pembangun form, parser rincian, kalkulasi, validasi, dialog konfirmasi kelebihan, model `lines`, dan renderer struk untuk ketiga kanal input: konter Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik.

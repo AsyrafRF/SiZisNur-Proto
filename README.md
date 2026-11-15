@@ -256,3 +256,10 @@ README.md
 - Untuk memeriksa struk fisik, tekan **Scan QR dengan kamera** dan izinkan akses kamera. Hasil valid berarti pembayaran telah disahkan Amil; hasil Pending masih belum tervalidasi. Token/nomor seri juga dapat dimasukkan secara manual.
 - Kamera memerlukan HTTPS atau localhost dan dukungan `BarcodeDetector`. Browser yang belum mendukung API pemindai harus memakai input manual.
 - Untuk penjelasan aturan status, privasi, dan batasan produksi, baca `docs/PORTAL_PUBLIK_TRANSPARANSI_DAN_QR.md`.
+
+## 15. Struk thermal 80 mm
+
+- Cetak Thermal 80 mm menggunakan layout satu kolom bergaya POS dengan font monospace, header tengah, metadata label/nilai sejajar, separator ASCII, rincian pembayaran ringkas, total uang/beras rata kanan, serta QR 30 mm.
+- Data yang tercetak tetap sama dengan struk digital/PDF, termasuk seluruh baris multi-jenis/multi-media, status, token QR, dan disclaimer simulasi.
+- PDF biasa tidak diubah. Thermal memakai dialog cetak browser dan CSS; ini bukan pengiriman perintah ESC/POS mentah. Ukuran kertas 80 mm dan pengaturan densitas/cutter mengikuti driver printer.
+- Detail: `docs/INPUT_TRANSAKSI_TERPADU.md`, bagian **Struk yang seragam**.

@@ -705,26 +705,103 @@
   function receiptPrintHtmlV5(tx) {
     return `<style>.receipt{font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#182b25}.receipt-preview{border:1px solid #ccd9d3;border-radius:12px;padding:22px}.receipt-brand{text-align:center;border-bottom:1px solid #ccd9d3;padding-bottom:14px;margin-bottom:14px}.receipt-brand b{display:block;font-size:22px}.receipt-brand small{display:block;margin-top:6px;font-weight:700}.receipt-data>div,.receipt .mini-item{display:flex;justify-content:space-between;gap:20px;padding:7px 0;border-bottom:1px solid #e6ece9}.receipt-data span,.receipt .mini-item span{color:#52635c}.receipt-lines{margin-top:16px}.receipt-lines>.mini-list{margin-top:6px}.receipt-totals{border-top:2px solid #52635c;margin-top:14px;padding-top:8px}.receipt-qr{text-align:center;margin:18px auto 8px}.receipt-qr svg{width:180px;height:180px}.receipt-token{font-size:10px;overflow-wrap:anywhere;text-align:center}.receipt-thanks{text-align:center;margin-top:18px}.receipt-preview>small{display:block;text-align:center;color:#64746e;margin-top:12px}</style><div class="receipt">${receiptMarkupV5(tx)}</div>`
   }
-  // Thermal printing uses the same complete receipt renderer as the PDF action.
-  // Keep this helper in the V5 layer: older revisions defined it, but the shared
-  // transaction refactor retained its call site and accidentally dropped the function.
-  function makeReceiptPrint(tx, thermal = false) {
-    const html = A.receiptHtml(tx)
-    const thermalStyle = thermal ? `<style>
+  // POS-style receipt for 80 mm thermal printers. It reuses the exact same
+  // transaction data, totals, status rules and QR token as the digital/PDF receipt,
+  // but uses a compact single-column monospace layout instead of the screen card.
+  function receiptThermalMarkupV5(tx) {
+    const person = db.persons.find((x) => x.id === tx.personId && x.tenantId === tx.tenantId)
+    const institution = db.tenants.find((x) => x.id === tx.tenantId)
+    const totals = effectiveTotals(tx)
+    const status = String(tx.status || '').toLowerCase()
+    const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(status)
+    const paid = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(status)
+    const heading = status === 'batal' ? 'RENCANA ZAKAT DIBATALKAN' : ['expired', 'kedaluwarsa'].includes(status) ? 'RENCANA ZAKAT KEDALUWARSA' : paid ? 'BUKTI SETOR ZAKAT - SIMULASI' : 'STRUK RENCANA ZAKAT - SIMULASI'
+    const source = tx.source === 'public-intake' ? 'Formulir publik' : tx.source === 'self-service' ? 'Layanan mandiri' : 'Input petugas / konter'
+    const statusLabels = {
+      pending: 'MENUNGGU AMIL', paid: 'PAID - DISAHKAN AMIL', disetor: 'DISERAHKAN BENDAHARA',
+      kas_diterima: 'KAS DITERIMA', terverifikasi: 'TERVERIFIKASI', expired: 'KEDALUWARSA',
+      kedaluwarsa: 'KEDALUWARSA', batal: 'DIBATALKAN', ditolak: 'DITOLAK',
+    }
+    const dateText = tx.createdAt ? new Date(tx.createdAt).toLocaleString('id-ID') : '—'
+    const expiryText = tx.expiresAt ? new Date(tx.expiresAt).toLocaleString('id-ID') : '—'
+    const meta = [
+      ['NO. TRANSAKSI', tx.serial || tx.id], ['ID TRANSAKSI', tx.id], ['TANGGAL', dateText],
+      ['NAMA MUZAKKI', person?.name || 'Muzakki'], ['JUMLAH JIWA / UNIT', Number(tx.jiwa || 1).toLocaleString('id-ID')],
+      ['SUMBER INPUT', source], ['STATUS', statusLabels[status] || status.toUpperCase() || '—'], ['BATAS WAKTU QR', expiryText],
+    ].map(([label, value]) => `<div class="thermal-kv"><span>${esc(label)}</span><b>${esc(value)}</b></div>`).join('')
+    const items = (tx.lines || []).map((line) => {
+      const kind = line.type === 'beras' ? 'BERAS' : 'UANG'
+      const value = line.type === 'beras' ? kilos(line.value) : money(line.value)
+      const quantity = Number(line.quantity) > 0 && line.unitLabel ? `${Number(line.quantity).toLocaleString('id-ID')} ${String(line.unitLabel).toUpperCase()}` : ''
+      const basis = Number(line.assetsValue) > 0 ? `DASAR HITUNG: ${money(line.assetsValue)}` : ''
+      return `<div class="thermal-item"><div class="thermal-item-row"><span>${esc(line.category)} / ${kind}</span><b>${value}</b></div>${quantity ? `<div class="thermal-item-note">${esc(quantity)}</div>` : ''}${basis ? `<div class="thermal-item-note">${esc(basis)}</div>` : ''}</div>`
+    }).join('')
+    const token = transactionToken(tx)
+    const qr = inactive
+      ? '<div class="thermal-qr-disabled">QR TIDAK AKTIF - TRANSAKSI TIDAK DAPAT DIPINDAI</div>'
+      : `<div class="thermal-qr">${A.qr(token)}</div><div class="thermal-token">${esc(token)}</div>`
+    const instruction = inactive
+      ? `ARSIP TRANSAKSI: ${statusLabels[status] || status.toUpperCase()}. QR SUDAH TIDAK BERLAKU.`
+      : paid
+        ? 'SIMPAN STRUK INI SEBAGAI CATATAN PEMBAYARAN SIMULASI.'
+        : 'TUNJUKKAN QR INI KEPADA AMIL UNTUK PEMERIKSAAN DAN PENGESAHAN PEMBAYARAN.'
+    return `<main class="thermal-receipt">
+      <header class="thermal-header"><b>${esc(institution?.name || 'SiZisNur')}</b><span>${heading}</span><small>DOKUMEN SIMULASI</small></header>
+      <div class="thermal-rule">==========================================</div>
+      <section class="thermal-meta">${meta}</section>
+      <div class="thermal-rule">------------------------------------------</div>
+      <section class="thermal-lines"><b class="thermal-section-title">RINCIAN PEMBAYARAN</b>${items || '<div class="thermal-item"><span>RINCIAN TIDAK TERSEDIA</span></div>'}</section>
+      <div class="thermal-rule">------------------------------------------</div>
+      <section class="thermal-totals">
+        <div class="thermal-total"><span>TOTAL UANG</span><b>${money(totals.money)}</b></div>
+        <div class="thermal-total"><span>TOTAL BERAS</span><b>${kilos(totals.rice)}</b></div>
+      </section>
+      <div class="thermal-rule">==========================================</div>
+      ${qr}
+      <footer class="thermal-footer"><b>${instruction}</b><p>STRUK INI MERUPAKAN DOKUMEN SIMULASI PROTOTYPE. ${paid ? 'Status pembayaran pada aplikasi tetap mengikuti verifikasi.' : 'STRUK RENCANA BERSTATUS PENDING BUKAN BUKTI PEMBAYARAN RESMI.'}</p><span>TERIMA KASIH</span></footer>
+    </main>`
+  }
+  function receiptThermalStyleV5() {
+    return `<style>
       @page { size: 80mm auto; margin: 3mm; }
-      html, body { width: 74mm; max-width: 74mm; margin: 0 auto; padding: 0; }
-      body { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: #182b25; }
-      .receipt { width: 74mm; max-width: 74mm; box-sizing: border-box; margin: 0 auto; padding: 0; border: 0; }
-      .receipt-preview { border: 0; border-radius: 0; padding: 1mm; }
-      .receipt-brand b { font-size: 14px; }
-      .receipt-brand small { font-size: 10px; }
-      .receipt-data > div, .receipt .mini-item { gap: 2mm; padding: 3px 0; font-size: 9px; break-inside: avoid; }
-      .receipt-qr svg { width: 35mm; height: 35mm; }
-      .receipt-token { font-size: 7px; overflow-wrap: anywhere; }
-      .receipt-thanks, .receipt-lines, .receipt-totals { break-inside: avoid; }
-      @media print { .tool { display: none; } }
-    </style>` : ''
-    A.printWindow(`SiZisNur ${tx.serial || tx.id}`, `${thermalStyle}${html}`, false)
+      html, body { width: 74mm !important; max-width: 74mm !important; margin: 0 !important; padding: 0 !important; }
+      body { font-family: "DejaVu Sans Mono", "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace !important; font-size: 8pt; line-height: 1.3; color: #000 !important; background: #fff !important; }
+      .thermal-receipt { width: 74mm; max-width: 74mm; box-sizing: border-box; margin: 0 auto; padding: 0 1mm; color: #000; font-family: inherit; font-size: 8pt; line-height: 1.3; }
+      .thermal-header { text-align: center; padding: 0 0 1.5mm; }
+      .thermal-header b { display: block; font-size: 12pt; line-height: 1.2; font-weight: 900; text-transform: uppercase; overflow-wrap: anywhere; }
+      .thermal-header span { display: block; margin-top: 1mm; font-size: 8pt; font-weight: 800; }
+      .thermal-header small { display: block; margin-top: .5mm; font-size: 7pt; letter-spacing: .3mm; }
+      .thermal-rule { white-space: nowrap; overflow: hidden; font-size: 7pt; line-height: 1.15; letter-spacing: -.15mm; }
+      .thermal-meta { padding: 1mm 0; }
+      .thermal-kv { display: grid; grid-template-columns: 25mm minmax(0,1fr); gap: 1mm; align-items: start; padding: .65mm 0; break-inside: avoid; }
+      .thermal-kv span { font-size: 7pt; font-weight: 600; }
+      .thermal-kv b { min-width: 0; text-align: right; font-size: 7.2pt; font-weight: 800; overflow-wrap: anywhere; }
+      .thermal-lines { padding: 1.4mm 0 .5mm; }
+      .thermal-section-title { display: block; text-align: center; font-size: 8pt; margin-bottom: 1mm; }
+      .thermal-item { padding: 1mm 0; border-bottom: .2mm dashed #777; break-inside: avoid; }
+      .thermal-item-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1mm; align-items: start; }
+      .thermal-item-row span { min-width: 0; font-size: 7.6pt; font-weight: 700; overflow-wrap: anywhere; }
+      .thermal-item-row b { white-space: nowrap; text-align: right; font-size: 7.6pt; font-weight: 900; }
+      .thermal-item-note { padding-left: 2mm; font-size: 6.8pt; line-height: 1.25; overflow-wrap: anywhere; }
+      .thermal-totals { padding: 1mm 0; }
+      .thermal-total { display: flex; justify-content: space-between; gap: 2mm; padding: .8mm 0; font-size: 8pt; font-weight: 900; }
+      .thermal-total b { white-space: nowrap; text-align: right; }
+      .thermal-qr { display: flex; justify-content: center; align-items: center; margin: 2mm auto 1mm; }
+      .thermal-qr svg { display: block; width: 30mm !important; height: 30mm !important; max-width: 30mm; max-height: 30mm; }
+      .thermal-token { max-width: 70mm; margin: 0 auto; text-align: center; font-size: 6pt; line-height: 1.2; overflow-wrap: anywhere; word-break: break-all; }
+      .thermal-qr-disabled { margin: 2mm 0; text-align: center; font-size: 7pt; font-weight: 900; }
+      .thermal-footer { margin-top: 2mm; text-align: center; font-size: 6.6pt; line-height: 1.35; }
+      .thermal-footer b { display: block; font-size: 7pt; }
+      .thermal-footer p { margin: 1.5mm 0; }
+      .thermal-footer span { display: block; padding-top: 1mm; font-weight: 900; letter-spacing: .4mm; }
+      @media print { .tool { display: none !important; } html, body { height: auto !important; } }
+    </style>`
+  }
+  // Thermal and PDF share all transaction facts and QR identity. Only the print
+  // presentation differs: POS-style monospace for 80 mm, standard page for PDF.
+  function makeReceiptPrint(tx, thermal = false) {
+    const html = thermal ? `${receiptThermalStyleV5()}${receiptThermalMarkupV5(tx)}` : A.receiptHtml(tx)
+    A.printWindow(`SiZisNur ${tx.serial || tx.id}`, html, false)
   }
   function showReceiptV5(tx) {
     const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(String(tx.status || '').toLowerCase())

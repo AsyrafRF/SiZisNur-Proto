@@ -86,7 +86,7 @@ Konfirmasi tidak mengesahkan pembayaran. Seluruh transaksi tetap berstatus `pend
 
 ## 7. Struk yang seragam
 
-Satu renderer menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal 80 mm. Cetak thermal memakai lebar konten 74 mm untuk kertas 80 mm dan menggunakan isi struk bersama yang sama dengan PDF. Renderer dipakai untuk transaksi yang berasal dari:
+Satu sumber data/aturan struk menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal 80 mm. Versi thermal menggunakan layout satu kolom bergaya POS dengan font monospace, header rata tengah, metadata dan nilai sejajar, pemisah ASCII, rincian pembayaran yang ringkas, total rata kanan, dan QR sekitar 30 mm. Lebar konten thermal 74 mm untuk kertas 80 mm. Format PDF tetap menggunakan layout dokumen biasa, tetapi seluruh fakta transaksi dan token QR-nya sama. Renderer dipakai untuk transaksi yang berasal dari:
 
 - Input petugas Operator/Amil.
 - Layanan Mandiri Muzakki.
@@ -95,6 +95,8 @@ Satu renderer menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak brow
 Struk menampilkan identitas dan nama Lembaga, nomor dan ID transaksi, tanggal, nama Muzakki, sumber input, status, batas waktu QR, setiap rincian jenis/media, jumlah dan satuan bila relevan, dasar perhitungan harta jika ada, total uang, total beras, dan QR selama transaksi masih aktif. Jika transaksi batal/kedaluwarsa/ditolak, QR aktif tidak ditampilkan dan struk menjadi catatan arsip.
 
 Struk berstatus Pending diberi label **STRUK RENCANA ZAKAT · SIMULASI**, bukan bukti pembayaran resmi. Bukti setor hanya dapat diterbitkan setelah proses penerimaan dan verifikasi Amil yang berlaku.
+
+Pada thermal, rincian panjang dapat membungkus ke baris berikutnya tanpa menghilangkan nilai atau satuan. Footer menjelaskan apakah dokumen adalah struk rencana atau bukti setor simulasi. Cetak thermal dijalankan melalui dialog cetak browser dengan CSS yang meniru tata letak POS/ESC-POS; prototype belum mengirim byte/perintah ESC/POS langsung, sehingga pilihan kertas 80 mm, densitas, pemotongan kertas, dan dukungan QR tetap mengikuti driver printer yang digunakan.
 
 ## 8. Aturan transaksi dan batas prototype
 
