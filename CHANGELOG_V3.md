@@ -190,3 +190,13 @@ Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook y
 - Memperbarui nama cache service worker agar deployment menggunakan berkas aplikasi terbaru.
 - Menambahkan pengujian navigasi tab root langsung serta pemeriksaan statis agar observer rekursif tidak kembali.
 - Seluruh 13 suite pengujian otomatis lulus. Chromium headless dicoba, tetapi proses browser pada lingkungan build tidak menyelesaikan `--dump-dom`; karena itu pengujian visual browser tidak diklaim berhasil.
+
+
+## Navigasi akun Muzakki: pemisahan halaman mandiri dan rencana bayar (15 November 2026)
+
+- Menu **Dashboard Zakat Saya** dipertahankan sebagai halaman ringkasan pribadi, termasuk status zakat periode aktif, rincian zakat, transaksi periode berjalan, dan riwayat sebelumnya. Panel dropdown layanan mandiri dihapus dari halaman dashboard.
+- Konten **Profil, Keluarga, dan Kalkulator Zakat** dipindahkan ke halaman/menu **Layanan Mandiri** tersendiri. Pada halaman ini Muzakki mengelola daftar lembaga yang terhubung, profil dan wilayah alamat pada lembaga aktif, data keluarga tanggungan, serta kalkulator zakat.
+- Ditambahkan halaman/menu **Rencana Bayar Zakat**. Halaman ini menunjukkan lembaga dan periode aktif, status rencana/transaksi, langkah pembayaran, serta tombol untuk membuka formulir perencanaan transaksi yang sudah ada. Pembuatan QR, status Pending, validasi akun/keanggotaan/periode, dan pemeriksaan Amil tetap memakai alur transaksi lama.
+- Untuk akun yang belum terhubung ke lembaga, halaman Layanan Mandiri mengarahkan Muzakki memilih lembaga; halaman Rencana Bayar menjelaskan bahwa keanggotaan dan periode aktif diperlukan sebelum membuat rencana.
+- Navigasi sidebar untuk role Muzakki menggunakan kelompok **Menu Akun Muzakki** dan hanya menampilkan halaman yang sesuai; kedua halaman baru dibatasi pada role Muzakki.
+- Uji regresi khusus memastikan menu baru muncul untuk Muzakki, dropdown tidak lagi ada di Dashboard, formulir layanan tersedia di halaman terpisah, rencana bayar membuka alur QR yang sama, dan role selain Muzakki tidak memperoleh akses.

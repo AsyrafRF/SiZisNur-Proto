@@ -37,8 +37,8 @@ const expectedMenus = {
     'Mustahik & Kelayakan', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
   ],
   Muzakki: [
-    'Data Keluarga Tanggungan', 'Kalkulator Zakat',
-    'Buat Rencana Transaksi dan QR', 'Riwayat dan Bukti Transaksi', 'Evaluasi Prototype'
+    'Layanan Mandiri · Data Keluarga Tanggungan', 'Layanan Mandiri · Kalkulator Zakat',
+    'Rencana Bayar Zakat', 'Riwayat dan Bukti Transaksi', 'Evaluasi Prototype'
   ],
   Operator: [
     'Data Muzakki', 'Penerimaan & Verifikasi · Input Konter',

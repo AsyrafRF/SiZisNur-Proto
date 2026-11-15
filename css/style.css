@@ -750,3 +750,10 @@ body.dark .tenant-map-canvas{filter:saturate(.8) brightness(.82)}
 body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;color:#d8ebdc}
 @media(max-width:900px){.tenant-profile-layout{grid-template-columns:1fr}}
 @media(max-width:600px){.tenant-map-canvas{height:155px}.tenant-gallery-slide{flex-basis:88%}.tenant-gallery-slide img{height:155px}.tenant-map-foot{align-items:flex-start;flex-direction:column;gap:5px}.tenant-join-profile{padding:12px}.tenant-location-facts{grid-template-columns:1fr 1fr}}
+
+/* Dedicated Muzakki account pages */
+.my-zis-services-page{padding:0;margin-top:0}
+.my-zis-services-content{gap:16px;padding:0}
+.my-zis-services-content>.card{margin:0}
+.simple-steps{display:grid;gap:8px;margin:0;padding-left:20px;color:var(--muted);font-size:12px;line-height:1.65}
+.simple-steps li{padding-left:3px}

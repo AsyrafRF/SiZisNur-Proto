@@ -64,6 +64,8 @@ Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan
 
 Profil lembaga untuk pemilihan Muzakki menampilkan ID publik unik, alamat dan wilayah, peta simulasi, serta carousel foto yang dikelola Admin melalui **Kelola Lembaga & UPZ**. Petunjuk pengaturan, format URL foto, pola ID, dan batasan peta ada di `docs/PROFIL_LEMBAGA_PETA_GALERI_ID.md`.
 
+Navigasi akun Muzakki dipisahkan menjadi tiga halaman: **Dashboard Zakat Saya** untuk ringkasan dan riwayat pribadi, **Layanan Mandiri** untuk profil/keluarga/kalkulator zakat, serta **Rencana Bayar Zakat** untuk memulai perencanaan pembayaran dan memperoleh QR transaksi Pending. Dashboard tidak lagi menampung panel layanan mandiri berbentuk dropdown.
+
 File mandiri yang memuat HTML, CSS, JavaScript, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md`.
 
 ## 6. Pengaturan Prototype

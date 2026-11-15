@@ -283,6 +283,8 @@
     audit: ['Audit & Arsip', '⊙', ['Admin', 'Bendahara', 'Pengurus']],
     help: ['Panduan & Bantuan', '?', 'Semua'],
     'my-zis': ['Dashboard Zakat Saya', '♙', ['Muzakki']],
+    'muzakki-services': ['Layanan Mandiri', '⚙', ['Muzakki']],
+    'pay-plan': ['Rencana Bayar Zakat', '↗', ['Muzakki']],
     'amil-guide': ['Dalil, Ketentuan & Akad', '۞', ['Amil']],
     prototype: ['Evaluasi Prototype', '◇', 'Semua'],
   })
@@ -294,7 +296,8 @@
     mustahik: ['Admin'], allocation: ['Bendahara', 'Pengurus'], distribution: ['Bendahara', 'Relawan'],
     incentives: ['Bendahara', 'Pengurus'], reports: ['Bendahara', 'Pengurus'], workbook: ['Admin', 'Bendahara', 'Pengurus'],
     notifications: ['Admin', 'Amil'], audit: ['Admin', 'Bendahara', 'Pengurus'], help: roles,
-    'my-zis': ['Muzakki'], 'amil-guide': ['Amil'], prototype: roles,
+    'my-zis': ['Muzakki'], 'muzakki-services': ['Muzakki'], 'pay-plan': ['Muzakki'],
+    'amil-guide': ['Amil'], prototype: roles,
   }
   function canV5(page) {
     const u = activeUser()
@@ -794,7 +797,6 @@
           <div class="alert light">Anda dapat menghubungkan akun ke satu atau beberapa lembaga. Setiap lembaga memiliki data keanggotaan, periode, transaksi, dan QR masing-masing.</div>
         </section>`
     }
-    const household = householdForUser()
     const period = currentPeriod()
     const transactions = personalTransactionsForUser(u.id)
     const periodTransactions = transactions.filter((x) => x.tenantId === currentTenantId() && x.periodId === period?.id)
@@ -842,14 +844,76 @@
       <section class="card"><div class="card-top"><div><h3>Jenis zakat yang tercatat periode ini</h3><p class="caption">Hanya rincian transaksi milik Anda pada periode aktif.</p></div></div>${A.table(['Jenis zakat', 'Media', 'Nilai', 'Nomor transaksi', 'Status', 'Bukti'], breakdownRows)}</section>
       <section class="card"><div class="card-top"><div><h3>Riwayat zakat sebelumnya</h3><p class="caption">Riwayat lintas periode dan lembaga yang terhubung ke akun atau identitas Muzakki Anda.</p></div><span class="tag info">${historicalTransactions.length} transaksi</span></div>${historicalTransactions.length ? A.table(['Tanggal', 'Periode / lembaga', 'Nomor', 'Jenis zakat', 'Uang', 'Beras', 'Status', 'Bukti'], historicalTransactions.map(personalHistoryRow)) : alert('Belum ada riwayat zakat dari periode sebelumnya. Transaksi pada periode aktif akan muncul di bagian atas.', 'light')}</section>
     </section>`
-    const accountTools = `<details class="card my-zis-tools"><summary>Layanan mandiri: profil, keluarga, dan kalkulator zakat</summary><div class="my-zis-tools-content">
+    return `${A.boxhead('Dashboard Zakat Saya', `Laporan pribadi ${esc(tenantLabel(currentTenantId()))} · ${esc(period?.name || 'Tidak ada periode aktif')}`, '')}${personalDashboard}`
+  }
+
+  function muzakkiServicesPage() {
+    const u = activeUser()
+    const account = accountForUser()
+    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id)
+    if (!tenants.length) {
+      return `${A.boxhead('Layanan Mandiri', 'Kelola data pribadi dan siapkan layanan setelah akun terhubung dengan lembaga.', '')}
+        <section class="card">
+          <div class="my-zis-dashboard-head"><div><span class="eyebrow">PENGATURAN AKUN MUZAKKI</span><h2>Profil akun Anda</h2><p>Akun belum terhubung dengan lembaga. Pilih lembaga terlebih dahulu untuk melengkapi profil keanggotaan, data keluarga, dan kalkulator zakat.</p></div><span class="tag warn">Belum terhubung</span></div>
+          <div class="my-zis-person-details section-gap">
+            <div><span>Nama lengkap</span><b>${esc(account?.displayName || u.name)}</b></div>
+            <div><span>Nomor HP</span><b>${esc(account?.phone || '—')}</b></div>
+            <div><span>Email</span><b>${esc(account?.email || '—')}</b></div>
+            <div><span>Alamat lengkap</span><b>${esc(account?.address || '—')}</b></div>
+          </div>
+          <div class="form-actions">${action('Pilih lembaga', 'tenant-join', 'primary')}</div>
+          <div class="alert light">Setelah bergabung, halaman ini menyediakan pengaturan profil pada lembaga, data keluarga tanggungan, dan kalkulator zakat.</div>
+        </section>`
+    }
+    const person = currentAccountPerson()
+    const household = householdForUser()
+    const serviceSections = `<div class="my-zis-tools-content my-zis-services-content">
       <section class="card"><div class="card-top"><h3>Lembaga yang terhubung</h3>${action('Gabung lembaga lain', 'tenant-join', 'sm')}</div>${A.table(['Lembaga', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section>
       <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
       <section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Data keluarga membantu menghitung kewajiban zakat fitrah dan jumlah jiwa yang ditanggung.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section></div>
       <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter lembaga yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['profesi', 'Zakat profesi'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Harta bersih (maal) / penghasilan profesi (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.sel('Periode penghasilan profesi', 'calcProfessionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}${A.fld('Jumlah jiwa / hari / kasus', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.sel('Status haul untuk zakat maal', 'calcHaul', [['no', 'Belum / tidak mencapai haul'], ['yes', 'Sudah mencapai haul satu tahun']], 'no')}${A.sel('Jenis kafarat', 'calcKafaratType', [['yamin', 'Melanggar sumpah (memberi makan 10 orang)'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}${A.sel('Tahapan kafarat 60 orang', 'calcKafaratFeeding', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Tidak mampu tahapan sebelumnya; hitung opsi memberi makan 60 orang']], 'no')}${A.fld('Harga emas acuan per gram (Rp)', 'goldPrice', Math.round(A.rule()?.goldPricePerGram || 1078609), 'text', 'inputmode="numeric" data-format="idr" min="1" required')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
       <div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>
-    </div></details>`
-    return `${A.boxhead('Dashboard Zakat Saya', `Laporan pribadi ${esc(tenantLabel(currentTenantId()))} · ${esc(period?.name || 'Tidak ada periode aktif')}`, '')}${personalDashboard}${accountTools}`
+    </div>`
+    return `${A.boxhead('Layanan Mandiri', 'Kelola profil, data keluarga tanggungan, dan hitung estimasi zakat dalam satu halaman tersendiri.', '')}<section class="card my-zis-tools my-zis-services-page">${serviceSections}</section>`
+  }
+
+  function muzakkiPayPlanPage() {
+    expirePending()
+    const u = activeUser()
+    const account = accountForUser()
+    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id)
+    if (!tenants.length) {
+      return `${A.boxhead('Rencana Bayar Zakat', 'Siapkan rencana pembayaran zakat dari akun pribadi Anda.', '')}
+        <section class="card"><div class="my-zis-dashboard-head"><div><span class="eyebrow">RENCANA PEMBAYARAN</span><h2>Hubungkan akun ke lembaga terlebih dahulu</h2><p>Untuk membuat rencana bayar, akun harus terdaftar pada lembaga yang menyediakan periode zakat aktif.</p></div><span class="tag warn">Belum terhubung</span></div>
+          <div class="form-actions">${action('Pilih lembaga', 'tenant-join', 'primary')}${actionFor('Buka Layanan Mandiri', 'quick-page', 'muzakki-services', 'sm')}</div></section>`
+    }
+    const member = memberForUser()
+    const person = currentAccountPerson()
+    const period = currentPeriod()
+    const transactions = period ? personalTransactionsForUser(u.id).filter((tx) => tx.tenantId === currentTenantId() && tx.periodId === period.id).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))) : []
+    const latest = transactions[0] || null
+    const alreadyPlanned = period && oneTxPerTenantPeriod(account?.id, currentTenantId(), period.id, person?.id)
+    const canCreate = Boolean(account && member && person && period && !alreadyPlanned)
+    const planAction = canCreate
+      ? action('Mulai rencana bayar zakat', 'self-tx-new', 'primary')
+      : alreadyPlanned
+        ? '<span class="tag info">Rencana periode ini sudah dibuat</span>'
+        : !period
+          ? '<span class="tag warn">Periode zakat belum dibuka</span>'
+          : '<span class="tag warn">Lengkapi profil keanggotaan terlebih dahulu</span>'
+    const currentStatus = latest
+      ? `<div class="my-zis-status-main">${personalStatusPill(latest)}<p class="caption">Nomor transaksi: <b class="mono">${esc(latest.serial || latest.id)}</b></p><p class="caption">Dibuat ${esc(new Date(latest.createdAt).toLocaleString('id-ID'))}. Tunjukkan QR transaksi kepada Amil untuk pemeriksaan dan pengesahan.</p></div>`
+      : '<div class="my-zis-status-main"><span class="tag info">Belum ada rencana pembayaran</span><p class="caption">Anda belum membuat rencana bayar pada periode lembaga yang sedang dipilih.</p></div>'
+    const tenantChoice = tenants.length > 1
+      ? `<div class="my-zis-tenant-picker"><label for="muzakki-tenant-switch">Lembaga aktif</label><select id="muzakki-tenant-switch">${tenants.map((m) => `<option value="${esc(m.tenantId)}" ${m.tenantId === currentTenantId() ? 'selected' : ''}>${esc(tenantLabel(m.tenantId))}</option>`).join('')}</select></div>`
+      : `<span class="tag info">${esc(tenantLabel(currentTenantId()))}</span>`
+    return `${A.boxhead('Rencana Bayar Zakat', 'Pilih jenis zakat, hitung estimasi, lalu simpan rencana untuk memperoleh QR transaksi yang akan diperiksa Amil.', '')}
+      <section class="card">
+        <div class="my-zis-dashboard-head"><div><span class="eyebrow">RENCANA PEMBAYARAN MUZAKKI</span><h2>Siapkan pembayaran Anda</h2><p>Rencana yang disimpan berstatus Pending sampai pembayaran fisik dan akad diperiksa oleh Amil.</p></div><div class="my-zis-tenant-control">${tenantChoice}</div></div>
+        <div class="cards section-gap">${A.stat('Lembaga aktif', esc(tenantLabel(currentTenantId())), 'Ruang keanggotaan yang dipilih')}${A.stat('Periode zakat', esc(period?.name || 'Belum dibuka'), period ? 'Periode aktif lembaga' : 'Hubungi pengelola lembaga')}${A.stat('Jumlah keluarga', householdForUser().length, 'Data tanggungan pada akun')}${A.stat('Status rencana', latest ? latest.status === 'pending' ? 'Menunggu Amil' : latest.status : 'Belum dibuat', 'Satu rencana aktif per periode dan lembaga')}</div>
+        <div class="two-col section-gap"><section class="card"><h3>Status rencana periode ini</h3>${currentStatus}</section><section class="card"><h3>Langkah pembayaran</h3><ol class="simple-steps"><li>Pilih jenis zakat dan media pembayaran.</li><li>Periksa estimasi berdasarkan tarif lembaga.</li><li>Simpan rencana dan tunjukkan QR kepada Amil.</li><li>Amil memeriksa penerimaan fisik dan memandu akad.</li></ol><div class="form-actions">${planAction}</div></section></div>
+        <div class="form-actions">${actionFor('Kelola profil & keluarga', 'quick-page', 'muzakki-services', 'sm')}</div>
+      </section>`
   }
 
   const TRANSACTION_CATEGORIES = [
@@ -1458,14 +1522,14 @@
         flow: ['Daftar akun mandiri dengan nama lengkap, nomor HP, email, dan alamat', 'Setelah login, hubungkan akun ke lembaga dari menu Layanan Mandiri', 'Lengkapi domisili dan data keluarga pada lembaga yang dipilih', 'Periksa status zakat pribadi pada periode aktif', 'Pantau pengesahan Amil, rekonsiliasi Bendahara, dan riwayat zakat', 'Buat rencana zakat setelah lembaga membuka periode'],
         modules: [
           { menu: 'Dashboard Zakat Saya', goal: 'Memeriksa pencatatan zakat pribadi dan status verifikasi tanpa melihat angka agregat panitia.', steps: ['Setelah daftar, bila belum ada lembaga yang terhubung, dashboard menampilkan status Belum terhubung dan ringkasan empat data akun.', 'Tekan Pilih lembaga untuk mendaftar ke lembaga aktif. Setelah berhasil, dashboard pribadi menampilkan nama dan lembaga yang sedang dipilih.', 'Periksa kartu Status zakat periode ini, Total uang tercatat, Total beras tercatat, dan Jiwa / unit dibayarkan.', 'Pada bagian Rincian zakat atas nama Anda, periksa apakah status verifikasi Bendahara sudah tertera sebagai Sudah terverifikasi atau Belum terverifikasi.', 'Baca tabel Jenis zakat yang tercatat periode ini untuk melihat kategori, media uang/beras, nilai, status, serta bukti transaksi.', 'Buka Riwayat zakat sebelumnya untuk meninjau pembayaran dari periode atau lembaga lain yang terhubung ke akun Anda.'], preview: [['Nama akun', 'Muzakki pribadi'], ['Status periode', 'Menunggu Amil / Menunggu Bendahara / Terverifikasi'], ['Rincian', 'Jenis zakat · Uang · Beras'], ['Riwayat', 'Periode sebelumnya']], result: 'Anda dapat memastikan transaksi pribadi mana yang tercatat, sudah disahkan Amil, dan benar-benar telah lulus rekonsiliasi Bendahara.', caution: 'Status Paid hanya berarti disahkan Amil. Status Terverifikasi Bendahara baru tampil jika transaksi tercantum pada berita acara setoran yang sudah lulus rekonsiliasi kas dan rekening.' },
-          { menu: 'Akun Muzakki · Lembaga', goal: 'Menghubungkan satu akun ke beberapa lembaga tanpa mencampur transaksi antar lembaga.', steps: ['Buka menu Layanan Mandiri. Akun yang baru dibuat dan belum terhubung akan menampilkan tombol Pilih lembaga.', 'Pada akun yang sudah memiliki membership, lihat daftar lembaga yang terhubung dan gunakan dropdown untuk berpindah lembaga aktif.', 'Untuk mendaftar ke lembaga lain, tekan Gabung lembaga lain.', 'Pilih lembaga aktif, tentukan status Warga daerah atau Non-daerah, lalu pilih RW dan RT dari master bila menjadi warga daerah. Alamat akun akan terisi awal dan dapat disesuaikan untuk lembaga tersebut. Centang persetujuan penggunaan data sebelum menghubungkan akun.', 'Tekan Daftar dan hubungkan lembaga. Setelah berhasil, data Muzakki dan kartu digital dibuat untuk lembaga tersebut.'], preview: [['Lembaga yang terhubung', 'Masjid An-Nur · Lembaga lainnya'], ['Status domisili', 'Warga daerah / Non-daerah'], ['RW / RT', 'Pilihan dari master lembaga'], ['Alamat lengkap', 'Alamat sesuai lembaga'], ['Tombol', 'Hubungkan lembaga']], result: 'Lembaga baru tampil dalam daftar dan dapat dipilih sebagai lembaga aktif.', caution: 'Setiap lembaga mempunyai keanggotaan, periode, dan QR transaksi sendiri. Amil suatu lembaga hanya dapat memverifikasi transaksi milik lembaga tersebut.' },
-          { menu: 'Profil dan Wilayah Alamat', goal: 'Memastikan identitas, kontak, Daerah, RT, dan alamat tidak salah.', steps: ['Pada bagian Profil dan wilayah alamat, isi atau periksa Nama lengkap.', 'Periksa Nomor HP dan Email. Minimal satu kontak perlu tersedia agar lembaga dapat mengenali akun Anda.', 'Pilih Warga daerah atau Non-daerah. Bila warga daerah, pilih RW dan RT yang sesuai dari master wilayah lembaga. Bila Non-daerah, pilihan RW dan RT tidak diperlukan.', 'Isi Alamat lengkap dengan jelas, misalnya nama jalan, nomor rumah, blok, atau patokan yang membantu petugas.', 'Centang persetujuan penggunaan data, lalu tekan Simpan profil.'], preview: [['Nama lengkap', 'Nama sesuai identitas'], ['Nomor HP / Email', 'Minimal satu kontak'], ['Status domisili', 'Warga daerah / Non-daerah'], ['RW / RT', 'Dipilih dari master wilayah lembaga'], ['Tombol', 'Simpan profil']], result: 'Profil lembaga aktif tersimpan dan informasi wilayah bisa digunakan untuk rekap Muzakki.' },
-          { menu: 'Data Keluarga Tanggungan', goal: 'Menyimpan nama orang yang menjadi tanggungan agar jumlah jiwa mudah digunakan kembali.', steps: ['Cari bagian Data keluarga tanggungan.', 'Masukkan nama setiap anggota keluarga pada satu baris. Isi hubungan seperti Kepala keluarga, Pasangan, atau Anak.', 'Tekan Tambah anggota bila perlu menambahkan baris baru.', 'Bila ada baris yang salah, tekan Hapus pada baris tersebut.', 'Setelah daftar lengkap, tekan Simpan data keluarga. Periksa kembali jumlah anggota yang tampil pada ringkasan.'], preview: [['Baris anggota', 'Nama anggota keluarga'], ['Hubungan', 'Kepala keluarga / Pasangan / Anak'], ['Tombol tambah', 'Tambah anggota'], ['Tombol simpan', 'Simpan data keluarga']], result: 'Jumlah anggota keluarga tersimpan dan menjadi nilai awal jumlah jiwa pada perhitungan fitrah.', caution: 'Periksa data keluarga sebelum membuat transaksi. Satu transaksi yang sudah dibuat pada lembaga dan periode aktif akan membatasi pembuatan transaksi berikutnya.' },
-          { menu: 'Kalkulator Zakat', goal: 'Menghitung perkiraan kewajiban sebelum menyimpan rencana transaksi.', steps: ['Pada bagian Kalkulator zakat, pilih jenis perhitungan seperti Zakat fitrah, Zakat maal, Fidyah, Kafarat, atau Infak / sedekah.', 'Pilih media perhitungan Uang atau Beras sesuai ketentuan lembaga.', 'Isi Jumlah jiwa atau hari. Untuk zakat maal, isi Nilai harta. Harga emas dipakai sebagai parameter perhitungan yang ditampilkan.', 'Tekan Hitung estimasi dan baca hasil yang muncul di kotak hasil.', 'Bila ragu dengan tarif atau hasil, tanyakan kepada Amil atau pengelola lembaga sebelum membuat transaksi.'], preview: [['Jenis perhitungan', 'Zakat fitrah / maal / lainnya'], ['Media', 'Uang (Rp) atau Beras (kg)'], ['Jumlah', 'Jiwa / hari'], ['Hasil', 'Estimasi kalkulator'], ['Tombol', 'Hitung estimasi']], result: 'Estimasi nominal atau kilogram tampil untuk membantu Anda menyiapkan pembayaran.', caution: 'Kalkulator adalah alat bantu berdasarkan parameter lembaga. Hasilnya bukan fatwa dan tidak menggantikan konsultasi apabila jenis kewajiban atau dasar perhitungannya belum jelas.' },
-          { menu: 'Buat Rencana Transaksi dan QR', goal: 'Menyimpan rencana pembayaran mandiri agar Amil dapat memeriksanya melalui QR.', steps: ['Pastikan lembaga yang dipilih benar dan periode zakat sedang aktif.', 'Pada bagian Transaksi periode aktif, tekan Buat rencana zakat.', 'Pilih jenis zakat, media pembayaran, dan jumlah jiwa atau unit. Periksa nominal uang dalam rupiah atau berat dalam kilogram.', 'Pilih saluran notifikasi yang diinginkan. Pilihan email dan WhatsApp pada prototype masih berupa simulasi.', 'Baca catatan transaksi. Centang pernyataan bahwa status transaksi masih Pending sampai diperiksa Amil.', 'Tekan Simpan dan tampilkan QR. Simpan struk digital pada perangkat Anda.'], preview: [['Jenis zakat', 'Zakat Fitrah'], ['Media pembayaran', 'Uang (Rp) / Beras (kg)'], ['Jumlah jiwa / unit', 'Isi sesuai kewajiban'], ['Nominal', 'Contoh Rp 180.000'], ['Status setelah simpan', 'Pending'], ['Tombol', 'Simpan dan tampilkan QR']], result: 'Nomor transaksi dan QR tampil pada struk. Bawa QR tersebut ke meja Amil untuk pemeriksaan dan pembayaran.', caution: 'Satu akun hanya dapat membuat satu transaksi dalam satu lembaga pada satu periode. QR Pending berlaku 24 jam atau sampai periode ditutup. QR bukan bukti pembayaran lunas.' },
+          { menu: 'Layanan Mandiri · Lembaga', goal: 'Menghubungkan satu akun ke beberapa lembaga tanpa mencampur transaksi antar lembaga.', steps: ['Buka menu Layanan Mandiri. Akun yang baru dibuat dan belum terhubung akan menampilkan tombol Pilih lembaga.', 'Pada akun yang sudah memiliki membership, lihat daftar lembaga yang terhubung dan gunakan dropdown untuk berpindah lembaga aktif.', 'Untuk mendaftar ke lembaga lain, tekan Gabung lembaga lain.', 'Pilih lembaga aktif, tentukan status Warga daerah atau Non-daerah, lalu pilih RW dan RT dari master bila menjadi warga daerah. Alamat akun akan terisi awal dan dapat disesuaikan untuk lembaga tersebut. Centang persetujuan penggunaan data sebelum menghubungkan akun.', 'Tekan Daftar dan hubungkan lembaga. Setelah berhasil, data Muzakki dan kartu digital dibuat untuk lembaga tersebut.'], preview: [['Lembaga yang terhubung', 'Masjid An-Nur · Lembaga lainnya'], ['Status domisili', 'Warga daerah / Non-daerah'], ['RW / RT', 'Pilihan dari master lembaga'], ['Alamat lengkap', 'Alamat sesuai lembaga'], ['Tombol', 'Hubungkan lembaga']], result: 'Lembaga baru tampil dalam daftar dan dapat dipilih sebagai lembaga aktif.', caution: 'Setiap lembaga mempunyai keanggotaan, periode, dan QR transaksi sendiri. Amil suatu lembaga hanya dapat memverifikasi transaksi milik lembaga tersebut.' },
+          { menu: 'Layanan Mandiri · Profil dan Wilayah Alamat', goal: 'Memastikan identitas, kontak, Daerah, RT, dan alamat tidak salah.', steps: ['Buka menu Layanan Mandiri. Pada bagian Profil dan wilayah alamat, isi atau periksa Nama lengkap.', 'Periksa Nomor HP dan Email. Minimal satu kontak perlu tersedia agar lembaga dapat mengenali akun Anda.', 'Pilih Warga daerah atau Non-daerah. Bila warga daerah, pilih RW dan RT yang sesuai dari master wilayah lembaga. Bila Non-daerah, pilihan RW dan RT tidak diperlukan.', 'Isi Alamat lengkap dengan jelas, misalnya nama jalan, nomor rumah, blok, atau patokan yang membantu petugas.', 'Centang persetujuan penggunaan data, lalu tekan Simpan profil.'], preview: [['Nama lengkap', 'Nama sesuai identitas'], ['Nomor HP / Email', 'Minimal satu kontak'], ['Status domisili', 'Warga daerah / Non-daerah'], ['RW / RT', 'Dipilih dari master wilayah lembaga'], ['Tombol', 'Simpan profil']], result: 'Profil lembaga aktif tersimpan dan informasi wilayah bisa digunakan untuk rekap Muzakki.' },
+          { menu: 'Layanan Mandiri · Data Keluarga Tanggungan', goal: 'Menyimpan nama orang yang menjadi tanggungan agar jumlah jiwa mudah digunakan kembali.', steps: ['Buka menu Layanan Mandiri, lalu cari bagian Data keluarga tanggungan.', 'Masukkan nama setiap anggota keluarga pada satu baris. Isi hubungan seperti Kepala keluarga, Pasangan, atau Anak.', 'Tekan Tambah anggota bila perlu menambahkan baris baru.', 'Bila ada baris yang salah, tekan Hapus pada baris tersebut.', 'Setelah daftar lengkap, tekan Simpan data keluarga. Periksa kembali jumlah anggota yang tampil pada ringkasan.'], preview: [['Baris anggota', 'Nama anggota keluarga'], ['Hubungan', 'Kepala keluarga / Pasangan / Anak'], ['Tombol tambah', 'Tambah anggota'], ['Tombol simpan', 'Simpan data keluarga']], result: 'Jumlah anggota keluarga tersimpan dan menjadi nilai awal jumlah jiwa pada perhitungan fitrah.', caution: 'Periksa data keluarga sebelum membuat transaksi. Satu transaksi yang sudah dibuat pada lembaga dan periode aktif akan membatasi pembuatan transaksi berikutnya.' },
+          { menu: 'Layanan Mandiri · Kalkulator Zakat', goal: 'Menghitung perkiraan kewajiban sebelum menyimpan rencana transaksi.', steps: ['Buka menu Layanan Mandiri. Pada bagian Kalkulator zakat, pilih jenis perhitungan seperti Zakat fitrah, Zakat maal, Fidyah, Kafarat, atau Infak / sedekah.', 'Pilih media perhitungan Uang atau Beras sesuai ketentuan lembaga.', 'Isi Jumlah jiwa atau hari. Untuk zakat maal, isi Nilai harta. Harga emas dipakai sebagai parameter perhitungan yang ditampilkan.', 'Tekan Hitung estimasi dan baca hasil yang muncul di kotak hasil.', 'Bila ragu dengan tarif atau hasil, tanyakan kepada Amil atau pengelola lembaga sebelum membuat transaksi.'], preview: [['Jenis perhitungan', 'Zakat fitrah / maal / lainnya'], ['Media', 'Uang (Rp) atau Beras (kg)'], ['Jumlah', 'Jiwa / hari'], ['Hasil', 'Estimasi kalkulator'], ['Tombol', 'Hitung estimasi']], result: 'Estimasi nominal atau kilogram tampil untuk membantu Anda menyiapkan pembayaran.', caution: 'Kalkulator adalah alat bantu berdasarkan parameter lembaga. Hasilnya bukan fatwa dan tidak menggantikan konsultasi apabila jenis kewajiban atau dasar perhitungannya belum jelas.' },
+          { menu: 'Rencana Bayar Zakat', goal: 'Menyimpan rencana pembayaran mandiri agar Amil dapat memeriksanya melalui QR.', steps: ['Pastikan lembaga yang dipilih benar dan periode zakat sedang aktif.', 'Buka menu Rencana Bayar Zakat pada sidebar, lalu tekan Mulai rencana bayar zakat.', 'Pilih jenis zakat, media pembayaran, dan jumlah jiwa atau unit. Periksa nominal uang dalam rupiah atau berat dalam kilogram.', 'Pilih saluran notifikasi yang diinginkan. Pilihan email dan WhatsApp pada prototype masih berupa simulasi.', 'Baca catatan transaksi. Centang pernyataan bahwa status transaksi masih Pending sampai diperiksa Amil.', 'Tekan Simpan dan tampilkan QR. Simpan struk digital pada perangkat Anda.'], preview: [['Jenis zakat', 'Zakat Fitrah'], ['Media pembayaran', 'Uang (Rp) / Beras (kg)'], ['Jumlah jiwa / unit', 'Isi sesuai kewajiban'], ['Nominal', 'Contoh Rp 180.000'], ['Status setelah simpan', 'Pending'], ['Tombol', 'Simpan dan tampilkan QR']], result: 'Nomor transaksi dan QR tampil pada struk. Bawa QR tersebut ke meja Amil untuk pemeriksaan dan pembayaran.', caution: 'Satu akun hanya dapat membuat satu transaksi dalam satu lembaga pada satu periode. QR Pending berlaku 24 jam atau sampai periode ditutup. QR bukan bukti pembayaran lunas.' },
           { menu: 'Riwayat dan Bukti Transaksi', goal: 'Melihat transaksi periode sebelumnya dan membuka bukti atau QR milik akun sendiri.', steps: ['Pada dashboard pribadi, buka tabel Riwayat zakat sebelumnya untuk periode yang telah berlalu atau lembaga lain yang terhubung.', 'Periksa tanggal, periode/lembaga, nomor transaksi, jenis zakat, nilai uang/beras, serta status.', 'Tekan Lihat bukti pada baris transaksi yang ingin diperiksa.', 'Pada struk, gunakan Unduh gambar PNG, Cetak / Simpan PDF, atau Cetak thermal bila diperlukan.', 'Status Terverifikasi hanya muncul bila berita acara Bendahara yang memuat transaksi tersebut sudah lulus rekonsiliasi.'], preview: [['Riwayat', 'Periode · Lembaga · Nomor'], ['Nilai', 'Uang (Rp) · Beras (kg)'], ['Status', 'Tahap Amil dan Bendahara'], ['Aksi bukti', 'Lihat bukti']], result: 'Anda dapat membuka kembali bukti transaksi dari periode sebelumnya yang terhubung dengan identitas pribadi.' },
         ],
-        faqs: [['Apakah saya harus memilih lembaga saat daftar akun?', 'Tidak. Pendaftaran awal hanya meminta nama lengkap, nomor HP, email, dan alamat. Pilih lembaga setelah login melalui menu Layanan Mandiri.'], ['Apakah QR berarti saya sudah membayar?', 'Belum. QR hanya identitas rencana transaksi. Pembayaran dicatat setelah Amil memeriksa rincian, menerima pembayaran, dan mengesahkannya.'], ['Mengapa tombol Buat rencana zakat tidak muncul?', 'Periksa apakah lembaga sudah dipilih, periode sudah aktif, dan Anda belum membuat transaksi untuk lembaga dan periode yang sama.'], ['Apakah akun dapat bergabung ke banyak lembaga?', 'Ya. Namun transaksi, QR, dan verifikasi tetap terpisah untuk setiap lembaga.'], ['Apakah email atau WhatsApp sudah pasti terkirim?', 'Belum. Pada prototype, kanal tersebut hanya pilihan simulasi dan belum terhubung ke layanan pengiriman.']]
+        faqs: [['Apakah saya harus memilih lembaga saat daftar akun?', 'Tidak. Pendaftaran awal hanya meminta nama lengkap, nomor HP, email, dan alamat. Pilih lembaga setelah login melalui menu Layanan Mandiri.'], ['Apakah QR berarti saya sudah membayar?', 'Belum. QR hanya identitas rencana transaksi. Pembayaran dicatat setelah Amil memeriksa rincian, menerima pembayaran, dan mengesahkannya.'], ['Mengapa tombol Mulai rencana bayar zakat tidak tersedia?', 'Periksa apakah lembaga sudah dipilih, periode sudah aktif, dan Anda belum membuat transaksi untuk lembaga dan periode yang sama.'], ['Apakah akun dapat bergabung ke banyak lembaga?', 'Ya. Namun transaksi, QR, dan verifikasi tetap terpisah untuk setiap lembaga.'], ['Apakah email atau WhatsApp sudah pasti terkirim?', 'Belum. Pada prototype, kanal tersebut hanya pilihan simulasi dan belum terhubung ke layanan pengiriman.']]
       },
       Operator: {
         intro: 'Anda melayani Muzakki yang datang langsung ke konter. Tugas utama adalah memastikan data dan nominal tercatat benar, lalu menyerahkan QR atau struk sementara kepada Muzakki untuk dibawa ke meja Amil.',
@@ -1915,7 +1979,7 @@
     const role = activeUser()?.role
     const roleHint = {
       Admin: 'Kelola periode, parameter, akun, dan verifikasi Mustahik. Data transaksi yang telah disahkan tidak dapat diubah.',
-      Muzakki: 'Kelola keluarga dan lembaga, hitung zakat, lalu buat QR untuk jalur cepat ke meja Amil.',
+      Muzakki: 'Periksa ringkasan zakat pribadi, kelola profil dan keluarga, lalu siapkan rencana pembayaran untuk dibawa ke meja Amil.',
       Operator: 'Catat transaksi walk-in sebagai Pending dan arahkan Muzakki membawa QR ke Amil.',
       Amil: 'Buka shift, scan QR, pandu akad, sahkan pembayaran menjadi Paid, lalu tutup shift untuk serah terima.',
       Bendahara: 'Cocokkan setoran Amil melalui dua tahap rekonsiliasi, lalu kelola jurnal, alokasi dan batch penyaluran.',
@@ -1923,7 +1987,7 @@
       Pengurus: 'Pantau penerimaan, rekonsiliasi dan audit; tinjau serta putuskan rencana alokasi tanpa mengubah transaksi operasional.',
     }[role]
     const quick = {
-      Admin: ['mustahik', 'Data Mustahik'], Muzakki: ['my-zis', 'Layanan Mandiri'],
+      Admin: ['mustahik', 'Data Mustahik'], Muzakki: ['pay-plan', 'Rencana Bayar Zakat'],
       Operator: ['transactions', 'Input Transaksi'], Amil: ['transactions', 'Scan QR'],
       Bendahara: ['deposits', 'Rekonsiliasi'], Relawan: ['distribution', 'Batch Tugas'],
       Pengurus: ['reports', 'Laporan'],
@@ -2043,6 +2107,8 @@
     switch (state.page) {
       case 'dashboard': return dashboardV5()
       case 'my-zis': return myZisPage()
+      case 'muzakki-services': return muzakkiServicesPage()
+      case 'pay-plan': return muzakkiPayPlanPage()
       case 'transactions': return transactionsPageV5()
       case 'deposits': return depositsPageV5()
       case 'ledger': return ledgerPage()
@@ -2343,7 +2409,7 @@
         case 'mustahik-new': if (activeUser()?.role !== 'Admin') throw new Error('Hanya Admin yang dapat membuat survei Mustahik'); A.mustahikModal?.(null); break
         case 'mustahik-edit-v5': { if (activeUser()?.role !== 'Admin') throw new Error('Hanya Admin yang dapat mengubah survei Mustahik'); const m = A.scoped('mustahiks').find((x) => x.id === id); if (!m) throw new Error('Mustahik tidak ditemukan'); A.mustahikModal?.(m); break }
         case 'mustahik-verify-v5': { if (activeUser()?.role !== 'Admin') throw new Error('Hanya Admin yang dapat memverifikasi Mustahik'); const m = A.scoped('mustahiks').find((x) => x.id === id); if (!m) throw new Error('Mustahik tidak ditemukan'); m.status = 'terverifikasi'; m.verifiedBy = activeUser().id; m.verifiedAt = timestamp(); A.aud('MUSTAHIK_VERIFIKASI', `Verifikasi ${m.id}`); A.persist(); A.render(); break }
-        case 'tenant-switch-button': switchTenant(id); break
+        case 'tenant-switch-button': switchTenant(id, state.page); break
         case 'household-add': $('household-rows')?.insertAdjacentHTML('beforeend', '<div class="household-row"><input name="memberName" placeholder="Nama anggota" required><input name="relation" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>'); break
         case 'household-remove': button.closest('.household-row')?.remove(); break
         case 'self-tx-new': openSelfTransaction(); break
@@ -2395,12 +2461,12 @@
     } catch (error) { console.error(error); A.toast(error.message || String(error), 'error') }
   })
 
-  function switchTenant(tenantId) {
+  function switchTenant(tenantId, returnPage = 'my-zis') {
     const u = activeUser()
     if (u?.role !== 'Muzakki' || !memberForUser(u.id, tenantId)) throw new Error('Akun ini belum terdaftar di lembaga tersebut')
     A.session.tenantId = tenantId
     saveSession()
-    state.page = 'my-zis'
+    state.page = ['my-zis', 'muzakki-services', 'pay-plan'].includes(returnPage) ? returnPage : 'my-zis'
     A.persist(); A.render(); trySync()
   }
   document.addEventListener('input', (event) => {
@@ -2441,7 +2507,7 @@
       }
     }
     if (event.target.id === 'muzakki-tenant-switch') {
-      try { switchTenant(event.target.value) } catch (error) { A.toast(error.message, 'error') }
+      try { switchTenant(event.target.value, state.page) } catch (error) { A.toast(error.message, 'error') }
     }
     if (event.target.id === 'dashboard-medium-filter') {
       state.filters.dashboardMedium = event.target.value === 'beras' ? 'beras' : 'uang'

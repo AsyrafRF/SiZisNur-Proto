@@ -115,6 +115,17 @@ assert.ok(app.html().includes('Belum terhubung'));
 assert.ok(app.html().includes('Jl. Contoh Nomor 10, Takokak'));
 assert.ok(app.html().includes('Pilih lembaga'));
 
+// Newly registered accounts can open the two dedicated pages before joining a tenant.
+app.navigateRef('muzakki-services');
+assert.ok(app.html().includes('Layanan Mandiri'));
+assert.ok(app.html().includes('Profil akun Anda'));
+assert.ok(app.html().includes('Pilih lembaga'));
+app.navigateRef('pay-plan');
+assert.ok(app.html().includes('Rencana Bayar Zakat'));
+assert.ok(app.html().includes('Hubungkan akun ke lembaga terlebih dahulu'));
+assert.ok(!app.html().includes('data-v5-action="self-tx-new"'));
+app.navigateRef('my-zis');
+
 // A walk-in record with the same contact details must not be silently claimed.
 const walkIn = {
   id: 'PS-WALKIN-UNVERIFIED', tenantId: 'TN-ALHIKMAH',

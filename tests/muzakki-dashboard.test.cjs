@@ -49,6 +49,12 @@ assert.equal(bridge.state.page, 'my-zis', 'Muzakki login must land on the person
 assert.ok(bridge.can('my-zis'));
 assert.ok(!bridge.can('dashboard'), 'the aggregate committee dashboard is not accessible to Muzakki');
 assert.ok(html.includes('Dashboard Zakat Saya'));
+assert.ok(html.includes('Menu Akun Muzakki'));
+assert.ok(html.includes('data-page="my-zis"'));
+assert.ok(html.includes('data-page="muzakki-services"'));
+assert.ok(html.includes('data-page="pay-plan"'));
+assert.ok(!html.includes('Layanan mandiri: profil, keluarga, dan kalkulator zakat'), 'dashboard must no longer contain the expandable account tools panel');
+assert.ok(!html.includes('<details'), 'dashboard must not stack the account tools as a dropdown');
 assert.ok(html.includes('Status zakat periode ini'));
 assert.ok(html.includes('Sudah terverifikasi'), 'verification state is derived from a verified Treasurer handover');
 assert.ok(html.includes('Terverifikasi Bendahara'));
@@ -60,6 +66,42 @@ assert.ok(!html.includes('TR-002') && !html.includes('TR-003'), 'other Muzakki t
 assert.ok(!html.includes('Status Distribusi'), 'Muzakki must not see the aggregate distribution panel');
 assert.ok(!html.includes('Transaksi Terbaru'), 'Muzakki must not see the committee-wide recent transactions panel');
 assert.ok(!html.includes('Total Muzakki terdaftar'), 'Muzakki must not see aggregate committee metrics');
+
+// Profile, family and calculator tools live on their own page.
+app.navigateRef('muzakki-services');
+html = app.html();
+assert.equal(bridge.state.page, 'muzakki-services');
+assert.ok(html.includes('Layanan Mandiri'));
+assert.ok(html.includes('Profil dan wilayah alamat'));
+assert.ok(html.includes('Data keluarga tanggungan'));
+assert.ok(html.includes('Kalkulator zakat'));
+assert.ok(html.includes('data-v5-form="self-profile"'));
+assert.ok(html.includes('data-v5-form="family-save"'));
+assert.ok(html.includes('data-v5-form="zakat-calc"'));
+assert.ok(!html.includes('<details'), 'the dedicated services page must render its content expanded, not as a dropdown');
+
+// Payment planning is a separate destination while it reuses the established QR transaction flow.
+const savedTransactions = bridge.db.transactions;
+bridge.db.transactions = savedTransactions.filter((tx) => !(tx.tenantId === 'TN-ANNUR' && tx.periodId === 'PR-1447' && tx.personId === 'PS-01'));
+app.navigateRef('pay-plan');
+html = app.html();
+assert.equal(bridge.state.page, 'pay-plan');
+assert.ok(html.includes('Rencana Bayar Zakat'));
+assert.ok(html.includes('Langkah pembayaran'));
+assert.ok(html.includes('data-v5-action="self-tx-new"'), 'the dedicated page launches the existing payment-plan modal when no transaction exists yet');
+assert.ok(html.includes('Pending'));
+assert.ok(bridge.can('pay-plan') && bridge.can('muzakki-services'));
+bridge.db.transactions = savedTransactions;
+app.navigateRef('pay-plan');
+html = app.html();
+assert.ok(html.includes('Rencana periode ini sudah dibuat'), 'the page prevents duplicate planning for an existing period transaction');
+
+// Non-Muzakki roles must not gain access to either new page.
+bridge.login('US-ADM', false);
+assert.ok(!bridge.can('pay-plan'));
+assert.ok(!bridge.can('muzakki-services'));
+bridge.login('US-MZK', false);
+html = app.html();
 
 // Even a stale/direct navigation attempt must not render the committee dashboard.
 app.navigateRef('dashboard');
