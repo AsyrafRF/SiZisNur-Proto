@@ -762,46 +762,70 @@
     </main>`
   }
   function receiptThermalStyleV5() {
+    // Keep @page in the document head. Edge may ignore page rules injected from
+    // a style element inside body. CSS page size accepts `auto` or absolute
+    // dimensions; `80mm auto` is not a valid mixed declaration, while a single
+    // 80 mm length makes a square page. Roll width/length must come from the
+    // selected thermal-printer driver, so keep the page size auto and constrain
+    // the printable receipt content to 74 mm.
     return `<style>
-      @page { size: 80mm auto; margin: 3mm; }
-      html, body { width: 74mm !important; max-width: 74mm !important; margin: 0 !important; padding: 0 !important; }
-      body { font-family: "DejaVu Sans Mono", "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace !important; font-size: 8pt; line-height: 1.3; color: #000 !important; background: #fff !important; }
-      .thermal-receipt { width: 74mm; max-width: 74mm; box-sizing: border-box; margin: 0 auto; padding: 0 1mm; color: #000; font-family: inherit; font-size: 8pt; line-height: 1.3; }
-      .thermal-header { text-align: center; padding: 0 0 1.5mm; }
-      .thermal-header b { display: block; font-size: 12pt; line-height: 1.2; font-weight: 900; text-transform: uppercase; overflow-wrap: anywhere; }
-      .thermal-header span { display: block; margin-top: 1mm; font-size: 8pt; font-weight: 800; }
-      .thermal-header small { display: block; margin-top: .5mm; font-size: 7pt; letter-spacing: .3mm; }
-      .thermal-rule { white-space: nowrap; overflow: hidden; font-size: 7pt; line-height: 1.15; letter-spacing: -.15mm; }
-      .thermal-meta { padding: 1mm 0; }
-      .thermal-kv { display: grid; grid-template-columns: 25mm minmax(0,1fr); gap: 1mm; align-items: start; padding: .65mm 0; break-inside: avoid; }
-      .thermal-kv span { font-size: 7pt; font-weight: 600; }
-      .thermal-kv b { min-width: 0; text-align: right; font-size: 7.2pt; font-weight: 800; overflow-wrap: anywhere; }
-      .thermal-lines { padding: 1.4mm 0 .5mm; }
-      .thermal-section-title { display: block; text-align: center; font-size: 8pt; margin-bottom: 1mm; }
-      .thermal-item { padding: 1mm 0; border-bottom: .2mm dashed #777; break-inside: avoid; }
-      .thermal-item-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1mm; align-items: start; }
-      .thermal-item-row span { min-width: 0; font-size: 7.6pt; font-weight: 700; overflow-wrap: anywhere; }
-      .thermal-item-row b { white-space: nowrap; text-align: right; font-size: 7.6pt; font-weight: 900; }
-      .thermal-item-note { padding-left: 2mm; font-size: 6.8pt; line-height: 1.25; overflow-wrap: anywhere; }
-      .thermal-totals { padding: 1mm 0; }
-      .thermal-total { display: flex; justify-content: space-between; gap: 2mm; padding: .8mm 0; font-size: 8pt; font-weight: 900; }
+      @page { size: auto; margin: 3mm; }
+      * { box-sizing: border-box; }
+      html { width: 100%; min-height: 100%; margin: 0; padding: 0; background: #edf2ef; }
+      body { width: 74mm; max-width: 74mm; margin: 14px auto !important; padding: 0 !important; color: #000 !important; background: #fff !important; font-family: "DejaVu Sans Mono", "Roboto Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace !important; font-size: 8.5pt; line-height: 1.32; }
+      .thermal-screen-actions { width: 74mm; max-width: 74mm; margin: 0 auto 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; font: 10px Arial, sans-serif; color: #33443c; }
+      .thermal-screen-actions button { border: 0; border-radius: 6px; background: #126344; color: #fff; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+      .thermal-screen-actions span { text-align: right; }
+      .thermal-receipt { width: 74mm; max-width: 74mm; margin: 0 auto; padding: 2mm 1mm 3mm; color: #000; background: #fff; font-family: inherit; font-size: 8.5pt; line-height: 1.32; }
+      .thermal-header { text-align: center; padding: 0 0 1.8mm; }
+      .thermal-header b { display: block; font-size: 13pt; line-height: 1.2; font-weight: 900; text-transform: uppercase; overflow-wrap: anywhere; }
+      .thermal-header span { display: block; margin-top: 1mm; font-size: 8.5pt; font-weight: 800; }
+      .thermal-header small { display: block; margin-top: .7mm; font-size: 7.2pt; letter-spacing: .25mm; }
+      .thermal-rule { white-space: nowrap; overflow: hidden; font-size: 7.5pt; line-height: 1.2; letter-spacing: -.12mm; }
+      .thermal-meta { padding: 1.2mm 0; }
+      .thermal-kv { display: grid; grid-template-columns: 26mm minmax(0,1fr); gap: 1mm; align-items: start; padding: .8mm 0; break-inside: avoid; }
+      .thermal-kv span { font-size: 7.7pt; font-weight: 600; }
+      .thermal-kv b { min-width: 0; text-align: right; font-size: 7.8pt; font-weight: 800; overflow-wrap: anywhere; }
+      .thermal-lines { padding: 1.6mm 0 .7mm; }
+      .thermal-section-title { display: block; text-align: center; font-size: 8.5pt; margin-bottom: 1.2mm; }
+      .thermal-item { padding: 1.2mm 0; border-bottom: .2mm dashed #777; break-inside: avoid; }
+      .thermal-item-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1.2mm; align-items: start; }
+      .thermal-item-row span { min-width: 0; font-size: 8pt; font-weight: 700; overflow-wrap: anywhere; }
+      .thermal-item-row b { white-space: nowrap; text-align: right; font-size: 8pt; font-weight: 900; }
+      .thermal-item-note { padding-left: 2mm; font-size: 7.2pt; line-height: 1.3; overflow-wrap: anywhere; }
+      .thermal-totals { padding: 1.2mm 0; }
+      .thermal-total { display: flex; justify-content: space-between; gap: 2mm; padding: 1mm 0; font-size: 9pt; font-weight: 900; }
       .thermal-total b { white-space: nowrap; text-align: right; }
-      .thermal-qr { display: flex; justify-content: center; align-items: center; margin: 2mm auto 1mm; }
-      .thermal-qr svg { display: block; width: 30mm !important; height: 30mm !important; max-width: 30mm; max-height: 30mm; }
-      .thermal-token { max-width: 70mm; margin: 0 auto; text-align: center; font-size: 6pt; line-height: 1.2; overflow-wrap: anywhere; word-break: break-all; }
-      .thermal-qr-disabled { margin: 2mm 0; text-align: center; font-size: 7pt; font-weight: 900; }
-      .thermal-footer { margin-top: 2mm; text-align: center; font-size: 6.6pt; line-height: 1.35; }
-      .thermal-footer b { display: block; font-size: 7pt; }
-      .thermal-footer p { margin: 1.5mm 0; }
+      .thermal-qr { display: flex; justify-content: center; align-items: center; margin: 2.5mm auto 1.2mm; }
+      .thermal-qr svg { display: block; width: 28mm !important; height: 28mm !important; max-width: 28mm; max-height: 28mm; }
+      .thermal-token { max-width: 70mm; margin: 0 auto; text-align: center; font-size: 6.5pt; line-height: 1.25; overflow-wrap: anywhere; word-break: break-all; }
+      .thermal-qr-disabled { margin: 2mm 0; text-align: center; font-size: 7.5pt; font-weight: 900; }
+      .thermal-footer { margin-top: 2.5mm; text-align: center; font-size: 7pt; line-height: 1.4; }
+      .thermal-footer b { display: block; font-size: 7.5pt; }
+      .thermal-footer p { margin: 1.8mm 0; }
       .thermal-footer span { display: block; padding-top: 1mm; font-weight: 900; letter-spacing: .4mm; }
-      @media print { .tool { display: none !important; } html, body { height: auto !important; } }
+      @media print {
+        @page { size: auto; margin: 3mm; }
+        html { width: 80mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+        body { width: 74mm !important; max-width: 74mm !important; margin: 0 auto !important; padding: 0 !important; background: #fff !important; }
+        .thermal-screen-actions { display: none !important; }
+        .thermal-receipt { width: 74mm !important; max-width: 74mm !important; margin: 0 !important; padding: 0 1mm 2mm !important; box-shadow: none !important; }
+      }
     </style>`
   }
   // Thermal and PDF share all transaction facts and QR identity. Only the print
   // presentation differs: POS-style monospace for 80 mm, standard page for PDF.
   function makeReceiptPrint(tx, thermal = false) {
-    const html = thermal ? `${receiptThermalStyleV5()}${receiptThermalMarkupV5(tx)}` : A.receiptHtml(tx)
-    A.printWindow(`SiZisNur ${tx.serial || tx.id}`, html, false)
+    if (thermal) {
+      const win = window.open('', '_blank', 'width=460,height=900,resizable=yes,scrollbars=yes')
+      if (!win) { toast('Popup diblokir. Izinkan popup agar bisa mencetak.', 'error'); return }
+      const title = `SiZisNur ${tx.serial || tx.id}`
+      win.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title>${receiptThermalStyleV5()}</head><body><div class="thermal-screen-actions"><button type="button" onclick="window.print()">Cetak struk</button><span>Pratinjau 80 mm · Pilih roll 80 mm di dialog cetak</span></div>${receiptThermalMarkupV5(tx)}</body></html>`)
+      win.document.close()
+      win.focus()
+      return
+    }
+    A.printWindow(`SiZisNur ${tx.serial || tx.id}`, A.receiptHtml(tx), false)
   }
   function showReceiptV5(tx) {
     const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(String(tx.status || '').toLowerCase())

@@ -20,6 +20,7 @@ const sessionStorage = new MemoryStorage()
 const elements = { app: { innerHTML: '' }, 'modal-root': { innerHTML: '' }, 'toast-host': { innerHTML: '' } }
 const listeners = {}
 const printDocuments = []
+const popupCalls = []
 const document = {
   body: { classList: { toggle() {} } },
   getElementById(id) { return elements[id] || (elements[id] = { innerHTML: '', textContent: '', dataset: {} }) },
@@ -31,7 +32,8 @@ const document = {
 const window = {
   localStorage, sessionStorage, crypto: crypto.webcrypto,
   addEventListener() {}, scrollTo() {},
-  open() {
+  open(...args) {
+    popupCalls.push(args)
     const doc = {
       html: '',
       write(html) { this.html = html; printDocuments.push(html) },
@@ -79,14 +81,18 @@ async function clickAction(action, id) {
   await clickAction('receipt-thermal', tx.id)
   assert.equal(printDocuments.length, 1, 'thermal action should open a print document')
   const thermalHtml = printDocuments[0]
+  assert.match(popupCalls[0]?.[2] || '', /width=460,height=900/, 'thermal preview window should be sized for a roll receipt rather than a full A4-like window')
   if (process.env.SAVE_RECEIPT_PREVIEW) fs.writeFileSync(process.env.SAVE_RECEIPT_PREVIEW, thermalHtml, 'utf8')
-  assert.match(thermalHtml, /@page\s*\{\s*size:\s*80mm auto;\s*margin:\s*3mm;/, 'thermal output must request 80 mm paper')
+  assert.match(thermalHtml, /<head>[\s\S]*@page\s*\{\s*size:\s*auto;\s*margin:\s*3mm;/, 'thermal output must declare the driver-selected roll media in the document head')
   assert.match(thermalHtml, /width:\s*74mm/, 'thermal content must fit the printable width')
+  assert.match(thermalHtml, /thermal-screen-actions/, 'thermal preview should show a dedicated toolbar')
+  assert.match(thermalHtml, /Pratinjau 80 mm · Pilih roll 80 mm di dialog cetak/, 'thermal popup should clearly identify its roll-paper preview')
+  assert.match(thermalHtml, /@media print[\s\S]*thermal-screen-actions \{ display: none/, 'screen toolbar must be hidden from print output')
   assert.match(thermalHtml, /thermal-receipt/, 'thermal output must use the compact POS-style receipt renderer')
   assert.match(thermalHtml, /DejaVu Sans Mono/, 'thermal output must use a monospace receipt font')
   assert.match(thermalHtml, /thermal-kv/, 'thermal output must align transaction metadata in compact rows')
   assert.match(thermalHtml, /==========================================/, 'thermal output must use an ASCII section separator')
-  assert.match(thermalHtml, /width:\s*30mm !important/, 'thermal QR should use a compact print size')
+  assert.match(thermalHtml, /width:\s*28mm !important/, 'thermal QR should use a compact print size')
   assert.match(thermalHtml, /Zakat Fitrah \/ UANG/, 'thermal output must include the money line item')
   assert.match(thermalHtml, /Zakat Fitrah \/ BERAS/, 'thermal output must include the rice line item')
   assert.match(thermalHtml, /Fidyah \/ UANG/, 'thermal output must include other zakat categories')
@@ -101,7 +107,7 @@ async function clickAction(action, id) {
   const pdfHtml = printDocuments[1]
   assert.match(pdfHtml, /receipt-preview/, 'PDF output must use the same receipt renderer')
   assert.match(pdfHtml, /Zakat Fitrah · Beras/, 'PDF output must preserve mixed payment details')
-  assert.doesNotMatch(pdfHtml, /size:\s*80mm auto/, 'PDF action should retain the normal page layout')
+  assert.doesNotMatch(pdfHtml, /thermal-screen-actions|Pratinjau 80 mm/, 'PDF action should retain the normal page layout')
 
   console.log('PASS — thermal 80 mm no longer calls an undefined function; thermal and PDF both print the shared multi-line receipt')
 })().catch((error) => { console.error(error); process.exitCode = 1 })

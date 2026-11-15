@@ -1,3 +1,13 @@
+## 15 November 2026 — Perbaikan ukuran halaman dan pratinjau thermal 80 mm di Edge
+
+- Memindahkan stylesheet thermal dan aturan `@page` ke dalam `<head>` jendela cetak khusus; sebelumnya aturan ukuran halaman disisipkan dari fragmen body dan berpotensi diabaikan browser.
+- Mengganti deklarasi ukuran halaman yang sebelumnya tidak valid (`80mm auto`) menjadi `size: auto` di `@page`; media roll 80 mm dipilih dari driver printer. Nilai tunggal `80mm` tidak digunakan karena CSS mendefinisikannya sebagai halaman persegi.
+- Membuat jendela pratinjau thermal selebar 460 px, memusatkan konten roll 74 mm, dan menambahkan tombol Cetak struk yang tidak ikut tercetak.
+- Menyesuaikan ukuran huruf metadata/rincian/total agar lebih terbaca serta mengatur QR menjadi 28 mm.
+- Cetak thermal tidak lagi melewati stylesheet umum `printWindow` yang menetapkan halaman otomatis/A4; jalur PDF biasa tetap menggunakan renderer dan layout dokumen normal.
+- Memperbarui tes struk untuk memeriksa aturan halaman di `<head>`, pratinjau roll, toolbar layar yang tersembunyi saat cetak, QR, rincian multi-jenis, dan kompatibilitas PDF.
+- Catatan penggunaan: di Microsoft Edge pilih printer thermal dan paper size 80 mm/80 mm roll, skala 100% atau Actual size, serta matikan header/footer. Dukungan ukuran media tetap bergantung pada driver printer.
+
 ## 15 November 2026 — Perapian Struk Thermal 80 mm Bergaya POS
 
 - Mengganti tampilan cetak thermal yang sebelumnya memakai kartu struk digital dengan layout satu kolom bergaya POS: tipografi monospace, header rata tengah, metadata label/nilai sejajar, rincian kategori/media ringkas, dan total uang/beras rata kanan.

@@ -86,7 +86,7 @@ Konfirmasi tidak mengesahkan pembayaran. Seluruh transaksi tetap berstatus `pend
 
 ## 7. Struk yang seragam
 
-Satu sumber data/aturan struk menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal 80 mm. Versi thermal menggunakan layout satu kolom bergaya POS dengan font monospace, header rata tengah, metadata dan nilai sejajar, pemisah ASCII, rincian pembayaran yang ringkas, total rata kanan, dan QR sekitar 30 mm. Lebar konten thermal 74 mm untuk kertas 80 mm. Format PDF tetap menggunakan layout dokumen biasa, tetapi seluruh fakta transaksi dan token QR-nya sama. Renderer dipakai untuk transaksi yang berasal dari:
+Satu sumber data/aturan struk menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal 80 mm. Versi thermal menggunakan layout satu kolom bergaya POS dengan font monospace, header rata tengah, metadata dan nilai sejajar, pemisah ASCII, rincian pembayaran yang ringkas, total rata kanan, dan QR sekitar 28 mm. Lebar konten thermal 74 mm untuk kertas roll 80 mm. Aturan `@page` diletakkan di `<head>` dokumen cetak dan memakai `size: auto` agar ukuran lembar mengikuti media dari driver printer; area isi dibatasi 74 mm. Format PDF tetap menggunakan layout dokumen biasa, tetapi seluruh fakta transaksi dan token QR-nya sama. Renderer dipakai untuk transaksi yang berasal dari:
 
 - Input petugas Operator/Amil.
 - Layanan Mandiri Muzakki.
@@ -96,7 +96,7 @@ Struk menampilkan identitas dan nama Lembaga, nomor dan ID transaksi, tanggal, n
 
 Struk berstatus Pending diberi label **STRUK RENCANA ZAKAT · SIMULASI**, bukan bukti pembayaran resmi. Bukti setor hanya dapat diterbitkan setelah proses penerimaan dan verifikasi Amil yang berlaku.
 
-Pada thermal, rincian panjang dapat membungkus ke baris berikutnya tanpa menghilangkan nilai atau satuan. Footer menjelaskan apakah dokumen adalah struk rencana atau bukti setor simulasi. Cetak thermal dijalankan melalui dialog cetak browser dengan CSS yang meniru tata letak POS/ESC-POS; prototype belum mengirim byte/perintah ESC/POS langsung, sehingga pilihan kertas 80 mm, densitas, pemotongan kertas, dan dukungan QR tetap mengikuti driver printer yang digunakan.
+Pada thermal, rincian panjang dapat membungkus ke baris berikutnya tanpa menghilangkan nilai atau satuan. Pratinjau layar dibatasi ke lebar 74 mm dan dipusatkan pada jendela khusus, agar tidak tampak seperti potongan kecil di kiri halaman A4. Aturan halaman cetak diletakkan pada stylesheet di bagian `<head>` (bukan di dalam `<body>`) dan memakai `size: auto`, sehingga ukuran kertas mengikuti media yang dipilih pada driver. CSS tidak dapat menyatakan lebar roll 80 mm dengan tinggi otomatis melalui campuran `80mm auto`; satu nilai `80mm` justru membentuk halaman persegi. Saat mencetak, pilih printer thermal, ukuran kertas/roll 80 mm, skala 100% atau Actual size, dan nonaktifkan header/footer browser bila tersedia. Cetak thermal dijalankan melalui dialog cetak browser dengan CSS yang meniru tata letak POS/ESC-POS; prototype belum mengirim byte/perintah ESC/POS langsung, sehingga pilihan kertas 80 mm, densitas, pemotongan kertas, dan dukungan QR tetap mengikuti driver printer yang digunakan. Jika driver hanya menyediakan A4/Letter, ukuran media perlu ditambahkan pada preferensi printer terlebih dahulu; bila tidak, browser dapat tetap menampilkan area kosong atau mengecilkan struk.
 
 ## 8. Aturan transaksi dan batas prototype
 

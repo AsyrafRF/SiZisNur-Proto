@@ -44,6 +44,7 @@ Tanggal pembaruan: 15 November 2026
 - Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
 - Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
+- Cetak Thermal 80 mm memakai jendela khusus selebar 460 px untuk pratinjau roll, aturan `@page size: auto` di `<head>` yang mengikuti media pada driver, konten 74 mm, font monospace yang diperbesar, QR 28 mm, dan toolbar layar yang disembunyikan saat cetak; Cetak/Simpan PDF tetap memakai layout halaman normal.
 - Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
 - Konfirmasi kelebihan pembayaran seragam pada tiga kanal; domisili warga daerah memakai RW/RT Master Wilayah Lembaga dengan filter RT per RW, sedangkan Non-daerah tidak memerlukan RW/RT.
 - Input Rupiah menggunakan pemisah titik ribuan sejak nilai awal dan saat diketik; input kilogram memakai koma desimal.
@@ -55,7 +56,7 @@ Tanggal pembaruan: 15 November 2026
 
 ## Batas hasil QA
 
-Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
+Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Tampilan pratinjau thermal sudah dibatasi ke lebar roll dan deklarasi ukuran halaman diverifikasi secara struktural; hasil akhir tetap bergantung pada driver printer dan opsi paper size di Microsoft Edge. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
 
 Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publik menyimpan tautan/identitas/transaksi pada localStorage browser yang sama; OTP hanya ditampilkan di layar dan bukan dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
 
