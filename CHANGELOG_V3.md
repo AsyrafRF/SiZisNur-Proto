@@ -1,3 +1,14 @@
+## 15 November 2026 — Bukti transaksi periode aktif dan pembatalan rencana oleh Muzakki
+
+- Mengaktifkan tombol **Lihat bukti / QR** pada kolom Bukti di tabel transaksi periode berjalan pada Dashboard Zakat Saya. Tombol membuka kembali struk transaksi yang sama dengan layar setelah pembuatan rencana, termasuk QR serta opsi unduh PNG, cetak/simpan PDF, dan cetak thermal.
+- Akses bukti tetap dibatasi pada transaksi pribadi yang terkait akun atau membership Muzakki.
+- Menambahkan opsi **Batalkan** untuk transaksi mandiri berstatus `pending` selama belum diverifikasi/dikonfirmasi Amil, belum berstatus `paid`, belum ditugaskan ke petugas, belum memiliki shift, dan belum tertaut berita acara setoran.
+- Pembatalan meminta alasan dan konfirmasi eksplisit. Sistem mengubah status menjadi `batal` tanpa menghapus record, menyimpan waktu/pelaku/alasan, mencatat audit, serta menambahkan event sinkronisasi lokal.
+- Transaksi batal/kedaluwarsa tetap terlihat pada bagian **Transaksi tidak aktif periode ini**, tidak dihitung sebagai penerimaan, dan QR ditandai tidak aktif. Struk transaksi batal/kedaluwarsa menampilkan catatan status tanpa memperlihatkan token QR yang sudah tidak berlaku.
+- Transaksi `paid`, `disetor`, `kas_diterima`, `terverifikasi`, transaksi konter, dan transaksi yang sudah masuk shift/berita acara tidak dapat dibatalkan oleh Muzakki.
+- Memperluas `tests/muzakki-dashboard.test.cjs` untuk memeriksa akses bukti saat ini, pemulihan QR, pembatalan dengan alasan dan jejak audit, penyimpanan record batal, serta penolakan pembatalan bagi transaksi yang sudah diproses.
+- Seluruh suite tes otomatis dan pemeriksaan sintaks JavaScript lulus; HTML standalone dibangun ulang.
+
 ## 15 November 2026 — Pemisahan Registrasi Akun dan Keanggotaan Lembaga Muzakki
 
 - Form pendaftaran mandiri Muzakki kini hanya meminta nama lengkap, nomor HP, email, dan alamat lengkap; tidak ada pilihan lembaga atau isian domisili RW/RT pada tahap ini.

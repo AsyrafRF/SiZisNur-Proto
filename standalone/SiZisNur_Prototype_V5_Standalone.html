@@ -3160,9 +3160,21 @@ render();
     const tenant = db.tenants.find((x) => x.id === tx.tenantId)
     const totals = effectiveTotals(tx)
     const token = transactionToken(tx)
-    const receiptTitle = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
-    const msg = `${person?.name || 'Muzakki'}, terima kasih telah menunaikan zakat melalui ${tenant?.name || 'lembaga'}. Tercatat ${tx.jiwa || 1} jiwa dengan ${tx.lines.map((x) => x.category).join(', ')}. Total ${money(totals.money)} dan ${kilos(totals.rice)}. Tunjukkan QR ini kepada Amil ${tenant?.name || ''}. Ttd, Amil ${tenant?.name || ''}.`
-    A.modal(`Struk digital ${tx.serial}`, `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${receiptTitle}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah tanggungan</span><b>${tx.jiwa || 1} orang</b></div><div><span>Jenis zakat</span><b>${esc(tx.lines.map((x) => x.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totals.money)}</b></div><div><span>Total beras</span><b>${kilos(totals.rice)}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div><p class="receipt-thanks">${esc(msg)}</p><small>Struk simulasi prototype. Belum menjadi bukti setor resmi.</small></div><div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`, true)
+    const inactive = ['batal', 'expired', 'kedaluwarsa'].includes(tx.status)
+    const receiptTitle = tx.status === 'batal'
+      ? 'CATATAN RENCANA DIBATALKAN'
+      : ['expired', 'kedaluwarsa'].includes(tx.status)
+        ? 'CATATAN RENCANA KEDALUWARSA'
+        : ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
+    const msg = inactive
+      ? `Rencana ${tx.serial} berstatus ${tx.status === 'batal' ? 'Dibatalkan' : 'Kedaluwarsa'}. QR transaksi ini tidak berlaku dan tidak dapat dipakai untuk verifikasi.`
+      : `${person?.name || 'Muzakki'}, terima kasih telah menunaikan zakat melalui ${tenant?.name || 'lembaga'}. Tercatat ${tx.jiwa || 1} jiwa dengan ${tx.lines.map((x) => x.category).join(', ')}. Total ${money(totals.money)} dan ${kilos(totals.rice)}. Tunjukkan QR ini kepada Amil ${tenant?.name || ''}. Ttd, Amil ${tenant?.name || ''}.`
+    const inactiveNote = inactive
+      ? `<div class="alert danger">${tx.status === 'batal' ? 'Transaksi dibatalkan' : 'Rencana kedaluwarsa'} — QR tidak aktif dan tidak dapat dipindai oleh Amil.${tx.cancelReason ? `<p>Alasan pembatalan: ${esc(tx.cancelReason)}</p>` : ''}</div>`
+      : ''
+    const qrBlock = inactive ? '' : `<div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div>`
+    const exportActions = inactive ? '' : `<div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`
+    A.modal(`Struk digital ${tx.serial}`, `${inactiveNote}<div class="receipt-preview"><div class="receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${receiptTitle}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah tanggungan</span><b>${tx.jiwa || 1} orang</b></div><div><span>Jenis zakat</span><b>${esc(tx.lines.map((x) => x.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totals.money)}</b></div><div><span>Total beras</span><b>${kilos(totals.rice)}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div>${qrBlock}<p class="receipt-thanks">${esc(msg)}</p><small>Struk simulasi prototype. Belum menjadi bukti setor resmi.</small></div>${exportActions}`, true)
   }
   function makeReceiptPrint(tx, thermal = false) {
     const html = A.receiptHtml(tx)
@@ -3225,6 +3237,29 @@ render();
     if (!tx) return false
     return personalTransactionsForUser(userId).some((item) => item.id === tx.id)
   }
+  function hasCommitteeTransactionProgress(tx) {
+    if (!tx) return true
+    const linkedDeposit = db.deposits.some((deposit) => deposit.tenantId === tx.tenantId
+      && Array.isArray(deposit.transactionIds) && deposit.transactionIds.includes(tx.id))
+    return Boolean(
+      tx.verifiedAt || tx.verifiedBy || tx.handledBy || tx.operatorId || tx.assignedAmilId
+      || tx.shiftId || tx.depositId || linkedDeposit
+    )
+  }
+  function canMuzakkiCancelTransaction(tx, userId = activeUser()?.id) {
+    return activeUser()?.role === 'Muzakki'
+      && isPersonalTransaction(tx, userId)
+      && tx.source === 'self-service'
+      && tx.status === 'pending'
+      && !hasCommitteeTransactionProgress(tx)
+  }
+  function openMuzakkiTransactionCancel(txId) {
+    if (activeUser()?.role !== 'Muzakki') throw new Error('Hanya Muzakki pemilik transaksi yang dapat mengajukan pembatalan')
+    const tx = db.transactions.find((item) => item.id === txId)
+    if (!tx || !canMuzakkiCancelTransaction(tx)) throw new Error('Transaksi tidak dapat dibatalkan. Pembatalan hanya tersedia untuk rencana mandiri yang masih Pending dan belum diproses Amil/panitia.')
+    const total = effectiveTotals(tx)
+    A.modal(`Batalkan rencana ${tx.serial}`, `<div class="alert warn"><b>Periksa sebelum membatalkan.</b><p>Transaksi ini masih menunggu verifikasi Amil, belum berstatus Paid, dan belum masuk proses shift atau berita acara setoran panitia. Setelah dibatalkan, QR lama langsung tidak berlaku dan tidak dapat dipakai untuk verifikasi. Anda dapat membuat rencana baru selama periode masih aktif.</p></div><div class="mini-list"><div class="mini-item"><span>Nomor transaksi</span><b class="mono">${esc(tx.serial)}</b></div><div class="mini-item"><span>Jenis zakat</span><b>${esc((tx.lines || []).map((line) => line.category).join(', '))}</b></div><div class="mini-item"><span>Total uang / beras</span><b>${money(total.money)} · ${kilos(total.rice)}</b></div><div class="mini-item"><span>Status sekarang</span>${statusPill(tx.status, 'transaction')}</div></div><form data-v5-form="self-transaction-cancel" data-id="${esc(tx.id)}">${A.textarea('Alasan pembatalan (wajib)', 'reason', '')}<label class="check"><input type="checkbox" name="confirmCancel" value="yes" required> Saya memahami bahwa transaksi dan QR ini akan dibatalkan.</label><div class="form-actions"><button type="submit" class="btn danger">Ya, batalkan transaksi</button></div></form>`, true)
+  }
   function personalTransactionProgress(tx) {
     const deposit = db.deposits.find((x) => x.tenantId === tx.tenantId && Array.isArray(x.transactionIds) && x.transactionIds.includes(tx.id))
     if (deposit?.status === 'terverifikasi') return {
@@ -3274,6 +3309,17 @@ render();
       actionFor('Lihat bukti', 'receipt-open', tx.id, 'sm'),
     ]
   }
+  function inactivePeriodTransactionRow(tx) {
+    const totals = effectiveTotals(tx)
+    const categories = (tx.lines || []).map((line) => line.category).filter(Boolean)
+    return [
+      esc(new Date(tx.createdAt).toLocaleDateString('id-ID')),
+      `<b class="mono">${esc(tx.serial || tx.id)}</b>`,
+      esc([...new Set(categories)].join(', ') || 'Rincian belum tersedia'),
+      money(totals.money), kilos(totals.rice), personalStatusPill(tx),
+      '<span class="caption">QR tidak aktif</span>',
+    ]
+  }
   function myZisPage() {
     expirePending()
     const u = activeUser()
@@ -3301,6 +3347,7 @@ render();
     const transactions = personalTransactionsForUser(u.id)
     const periodTransactions = transactions.filter((x) => x.tenantId === currentTenantId() && x.periodId === period?.id)
     const activePeriodTransactions = periodTransactions.filter((x) => !['batal', 'expired', 'kedaluwarsa'].includes(x.status))
+    const inactivePeriodTransactions = periodTransactions.filter((x) => ['batal', 'expired', 'kedaluwarsa'].includes(x.status))
     const latestPeriodTransaction = periodTransactions[0] || null
     const totals = {
       money: sum(activePeriodTransactions, (x) => effectiveTotals(x).money),
@@ -3311,13 +3358,20 @@ render();
     const nextTxBlocked = period && oneTxPerTenantPeriod(account?.id, currentTenantId(), period.id, person?.id)
     const pending = periodTransactions.filter((x) => ['pending', 'tercatat'].includes(x.status))
     const historicalTransactions = transactions.filter((x) => !(x.tenantId === currentTenantId() && x.periodId === period?.id))
-    const breakdownRows = activePeriodTransactions.flatMap((tx) => (tx.lines || []).map((line) => [
-      esc(line.category || 'Jenis zakat belum dicantumkan'),
-      line.type === 'beras' ? 'Beras' : 'Uang',
-      line.type === 'beras' ? kilos(line.value) : money(line.value),
-      `<span class="mono">${esc(tx.serial || tx.id)}</span>`,
-      personalStatusPill(tx),
-    ]))
+    const breakdownRows = activePeriodTransactions.flatMap((tx) => (tx.lines || []).map((line, index) => {
+      const proofAction = actionFor('Lihat bukti / QR', 'receipt-open', tx.id, 'sm')
+      const cancelAction = index === 0 && canMuzakkiCancelTransaction(tx, u.id)
+        ? actionFor('Batalkan', 'self-tx-cancel-open', tx.id, 'sm danger')
+        : ''
+      return [
+        esc(line.category || 'Jenis zakat belum dicantumkan'),
+        line.type === 'beras' ? 'Beras' : 'Uang',
+        line.type === 'beras' ? kilos(line.value) : money(line.value),
+        `<span class="mono">${esc(tx.serial || tx.id)}</span>`,
+        personalStatusPill(tx),
+        `<div class="actions">${proofAction}${cancelAction}</div>`,
+      ]
+    }))
     const periodStatus = latestPeriodTransaction
       ? `${personalStatusPill(latestPeriodTransaction)}<p class="caption">${esc(latestProgress.detail)}</p>`
       : '<span class="tag info">Belum ada zakat tercatat</span><p class="caption">Belum ditemukan transaksi atas nama akun ini pada periode aktif.</p>'
@@ -3341,7 +3395,8 @@ render();
         <section class="card my-zis-status-card"><div class="card-top"><h3>Status zakat periode ini</h3>${createAction}</div><div class="my-zis-status-main">${periodStatus}</div>${pending.length ? alert(`Ada ${pending.length} transaksi yang masih menunggu pemeriksaan Amil. Tunjukkan QR transaksi kepada Amil.`, 'warn') : ''}<p class="caption">Catatan: pembayaran berstatus Paid berarti disahkan Amil. Status Terverifikasi hanya diberikan setelah berita acara setoran lulus rekonsiliasi Bendahara.</p></section>
         <section class="card"><h3>Rincian zakat atas nama Anda</h3><div class="my-zis-person-details"><div><span>Nama Muzakki</span><b>${esc(person?.name || account?.displayName || u.name)}</b></div><div><span>Periode</span><b>${esc(period?.name || 'Belum ada periode aktif')}</b></div><div><span>Jumlah transaksi</span><b>${activePeriodTransactions.length}</b></div><div><span>Status verifikasi Bendahara</span><b>${latestProgress?.verified ? '<span class="tag ok">Sudah terverifikasi</span>' : '<span class="tag warn">Belum terverifikasi</span>'}</b></div></div></section>
       </div>
-      <section class="card"><div class="card-top"><div><h3>Jenis zakat yang tercatat periode ini</h3><p class="caption">Hanya rincian transaksi milik Anda pada periode aktif.</p></div></div>${A.table(['Jenis zakat', 'Media', 'Nilai', 'Nomor transaksi', 'Status', 'Bukti'], breakdownRows)}</section>
+      <section class="card"><div class="card-top"><div><h3>Jenis zakat yang tercatat periode ini</h3><p class="caption">Tombol Lihat bukti / QR dapat digunakan kembali kapan saja selama transaksi masih tersimpan. Pembatalan hanya tersedia sebelum transaksi diperiksa Amil dan diproses panitia.</p></div></div>${A.table(['Jenis zakat', 'Media', 'Nilai', 'Nomor transaksi', 'Status', 'Bukti / tindakan'], breakdownRows)}</section>
+      ${inactivePeriodTransactions.length ? `<section class="card"><div class="card-top"><div><h3>Transaksi tidak aktif periode ini</h3><p class="caption">Transaksi yang dibatalkan atau kedaluwarsa tetap ditampilkan sebagai riwayat, tetapi tidak dihitung sebagai penerimaan. QR-nya tidak dapat digunakan.</p></div><span class="tag info">${inactivePeriodTransactions.length} transaksi</span></div>${A.table(['Tanggal', 'Nomor transaksi', 'Jenis zakat', 'Uang', 'Beras', 'Status', 'QR'], inactivePeriodTransactions.map(inactivePeriodTransactionRow))}</section>` : ''}
       <section class="card"><div class="card-top"><div><h3>Riwayat zakat sebelumnya</h3><p class="caption">Riwayat lintas periode dan lembaga yang terhubung ke akun atau identitas Muzakki Anda.</p></div><span class="tag info">${historicalTransactions.length} transaksi</span></div>${historicalTransactions.length ? A.table(['Tanggal', 'Periode / lembaga', 'Nomor', 'Jenis zakat', 'Uang', 'Beras', 'Status', 'Bukti'], historicalTransactions.map(personalHistoryRow)) : alert('Belum ada riwayat zakat dari periode sebelumnya. Transaksi pada periode aktif akan muncul di bagian atas.', 'light')}</section>
     </section>`
     return `${A.boxhead('Dashboard Zakat Saya', `Laporan pribadi ${esc(tenantLabel(currentTenantId()))} · ${esc(period?.name || 'Tidak ada periode aktif')}`, '')}${personalDashboard}`
@@ -4913,6 +4968,7 @@ render();
         case 'household-add': $('household-rows')?.insertAdjacentHTML('beforeend', '<div class="household-row"><input name="memberName" placeholder="Nama anggota" required><input name="relation" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>'); break
         case 'household-remove': button.closest('.household-row')?.remove(); break
         case 'self-tx-new': openSelfTransaction(); break
+        case 'self-tx-cancel-open': openMuzakkiTransactionCancel(id); break
         case 'operator-new': if (!['Operator', 'Amil'].includes(activeUser()?.role)) throw new Error('Hanya Operator atau Amil yang dapat mencatat transaksi'); openOperatorTransactionModal(); break
         case 'amil-scan': scanAmil(); break
         case 'camera-start': await startCamera(button.dataset.camera); break
@@ -5090,6 +5146,21 @@ render();
           break
         }
         case 'self-transaction': submitSelfTransaction(d); return
+        case 'self-transaction-cancel': {
+          if (activeUser()?.role !== 'Muzakki') throw new Error('Hanya Muzakki yang dapat membatalkan transaksi pribadi')
+          const tx = db.transactions.find((item) => item.id === id)
+          if (!tx || !canMuzakkiCancelTransaction(tx)) throw new Error('Transaksi sudah diproses Amil/panitia atau bukan milik akun ini; pembatalan tidak tersedia')
+          if (!String(d.reason || '').trim()) throw new Error('Alasan pembatalan wajib diisi')
+          if (d.confirmCancel !== 'yes') throw new Error('Konfirmasi pembatalan wajib dicentang')
+          tx.status = 'batal'
+          tx.cancelledAt = timestamp()
+          tx.cancelledBy = activeUser().id
+          tx.cancelReason = String(d.reason).trim()
+          A.aud('MUZAKKI_TRANSACTION_CANCELLED', `Muzakki membatalkan ${tx.serial}: ${tx.cancelReason}`)
+          enqueueSync('transaction.cancelled_by_muzakki', { transactionId: tx.id, tenantId: tx.tenantId, reason: tx.cancelReason })
+          A.toast('Rencana zakat dibatalkan. QR transaksi lama sudah tidak berlaku.')
+          break
+        }
         case 'allocation-flexible-create': createFlexibleAllocation(d); break
         case 'operator-transaction': submitOperatorTransaction(d); return
         case 'amil-verify': {

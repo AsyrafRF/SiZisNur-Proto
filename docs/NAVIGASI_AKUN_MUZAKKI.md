@@ -6,6 +6,10 @@ Menu akun Muzakki dibagi menjadi tiga halaman agar fungsi tidak menumpuk pada sa
 
 Halaman ini mempertahankan ringkasan pribadi yang sudah tersedia: status zakat periode aktif, total uang dan beras yang tercatat, rincian jenis zakat, status verifikasi Bendahara, serta riwayat zakat periode sebelumnya. Panel profil/keluarga/kalkulator tidak lagi ditampilkan sebagai dropdown di halaman ini.
 
+Pada tabel **Jenis zakat yang tercatat periode ini**, tombol **Lihat bukti / QR** membuka kembali struk transaksi yang sama dengan layar setelah pembuatan rencana, termasuk QR dan opsi unduh PNG atau cetak/simpan PDF. Muzakki tidak perlu mengunduh bukti pada saat pertama kali membuat rencana; bukti dapat dibuka kembali selama transaksi tersimpan dan terkait dengan akun atau membership miliknya.
+
+Tombol **Batalkan** hanya muncul untuk transaksi mandiri berstatus `pending` yang belum memiliki penanda verifikasi Amil, penugasan petugas, shift, maupun berita acara setoran. Muzakki wajib mengisi alasan dan konfirmasi. Sistem mengubah status menjadi `batal` tanpa menghapus transaksi, mencatat waktu/pelaku/alasan ke audit, dan menampilkan transaksi pada bagian **Transaksi tidak aktif periode ini**. QR transaksi yang dibatalkan tidak berlaku lagi. Transaksi `paid`, `disetor`, `kas_diterima`, `terverifikasi`, transaksi konter, atau transaksi yang sudah tertaut berita acara tidak dapat dibatalkan dari akun Muzakki.
+
 ## 2. Layanan Mandiri
 
 Halaman ini berisi daftar lembaga yang terhubung, tombol untuk bergabung dengan lembaga lain, pengaturan profil dan wilayah alamat pada lembaga aktif, pengelolaan keluarga tanggungan, serta kalkulator zakat. Jika akun belum terhubung dengan lembaga, halaman menampilkan data akun global dan tombol **Pilih lembaga**. Setelah bergabung, formulir layanan mandiri tersedia.

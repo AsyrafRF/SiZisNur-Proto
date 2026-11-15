@@ -190,6 +190,11 @@ node tests/pagination.test.cjs
 node tests/tenant-territories.test.cjs
 node tests/transaction-calculator.test.cjs
 node tests/platform-admin.test.cjs
+node tests/muzakki-dashboard.test.cjs
+node tests/muzakki-registration.test.cjs
+node tests/dashboard-analytics.test.cjs
+node tests/dashboard-status.test.cjs
+node tests/public-portal.test.cjs
 python tools/build-standalone.py
 ```
 
