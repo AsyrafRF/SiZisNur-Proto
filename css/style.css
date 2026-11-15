@@ -793,3 +793,75 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
 .auth-footnote{border-top:1px solid var(--line);padding-top:13px;margin-top:20px;color:var(--muted);font-size:10px;line-height:1.6}
 .auth-submit{min-width:180px}
 @media(max-width:760px){.auth-v2 .auth-choice-grid{grid-template-columns:1fr}.auth-v2 .auth-choice{min-height:150px}.auth-demo-separate{align-items:flex-start;flex-direction:column}.auth-demo-grid{grid-template-columns:1fr}.auth-v2 .auth-box h2{font-size:24px}}
+
+/* Public self-service zakat intake — clearly marked local evaluation prototype. */
+.pi-simulation-notice{border:1px solid #d9a441!important;background:#fff8e7!important;color:#67440b!important;line-height:1.65}
+.pi-tenant-summary{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pi-tenant-summary>div{display:flex;flex-direction:column;gap:5px;padding:8px 2px}
+.pi-tenant-summary small,.pi-qr-details label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.pi-tenant-summary b{font-size:16px;color:var(--ink)}
+.pi-tenant-summary span{font-size:12px;color:var(--muted)}
+.pi-card-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.pi-card-heading h3{margin:0 0 5px}
+.pi-card-heading p{margin:0;color:var(--muted);font-size:13px}
+.pi-qr-layout{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:24px;align-items:center}
+.pi-qr-code{display:flex;flex-direction:column;align-items:center;gap:9px;padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff;color:#183c30}
+.pi-qr-code svg{width:100%;max-width:225px;height:auto}
+.pi-qr-code small{font-size:10px;font-weight:800;letter-spacing:.08em;text-align:center}
+.pi-qr-details{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pi-qr-details>span,.pi-qr-details .caption{font-size:12px;color:var(--muted)}
+.pi-qr-details input{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--surface);color:var(--ink);font-size:12px}
+.pi-public-shell{min-height:100vh;padding:24px 14px 42px;background:linear-gradient(145deg,#edf5ef,#f7f8f5)}
+.pi-public-card{max-width:850px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.pi-public-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border:1px solid var(--line);background:var(--surface);border-radius:16px;box-shadow:0 5px 20px rgba(24,54,42,.05)}
+.pi-public-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.pi-public-brand img,.pi-logo img{width:42px;height:42px;object-fit:contain}
+.pi-public-brand div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pi-public-brand b{font-size:16px;color:var(--ink)}
+.pi-public-brand small{font-size:11px;color:var(--muted)}
+.pi-welcome{padding:22px 24px;border-radius:18px;background:linear-gradient(120deg,#0e6145,#12835c);color:#fff;box-shadow:0 12px 26px rgba(14,97,69,.16)}
+.pi-welcome .eyebrow{color:#ccebdd;font-size:11px;font-weight:800;letter-spacing:.1em}
+.pi-welcome h1{margin:8px 0;font-size:30px;color:#fff}
+.pi-welcome p{margin:0;color:#e2f3e9;line-height:1.65}
+.pi-mini-facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.pi-mini-facts span{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);border-radius:99px;padding:6px 10px;font-size:11px}
+.pi-form-card{padding:22px}
+.pi-form-card h2{margin:7px 0 8px;color:var(--ink)}
+.pi-form-card>p{color:var(--muted);font-size:13px;line-height:1.6}
+.pi-step-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:#0b7953}
+.pi-demo-otp{display:flex;flex-direction:column;align-items:center;gap:7px;margin:18px 0;padding:18px;border:1px dashed #c69435;border-radius:14px;background:#fff8e7;color:#62440d}
+.pi-demo-otp small{font-size:10px;font-weight:900;letter-spacing:.08em;text-align:center}
+.pi-demo-otp strong{font-size:32px;letter-spacing:.28em;font-variant-numeric:tabular-nums}
+.pi-demo-otp span{font-size:12px}
+.pi-verified-banner{display:flex;align-items:center;gap:12px;padding:14px 17px;background:#e8f6ed;border:1px solid #b9dec8;border-radius:13px;color:#155c3c}
+.pi-verified-banner>span{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#ccebd8;font-weight:900}
+.pi-verified-banner div{display:flex;flex-direction:column;gap:3px}
+.pi-verified-banner small{font-size:11px;color:#3a7255}
+.pi-identity-summary{display:flex;flex-direction:column;gap:5px;padding:13px 15px;border-radius:12px;background:var(--surface-2,#f4f7f5);margin:14px 0}
+.pi-identity-summary span,.pi-identity-summary small{font-size:12px;color:var(--muted)}
+.pi-calc-preview{line-height:1.5}
+.pi-excess-option{margin:12px 0}
+.pi-transaction-card{margin:14px 0;border:1px solid var(--line);box-shadow:none}
+.pi-tx-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.pi-tx-facts>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pi-tx-facts small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.pi-tx-facts b{font-size:13px;overflow-wrap:anywhere}
+.pi-history{margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.pi-history summary{cursor:pointer;font-weight:750;color:var(--ink)}
+.pi-public-footer{padding:14px;text-align:center;color:var(--muted);font-size:11px}
+.pi-logo{display:flex;align-items:center;gap:10px;font-size:17px;color:var(--ink)}
+.pi-receipt-preview{border:1px dashed #aebeb4;border-radius:13px;padding:18px;background:#fff;color:#24352c}
+.pi-receipt-brand{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;margin-bottom:18px}
+.pi-receipt-brand b{font-size:17px}
+.pi-receipt-brand small{font-size:11px;font-weight:900;letter-spacing:.06em}
+.pi-receipt-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pi-receipt-facts>div{display:flex;flex-direction:column;gap:4px;border-bottom:1px solid #e8eee9;padding:6px 0}
+.pi-receipt-facts span{font-size:10px;color:#64756b}
+.pi-receipt-facts b{font-size:12px;overflow-wrap:anywhere}
+.pi-receipt-qr{display:flex;justify-content:center;padding:16px}
+.pi-receipt-qr svg{width:190px;height:190px}
+.pi-token{font-size:10px;overflow-wrap:anywhere;text-align:center;color:#526258}
+@media(max-width:680px){.pi-tenant-summary{grid-template-columns:1fr}.pi-qr-layout{grid-template-columns:1fr}.pi-qr-code{max-width:280px;margin:0 auto;width:100%}.pi-public-head{align-items:flex-start;flex-direction:column}.pi-welcome{padding:19px}.pi-welcome h1{font-size:25px}.pi-form-card{padding:17px}.pi-tx-facts,.pi-receipt-facts{grid-template-columns:1fr 1fr}}
+
+.pi-consent{margin:12px 0;align-items:flex-start;line-height:1.55;font-size:12px}
+.pi-consent input{margin-top:2px;flex:0 0 auto}

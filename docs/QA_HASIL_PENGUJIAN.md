@@ -9,8 +9,9 @@ Tanggal pembaruan: 15 November 2026
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
 | `node --check js/authentication.js` | Lulus |
+| `node --check js/public-intake.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 16 suite, 16/16 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 17 suite, 17/17 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
@@ -42,6 +43,8 @@ Tanggal pembaruan: 15 November 2026
 - Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
 - Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
+- Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
+- Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending/tercatat tetap menghalangi transaksi ganda.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf; preset An-Nur hanya satu lembaga dan preset multi-tenant menambahkan Al-Hikmah serta pengajuan Al-Falah.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
 - Angka penerimaan workbook serta total alokasi Tahap 1 dan Tahap 2 sebesar Rp148.287.500 dan 1.882,6 kg.
@@ -51,9 +54,9 @@ Tanggal pembaruan: 15 November 2026
 
 Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
 
-Tidak ada backend atau endpoint sinkronisasi yang disertakan. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
+Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publik menyimpan tautan/identitas/transaksi pada localStorage browser yang sama; OTP hanya ditampilkan di layar dan bukan dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
 
-Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
+Lihat `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
 
 
 ## Pemeriksaan alert dan toast pada light/dark mode — 13 November 2026
@@ -143,3 +146,15 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Menambahkan `docs/GLOSARIUM_TERMINOLOGI.md` untuk menyamakan istilah Admin Lembaga, Admin SiZisNur, dan Portal Publik.
 - Nama teknis internal seperti `tenantId`, `db.tenants`, rute/event internal, dan format identitas QR tetap dipertahankan untuk kompatibilitas.
 - Seluruh 12 suite pengujian yang tersedia lulus setelah ekspektasi teks antarmuka diperbarui. Build HTML standalone berhasil dibuat ulang.
+
+
+## Portal Zakat Publik & Pendataan Mandiri — 15 November 2026
+
+- Menambahkan halaman manajemen **Formulir Publik & QR Warga** khusus role Admin, Amil, dan Operator. Tautan terikat pada satu Lembaga dan periode aktif, dapat dibagikan melalui WhatsApp, dipratinjau, dicetak menjadi banner, serta dicabut.
+- Menambahkan rute formulir publik tanpa login, identitas (nama, HP, email opsional, alamat, domisili), checkbox persetujuan evaluasi, dan OTP demo 6 digit yang hanya ditampilkan di browser. Kode berlaku 5 menit, maksimal 5 percobaan, dan sesi verifikasi berlangsung 10 menit. Tidak ada OTP nyata yang dikirim.
+- Pencocokan identitas dibatasi pada tenant/periode dari link, menormalisasi nomor/email, mencocokkan nama, dan menghentikan kasus ambigu tanpa auto-merge. Sebelum verifikasi kontak, halaman tidak menampilkan catatan transaksi pribadi.
+- Formulir menggunakan kalkulator zakat tenant yang sama dan membuat transaksi `source=public-intake`, `status=pending`, lengkap dengan person/kartu Muzakki, nomor PU, notifikasi lokal, audit, dan QR/struk rencana.
+- Pending/tercatat menjadi kondisi unpaid yang memblokir transaksi ganda. Bukti transaksi dapat dibuka kembali. Pembatalan hanya tersedia untuk Pending mandiri yang belum diproses petugas/setoran, dengan alasan, konfirmasi, pencatatan audit, dan tanpa menghapus record. Paid/riwayat yang selesai tidak memblokir rencana baru.
+- Service worker tidak menyimpan URL yang berisi parameter token `portal` di cache shell. Cache dinaikkan ke `sizisnur-shell-v5-20261115-public-intake-v2`.
+- `node tests/public-intake.test.cjs` dan seluruh 17 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
+- Batasan: `localStorage` hanya pada browser saat ini. QR yang dibuka pada perangkat berbeda tidak dapat mengakses database demo petugas. OTP hanya tampilan simulasi, tidak dikirim ke provider. Jangan masukkan PII atau transaksi nyata. Dokumen lengkap tahap implementasi, batasan, dan checklist keamanan produksi tersedia pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`.

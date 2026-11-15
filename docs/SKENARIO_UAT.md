@@ -131,3 +131,23 @@ UAT ini perlu dijalankan bersama perwakilan Admin, Operator, Amil, Bendahara, Re
 7. Periksa menu masing-masing role pada lembaga baru dan pada kedua preset. Admin harus dapat melihat dan mengatur Jadwal & Kehadiran, tetapi tidak boleh melihat Alokasi & Persetujuan, Penyaluran, atau Laporan & Statistik. Pastikan Amil, Operator, Bendahara, Relawan, dan Pengurus hanya melihat menu sesuai tanggung jawab serta panduan role.
 8. Jalankan `node tests/dataset-role-reset.test.cjs` dan `node tests/prototype-settings.test.cjs`; keduanya harus lulus.
 
+
+
+## J. Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi)
+
+> Jalankan hanya menggunakan data sintetis dan satu browser/profil yang sama. OTP yang ditampilkan di layar bukan OTP sungguhan; data tidak tersinkron ke perangkat lain. Fitur ini bukan kanal pembayaran nyata.
+
+1. Pilih Dataset Masjid An-Nur dan pastikan periode zakat aktif. Login bergantian sebagai Admin, Amil, dan Operator; pastikan menu **Formulir Publik & QR Warga** tersedia. Login sebagai Bendahara/Relawan/Pengurus/Muzakki dan pastikan menu pengelola tautan tidak tersedia.
+2. Sebagai Admin/Amil/Operator, buka Formulir Publik & QR Warga. Terbitkan tautan/QR. Pastikan tautan menunjukkan satu lembaga dan satu periode.
+3. Coba salin tautan, buka pratinjau, buat pesan WhatsApp, dan cetak banner. Pastikan banner memuat peringatan `EVALUASI SIMULASI` dan keterangan bahwa perangkat berbeda tidak berbagi database lokal.
+4. Salin URL tautan ke tab lain pada browser/profil yang sama. Pastikan halaman publik terbuka tanpa login dan menampilkan penanda evaluasi simulasi. Jangan menguji QR dari HP lain sebagai seolah-olah sinkronisasi produksi.
+5. Isi nama, nomor HP sintetis, alamat sintetis, domisili, serta kanal OTP. Centang persetujuan simulasi. Pastikan form tidak mengizinkan lanjut tanpa konfirmasi tersebut.
+6. Kirim form. Pastikan halaman menampilkan OTP 6 digit dengan label `TIDAK DIKIRIM KE WHATSAPP / EMAIL`. Uji kode salah, batas lima percobaan, kode kedaluwarsa, dan kode benar.
+7. Setelah OTP benar, pastikan pencarian identitas dibatasi pada lembaga/periode dari tautan. Sebelum OTP tidak boleh ada detail identitas atau transaksi lama yang ditampilkan.
+8. Untuk identitas baru, isi rencana Zakat Fitrah dengan tarif tenant dan simpan. Pastikan `source=public-intake`, `status=pending`, tenant/periode benar, nomor PU terbit, dan struk diberi label bukan bukti pembayaran resmi.
+9. Verifikasi ulang kontak sintetis yang sama. Pastikan transaksi Pending ditemukan, bukti/QR dapat dibuka, dan form transaksi baru tidak ditampilkan. Batalkan dengan alasan dan konfirmasi; pastikan record tidak dihapus, status menjadi `batal`, QR lama tidak aktif, dan audit tersimpan.
+10. Ulangi identitas dan buat Pending baru, lalu tandai transaksi sebagai diproses petugas/shift atau ubah ke Paid pada data uji. Pastikan tombol pembatalan tidak tersedia. Paid yang sudah selesai ditampilkan pada riwayat dan tidak dianggap sebagai unpaid yang menghalangi rencana baru.
+11. Buat dua identitas demo dengan satu nomor HP bersama atau nomor/email yang mengarah ke person berbeda. Pastikan sistem menghentikan pencarian otomatis dan meminta pemeriksaan petugas; jangan auto-merge data.
+12. Cabut tautan dari menu petugas. Pastikan pratinjau/URL lama tidak dapat membuka formulir. Pastikan periode tertutup atau lembaga dinonaktifkan juga menolak tautan.
+13. Jalankan `node tests/public-intake.test.cjs` dan seluruh tes `for f in tests/*.test.cjs; do node "$f"; done`.
+14. Baca `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`, khususnya bagian batasan prototype dan checklist produksi. Jangan publikasikan banner kepada warga untuk penggunaan riil sebelum backend, OTP provider, isolasi tenant, audit, dan seluruh gate keamanan dipenuhi.

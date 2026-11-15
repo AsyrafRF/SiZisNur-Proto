@@ -18,13 +18,15 @@ platform_admin = (ROOT / 'js' / 'platform-admin.js').read_text(encoding='utf-8')
 public_portal = (ROOT / 'js' / 'public-portal.js').read_text(encoding='utf-8')
 prototype_settings = (ROOT / 'js' / 'prototype-settings.js').read_text(encoding='utf-8')
 authentication = (ROOT / 'js' / 'authentication.js').read_text(encoding='utf-8')
+public_intake = (ROOT / 'js' / 'public-intake.js').read_text(encoding='utf-8')
 logo = data_uri(ROOT / 'assets' / 'sizisnur-logo-mark.png', 'image/png')
 favicon = data_uri(ROOT / 'assets' / 'favicon.png', 'image/png')
 app = app.replace('assets/sizisnur-logo-mark.png', logo)
 revision = revision.replace('assets/sizisnur-logo-mark.png', logo)
 platform_admin = platform_admin.replace('assets/sizisnur-logo-mark.png', logo)
 authentication = authentication.replace('assets/sizisnur-logo-mark.png', logo)
-if re.search(r'</script\s*>', qr + app + revision + platform_admin + public_portal + prototype_settings + authentication, flags=re.I):
+public_intake = public_intake.replace('assets/sizisnur-logo-mark.png', logo)
+if re.search(r'</script\s*>', qr + app + revision + platform_admin + public_portal + prototype_settings + authentication + public_intake, flags=re.I):
     raise SystemExit('Unsafe </script> sequence found in source; refusing to inline.')
 
 html = f'''<!doctype html>
@@ -63,6 +65,9 @@ html = f'''<!doctype html>
   </script>
   <script>
 {authentication}
+  </script>
+  <script>
+{public_intake}
   </script>
 </body>
 </html>

@@ -155,9 +155,11 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 - **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Dataset default hanya memuat Masjid An-Nur / Perumahan Villa Pesona Asri, RW 11 dengan RT 01–06. Preset Multi-Lembaga juga memuat Masjid Al-Hikmah / Kompleks Buana Citra, RW 1 (RT 01–10) dan RW 2 (RT 01–05). Tenant baru mendapat Daerah induk otomatis; Admin-nya mengatur RW/RT sendiri. Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
 - **Preset dataset prototype:** Dataset Masjid An-Nur adalah default dan memuat satu lembaga beserta operasional dan acuan workbook 1447H. Dataset Multi-Lembaga dapat dipilih terpisah di Pengaturan Prototype dan memuat An-Nur, Al-Hikmah, serta pengajuan Al-Falah menunggu. Hapus semua data menyisakan hanya akun Admin SiZisNur (Root), tanpa membuat ulang akun tenant yatim pada reload. Jika belum ada lembaga, halaman Muzakki menjelaskan kondisi tersebut; aplikasi dan Master Wilayah tetap tersedia untuk lembaga baru. Hak akses menu mengikuti matriks role V5.
 - **Kalkulator zakat:** tersedia pada halaman Muzakki dan menjadi pratinjau wajib saat transaksi pada halaman Muzakki, Operator, serta Amil. Mendukung fitrah, maal, profesi, fidyah, kafarat, dan sedekah; tarif dan nisab mengikuti parameter lembaga.
+- **Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi):** Admin, Amil, dan Operator dapat menerbitkan tautan/QR per lembaga dan periode, membagikan tautan melalui WhatsApp, serta mencetak banner. Warga dapat mengisi identitas dan rencana zakat tanpa akun; OTP hanya ditampilkan pada browser, pencarian transaksi dibatasi tenant/periode, transaksi Pending dapat dibuka buktinya dan dibatalkan bila belum diproses. Fitur ini berjalan pada localStorage satu browser, tidak mengirim OTP dan tidak menyinkronkan perangkat. Jangan gunakan data nyata; lihat `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk alur, batas simulasi, dan checklist keamanan produksi.
 - **Panduan role:** halaman Panduan & Bantuan menampilkan langkah dan diagram alur sesuai peran. Amil juga memiliki halaman ketentuan, dalil, niat, doa, dan pengingat akad.
 - **Support & feedback:** laporan bantuan, saran, bug, dan dugaan masalah keamanan tersimpan di database browser lokal. Pengiriman ke sistem monitoring eksternal memerlukan endpoint.
 - **Offline-first prototype:** service worker menyimpan shell aplikasi. Perubahan data masuk antrean sinkronisasi lokal. Pengiriman baru dicoba jika `window.SIZISNUR_API_BASE` disediakan. Tanpa backend yang sesuai, tidak ada sinkronisasi cloud.
+- **Produksi Portal Publik:** sebelum layanan digunakan warga sungguhan, backend harus menyediakan token tautan ter-hash, tenant isolation, OTP provider nyata, rate-limit/anti-bot, pencocokan identitas yang aman, transaksi atomik/idempotent, otorisasi state machine pembatalan, QR bertanda tangan, enkripsi, audit server, retensi privasi, monitoring, backup, dan penetration test. Checklist lengkap ada pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`; jangan menganggap prototype sudah memenuhi kontrol tersebut.
 - **Ruang evaluasi prototype:** menginventarisasi aturan bisnis, kebijakan keuangan, syariah, integrasi dan keamanan yang belum disepakati.
 
 ## 11. Batasan dan keamanan yang wajib dipahami
@@ -174,7 +176,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 
 ## 12. Rujukan kebutuhan dan keputusan yang belum selesai
 
-Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
+Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk Portal Zakat Publik dan standar keamanan produksi, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
 
 Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
 
@@ -184,6 +186,7 @@ Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, 
 node --check js/app.js
 node --check js/revision-v5.js
 node --check js/platform-admin.js
+node --check js/public-intake.js
 node tests/workbook-rules.test.cjs
 node tests/dataset-role-reset.test.cjs
 node tests/prototype-settings.test.cjs
@@ -200,6 +203,7 @@ node tests/muzakki-registration.test.cjs
 node tests/dashboard-analytics.test.cjs
 node tests/dashboard-status.test.cjs
 node tests/public-portal.test.cjs
+node tests/public-intake.test.cjs
 python tools/build-standalone.py
 ```
 
@@ -213,6 +217,8 @@ css/style.css
 js/app.js
 js/revision-v5.js
 js/platform-admin.js
+js/public-portal.js
+js/public-intake.js
 js/qrcode.js
 assets/
 docs/
@@ -228,6 +234,7 @@ manifest.webmanifest
 service-worker.js
 standalone/SiZisNur_Prototype_V5_Standalone.html
 tests/workbook-rules.test.cjs
+tests/public-intake.test.cjs
 tests/dataset-role-reset.test.cjs
 tests/prototype-settings.test.cjs
 tests/authentication.test.cjs

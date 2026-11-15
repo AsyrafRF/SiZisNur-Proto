@@ -300,6 +300,7 @@
     reports: ['Laporan & Statistik', '▧', ['Bendahara', 'Pengurus']],
     workbook: ['Acuan Workbook 1447H', '▤', ['Admin', 'Bendahara', 'Pengurus']],
     notifications: ['Notifikasi', '✉', ['Admin', 'Amil']],
+    'public-intake-manager': ['Formulir Publik & QR', '▣', ['Admin', 'Amil', 'Operator']],
     audit: ['Audit & Arsip', '⊙', ['Admin', 'Bendahara', 'Pengurus']],
     help: ['Panduan & Bantuan', '?', 'Semua'],
     'my-zis': ['Dashboard Zakat Saya', '♙', ['Muzakki']],
@@ -315,7 +316,7 @@
     deposits: ['Bendahara', 'Pengurus'], ledger: ['Bendahara', 'Pengurus'], corrections: ['Bendahara', 'Amil', 'Operator', 'Pengurus'],
     mustahik: ['Admin'], allocation: ['Bendahara', 'Pengurus'], distribution: ['Bendahara', 'Relawan'],
     incentives: ['Bendahara', 'Pengurus'], reports: ['Bendahara', 'Pengurus'], workbook: ['Admin', 'Bendahara', 'Pengurus'],
-    notifications: ['Admin', 'Amil'], audit: ['Admin', 'Bendahara', 'Pengurus'], help: roles,
+    notifications: ['Admin', 'Amil'], 'public-intake-manager': ['Admin', 'Amil', 'Operator'], audit: ['Admin', 'Bendahara', 'Pengurus'], help: roles,
     'my-zis': ['Muzakki'], 'muzakki-services': ['Muzakki'], 'pay-plan': ['Muzakki'],
     'amil-guide': ['Amil'], prototype: roles,
   }
@@ -2203,6 +2204,7 @@
       case 'help': return helpPageV5()
       case 'amil-guide': return amilGuidePage()
       case 'prototype': return prototypePage()
+      case 'public-intake-manager': return window.__SIZISNUR_PUBLIC_INTAKE_MANAGER_VIEW ? window.__SIZISNUR_PUBLIC_INTAKE_MANAGER_VIEW() : '<div class="alert warn">Modul Formulir Publik belum dimuat.</div>'
       case 'tenant': return tenantPageV5()
       case 'muzakki': return muzakkiPageV5()
       case 'reports': return reportsPageV5()
