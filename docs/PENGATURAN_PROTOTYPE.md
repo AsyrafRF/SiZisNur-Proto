@@ -5,10 +5,10 @@ Halaman ini tersedia pada konsol **Admin SiZisNur** melalui tab **Pengaturan Pro
 ## Cara membuka
 
 1. Jalankan `index.html` melalui browser modern atau server lokal (`python -m http.server 8000`).
-2. Masuk menggunakan aktor **Admin SiZisNur** (`root@sizisnur.demo`) pada layar login simulasi.
+2. Dari halaman pilihan akses, buka **Akses Demo Langsung** lalu pilih **Admin SiZisNur** (`root@sizisnur.demo`).
 3. Buka tab **Pengaturan Prototype** pada konsol root.
 
-Login prototype tidak memakai password. Identitas aktor dan pembatasan menu hanya simulasi browser, bukan pengamanan akun produksi.
+Halaman login simulasi terpisah dari akses demo langsung. Akun seed menggunakan password demo yang didokumentasikan pada `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`. Password di-hash PBKDF2 di browser, tetapi localStorage dan sesi tetap dapat dimodifikasi pengguna perangkat; ini bukan autentikasi produksi.
 
 ## Tindakan yang tersedia
 

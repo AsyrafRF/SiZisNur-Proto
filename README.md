@@ -57,8 +57,9 @@ Seluruh tabel data yang menggunakan komponen tabel bersama menampilkan maksimal 
    ```
 
    Buka `http://localhost:8000/`.
-4. Pilih **Masuk / Coba Demo** dan pilih akun role yang tersedia. Login prototype tidak menggunakan password atau OTP.
-5. Untuk menyiapkan ulang simulasi, masuk sebagai **Admin SiZisNur** (`root@sizisnur.demo`) lalu buka tab **Pengaturan Prototype**. Di sana tersedia ekspor/impor cadangan JSON, reset ke data bawaan, hapus semua data, dan pemeriksaan integritas. Reset/hapus memerlukan frasa konfirmasi.
+4. Pilih **Masuk / Coba Demo**. Layar awal memisahkan **Login sebagai Muzakki** dan **Login sebagai Panitia**. Pendaftaran Muzakki tersedia dari link di halaman login Muzakki; pendaftaran pada jalur Panitia adalah pengajuan lembaga, bukan pembuatan akun petugas.
+5. Untuk melewati simulasi login, buka **Akses Demo Langsung** yang berada pada halaman terpisah. Pilih akun/role yang ingin diuji.
+6. Untuk menyiapkan ulang simulasi, masuk sebagai **Admin SiZisNur** (`root@sizisnur.demo`) lalu buka tab **Pengaturan Prototype**. Di sana tersedia ekspor/impor cadangan JSON, reset ke data bawaan, hapus semua data, dan pemeriksaan integritas. Reset/hapus memerlukan frasa konfirmasi.
 
 Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan harus menunggu verifikasi nomor HP/email agar data tidak dapat diambil hanya dengan memasukkan kontak milik orang lain.
 
@@ -66,7 +67,7 @@ Profil lembaga untuk pemilihan Muzakki menampilkan ID publik unik, alamat dan wi
 
 Navigasi akun Muzakki dipisahkan menjadi tiga halaman: **Dashboard Zakat Saya** untuk ringkasan dan riwayat pribadi, **Layanan Mandiri** untuk profil/keluarga/kalkulator zakat, serta **Rencana Bayar Zakat** untuk memulai perencanaan pembayaran dan memperoleh QR transaksi Pending. Dashboard tidak lagi menampung panel layanan mandiri berbentuk dropdown.
 
-File mandiri yang memuat HTML, CSS, JavaScript, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md`.
+File mandiri yang memuat HTML, CSS, JavaScript, autentikasi simulasi, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md` dan `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`.
 
 ## 6. Pengaturan Prototype
 
@@ -116,7 +117,7 @@ Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan peng
 - **Nama/role:** Admin SiZisNur
 - **Email demo:** `root@sizisnur.demo`
 - **ID internal:** `PA-SIZISNUR-ROOT`
-- **Cara masuk:** pilih tile **Admin SiZisNur** pada halaman Masuk Demo atau pilih akun tersebut pada dropdown akun demonstrasi. Prototype ini belum meminta password/OTP.
+- **Cara masuk:** pilih tile **Admin SiZisNur** pada halaman **Akses Demo Langsung**. Akun root tidak diterima pada jalur Login Panitia.
 - **Konsol:** Ringkasan, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
 
 Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, serta mengaktifkan/nonaktifkan akun lembaga. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
@@ -160,7 +161,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 
 ## 11. Batasan dan keamanan yang wajib dipahami
 
-1. Tidak ada backend produksi, PostgreSQL, autentikasi sesungguhnya, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi lembaga tingkat server. Akun demo lembaga maupun root tidak memakai password. Akun root hanya dipisahkan secara struktur data dan UI pada browser; ini belum menjadi batas keamanan yang dapat dipercaya. Jangan mempublikasikan build demo dengan data nyata. Sebelum produksi, autentikasi root harus memakai kredensial terpisah, MFA wajib, otorisasi backend khusus platform, pembatasan jaringan/perangkat sesuai risiko, rate limit, pencatatan audit server append-only, serta proses pemulihan akun yang diawasi. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
+1. Belum ada backend produksi, PostgreSQL, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi lembaga tingkat server. Prototype kini memiliki form login email/password dan hash PBKDF2 pada browser, tetapi kredensial serta sesi tetap berada di localStorage/sessionStorage dan dapat dimodifikasi pemilik perangkat. Ini bukan autentikasi produksi atau batas keamanan yang dapat dipercaya. Jangan mempublikasikan build demo dengan data nyata. Sebelum produksi, autentikasi root harus memakai kredensial terpisah, MFA wajib, otorisasi backend khusus platform, pembatasan jaringan/perangkat sesuai risiko, rate limit, pencatatan audit server append-only, serta proses pemulihan akun yang diawasi. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
 2. `localStorage` dapat dibaca dan diubah oleh pengguna perangkat. Hash audit SHA-256 pada browser bukan bukti immutable, bukan tanda tangan digital, dan bukan pengganti audit server append-only.
 3. Master wilayah administratif menggunakan relasi `areas` → `rws` → `rts`; identitas menyimpan `domicileStatus`, `areaId`, `rwId`, dan `rtId`, sedangkan snapshot keanggotaan lembaga menyimpan atribut domisili lembaga yang sama. Validasi relasi dijalankan di sisi aplikasi prototype, tetapi API produksi tetap wajib memverifikasi kepemilikan lembaga dan parent-child di server. Antrean sinkronisasi hanya menyiapkan event dan record untuk endpoint yang belum disediakan. API produksi harus mengautentikasi pengguna, memeriksa lembaga di server, menggunakan HTTPS, menerapkan idempotensi, validasi skema, penanganan konflik, dan mengembalikan `acknowledgedEventIds` sebelum event terkait dihapus dari antrean.
 4. Cache service worker hanya mencakup application shell. Offline belum menjamin semua proses kamera, data lintas perangkat, autentikasi, atau penyelesaian konflik. Operasi keuangan offline untuk rilis memerlukan desain transaksi lokal, enkripsi, idempotency key, kontrol perangkat, dan uji pemulihan.

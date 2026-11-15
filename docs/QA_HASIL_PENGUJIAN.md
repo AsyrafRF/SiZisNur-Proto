@@ -8,6 +8,9 @@ Tanggal pembaruan: 15 November 2026
 |---|---|
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
+| `node --check js/authentication.js` | Lulus |
+| `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
+| `node --test tests/*.test.cjs` | Lulus — 15 suite, 15/15 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 314 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
@@ -25,6 +28,8 @@ Tanggal pembaruan: 15 November 2026
 ## Cakupan yang diperiksa oleh test otomatis
 
 - Schema demo V5 dan matriks akses tujuh role.
+- Pilihan awal Login sebagai Muzakki atau Login sebagai Panitia; form email/password, pembatasan akun antar-role, dan halaman Akses Demo Langsung terpisah.
+- Hash kredensial PBKDF2 browser-side, registrasi Muzakki tanpa lembaga, pengajuan lembaga tanpa membuat akun Panitia, pembuatan Admin awal setelah disetujui root, serta penggantian password sementara pada login pertama.
 - Registrasi mandiri Muzakki hanya menyimpan nama lengkap, nomor HP, email, dan alamat; akun awal tidak diberi lembaga, person, kartu Muzakki, atau membership sampai pemilihan lembaga dari dalam akun.
 - Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.

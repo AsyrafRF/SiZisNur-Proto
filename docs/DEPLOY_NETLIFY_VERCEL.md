@@ -46,7 +46,7 @@ Variabel ini hanya mengaktifkan percobaan pengiriman antrean. Ia bukan konfigura
 ## Pemeriksaan sebelum demo
 
 - Gunakan hanya data fiktif. Jangan masukkan NIK, nomor HP nyata, alamat rumah, rekening, data keluarga, atau transaksi sesungguhnya.
-- Login demo tidak memakai password atau OTP. Hak akses berjalan di JavaScript browser, bukan otorisasi server.
+- Form login prototype memakai email/password dan PBKDF2 lokal. Ini belum menyediakan OTP, MFA, autentikasi server-side, atau otorisasi API; akses demo langsung tetap terpisah untuk UAT.
 - Data tersimpan di `localStorage` per browser dan origin. Perangkat atau domain lain tidak otomatis berbagi data.
 - Hash audit SHA-256 hanya membantu mendeteksi perubahan lokal. Pengguna yang menguasai browser dapat memodifikasi data dan hash.
 - Kamera memerlukan izin browser. Input token manual tetap tersedia sebagai fallback.

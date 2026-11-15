@@ -283,7 +283,8 @@
   function openTenantCreate() {
     A.modal('Daftarkan Lembaga Baru', `<form data-root-form="tenant-create"><div class="grid-form">
       ${A.fld('Nama lembaga','name','','text','required')}${A.fld('Nama Admin lembaga pertama','adminName','','text','required')}
-      ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Email lembaga','email','','email')}
+      ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Password awal Admin','adminPassword','','password','minlength="8" autocomplete="new-password" required')}
+      ${A.fld('Ulangi password Admin','adminPasswordConfirm','','password','minlength="8" autocomplete="new-password" required')}${A.fld('Email lembaga','email','','email')}
       ${A.fld('Nomor telepon','phone','','tel')}${A.fld('Wilayah / daerah','daerah','','text')}
       ${A.fld('Kelurahan / Desa','kelurahan','','text')}${A.fld('Kecamatan','kecamatan','','text')}
       ${A.fld('Kota / Kabupaten','city','','text')}${A.fld('Provinsi','province','','text')}

@@ -18,7 +18,7 @@ Admin SiZisNur adalah aktor pengelola platform secara global. Akun ini berbeda d
 | Lembaga | Tidak terikat lembaga (`tenantId` tidak tersedia) |
 | Lokasi data | `db.platformAdmins` — terpisah dari `db.users` |
 
-Pada halaman **Masuk ke demo SiZisNur**, pilih tile **Admin SiZisNur** atau opsi akun root pada dropdown akun demonstrasi. Prototype tidak meminta password atau OTP. Jangan mempublikasikan akun ini sebagai kredensial produksi.
+Pada halaman pilihan akses, buka **Akses Demo Langsung** lalu pilih tile **Admin SiZisNur**. Akun root sengaja tidak masuk ke jalur Login Panitia. Jangan mempublikasikan akun ini sebagai kredensial produksi.
 
 ## 3. Menu konsol root
 
@@ -55,7 +55,7 @@ Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyal
 
 ## 6. Keamanan sebelum produksi
 
-Fitur ini belum boleh digunakan sebagai superadmin produksi. Prototype berjalan dengan JavaScript dan `localStorage`; pengguna yang memiliki akses ke browser dapat memeriksa atau mengubah data, memalsukan sesi, dan memodifikasi koleksi platform. Tidak ada password, MFA, backend, otorisasi server-side, maupun audit immutable. Pemisahan koleksi hanya pemisahan logis pada data demo.
+Fitur ini belum boleh digunakan sebagai superadmin produksi. Prototype berjalan dengan JavaScript dan `localStorage`; pengguna yang memiliki akses ke browser dapat memeriksa atau mengubah data, memalsukan sesi, dan memodifikasi koleksi platform. Belum ada MFA, backend, otorisasi server-side, maupun audit immutable. Form login dan hash PBKDF2 pada browser hanya simulasi; localStorage/sessionStorage masih dapat dimodifikasi oleh pemilik perangkat. Pemisahan koleksi hanya pemisahan logis pada data demo.
 
 Sebelum produksi, minimal implementasikan:
 
