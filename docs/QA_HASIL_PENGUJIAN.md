@@ -19,13 +19,13 @@ Tanggal pembaruan: 15 November 2026
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
-| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per lembaga |
+| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah per Lembaga, filter RT mengikuti RW, Non-daerah tanpa RW/RT, dan validasi relasi |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas lembaga/periode |
 | `node tests/muzakki-registration.test.cjs` | Lulus — registrasi empat data tanpa lembaga, akun tanpa person/kartu/membership, dan penghubungan dari dalam akun dengan persetujuan |
 | `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
-| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per lembaga, alokasi kelebihan, dan aturan konfirmasi kafarat |
+| `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -44,6 +44,9 @@ Tanggal pembaruan: 15 November 2026
 - Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
 - Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
+- Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
+- Konfirmasi kelebihan pembayaran seragam pada tiga kanal; domisili warga daerah memakai RW/RT Master Wilayah Lembaga dengan filter RT per RW, sedangkan Non-daerah tidak memerlukan RW/RT.
+- Input Rupiah menggunakan pemisah titik ribuan sejak nilai awal dan saat diketik; input kilogram memakai koma desimal.
 - Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending/tercatat tetap menghalangi transaksi ganda.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf; preset An-Nur hanya satu lembaga dan preset multi-tenant menambahkan Al-Hikmah serta pengajuan Al-Falah.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
@@ -56,7 +59,7 @@ Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Peng
 
 Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publik menyimpan tautan/identitas/transaksi pada localStorage browser yang sama; OTP hanya ditampilkan di layar dan bukan dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
 
-Lihat `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
+Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersama, `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
 
 
 ## Pemeriksaan alert dan toast pada light/dark mode — 13 November 2026

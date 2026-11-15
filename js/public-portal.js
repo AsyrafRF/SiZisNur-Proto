@@ -127,7 +127,7 @@
         <div class="public-camera-actions"><button type="button" class="btn primary" data-public-action="camera-start"> <span aria-hidden="true">▣</span> Scan QR dengan kamera</button><button type="button" class="btn" data-public-action="camera-stop" hidden>Hentikan kamera</button></div>
         <video id="public-camera" class="camera-preview public-camera-preview" playsinline muted hidden aria-label="Pratinjau kamera pemindai QR"></video>
         <p id="public-camera-status" class="caption" aria-live="polite">Kamera memerlukan izin perangkat dan koneksi HTTPS atau localhost. Jika browser tidak mendukung pemindai QR, masukkan token secara manual.</p>
-      </div><div class="public-manual-panel"><form data-form="verify-public" class="public-verify-form"><div class="field"><label for="public-scan-token">Nomor seri / ID transaksi / token QR</label><input id="public-scan-token" name="token" type="text" placeholder="Contoh: SIZISNUR|tenant|id|seri" autocomplete="off" required value="${esc(state.filters.verify || '')}"></div><button class="btn primary" type="submit">Verifikasi struk</button></form></div></div>
+      </div><div class="public-manual-panel"><form data-form="verify-public" class="public-verify-form"><div class="field"><label for="public-scan-token">Nomor seri / ID transaksi / token QR</label><input id="public-scan-token" name="token" type="text" placeholder="Contoh: SIZISNUR|ID_LEMBAGA|ID_TRANSAKSI|NOMOR_SERI" autocomplete="off" required value="${esc(state.filters.verify || '')}"></div><button class="btn primary" type="submit">Verifikasi struk</button></form></div></div>
       <div id="verify-result" class="public-verify-result" aria-live="polite"></div>`
   }
 

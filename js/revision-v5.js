@@ -179,10 +179,14 @@
     const area = areaFor(tenantId)
     const rws = rwsFor(tenantId, area?.id)
     const existing = domicileParts(person, tenantId)
-    const resident = existing.status === 'warga_daerah'
-    const selectedRw = resident ? existing.rw.id : (rws[0]?.id || '')
+    // New on-site/public registrations default to the Lembaga's local area when Master Wilayah is configured.
+    // Existing records keep their saved status; users from outside the area can explicitly choose Non-daerah.
+    const resident = person
+      ? existing.status === 'warga_daerah'
+      : Boolean(area && rws.length && rtsFor(tenantId, rws[0].id).length)
+    const selectedRw = resident && existing.rw ? existing.rw.id : (rws[0]?.id || '')
     const rts = selectedRw ? rtsFor(tenantId, selectedRw) : []
-    const selectedRt = resident ? existing.rt.id : (rts[0]?.id || '')
+    const selectedRt = resident && existing.rt ? existing.rt.id : (rts[0]?.id || '')
     const statusLabel = area?.name || 'Daerah lembaga'
     return `<div class="field"><label>Status domisili</label><select name="domicileStatus"><option value="warga_daerah" ${resident ? 'selected' : ''} ${!rws.length ? 'disabled' : ''}>Warga ${esc(statusLabel)}</option><option value="non_daerah" ${!resident ? 'selected' : ''}>Non-${esc(statusLabel)}</option></select></div><div data-domicile-detail ${resident ? '' : 'hidden'}><div class="field"><label>RW</label><select name="rwId" ${resident ? 'required' : ''}><option value="">Pilih RW</option>${rws.map((x) => `<option value="${esc(x.id)}" ${x.id === selectedRw ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div><div class="field"><label>RT</label><select name="rtId" ${resident ? 'required' : ''}><option value="">Pilih RT</option>${rts.map((x) => `<option value="${esc(x.id)}" ${x.id === selectedRt ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div></div><p class="caption" data-domicile-area-label>Daerah induk lembaga: ${esc(statusLabel)}. RW/RT dipilih dari master wilayah lembaga, bukan diketik bebas.</p>`
   }
@@ -196,10 +200,12 @@
     const rtSelect = form.elements.rtId
     if (!status || !detail || !rwSelect || !rtSelect) return
     const resident = status.value === 'warga_daerah'
+    const rws = rwsFor(tenantId, area?.id)
     detail.hidden = !resident
     rwSelect.required = resident
     rtSelect.required = resident
-    const rws = rwsFor(tenantId, area?.id)
+    rwSelect.disabled = !resident || !rws.length
+    rtSelect.disabled = !resident
     const oldRw = preferred.rwId || rwSelect.value
     const chosenRw = rws.some((x) => x.id === oldRw) ? oldRw : (rws[0]?.id || '')
     rwSelect.innerHTML = `<option value="">Pilih RW</option>${rws.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}`
@@ -210,7 +216,9 @@
     rtSelect.innerHTML = `<option value="">Pilih RT</option>${rts.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}`
     rtSelect.value = chosenRt
     const label = form.querySelector('[data-domicile-area-label]')
-    if (label) label.textContent = `Daerah induk lembaga: ${area?.name || 'Belum diatur'}. RW/RT dipilih dari master wilayah lembaga, bukan diketik bebas.`
+    if (label) label.textContent = resident
+      ? `Daerah induk lembaga: ${area?.name || 'Belum diatur'}. Pilih RW lalu RT yang tercatat pada Master Wilayah lembaga.`
+      : `Domisili Non-${area?.name || 'daerah lembaga'}: pilihan RW dan RT tidak diperlukan.`
   }
   function readDomicile(data, tenantId = currentTenantId()) {
     const status = data.domicileStatus
@@ -677,63 +685,105 @@
   }
   A.set('transactionsPage', transactionsPageV5)
 
-  function showReceiptV5(tx) {
+  function receiptMarkupV5(tx) {
     const person = db.persons.find((x) => x.id === tx.personId && x.tenantId === tx.tenantId)
-    const tenant = db.tenants.find((x) => x.id === tx.tenantId)
+    const institution = db.tenants.find((x) => x.id === tx.tenantId)
     const totals = effectiveTotals(tx)
+    const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(String(tx.status || '').toLowerCase())
+    const paid = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(String(tx.status || '').toLowerCase())
+    const heading = tx.status === 'batal' ? 'CATATAN RENCANA DIBATALKAN' : ['expired', 'kedaluwarsa'].includes(tx.status) ? 'CATATAN RENCANA KEDALUWARSA' : paid ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
+    const source = tx.source === 'public-intake' ? 'Formulir publik' : tx.source === 'self-service' ? 'Layanan mandiri' : 'Input petugas / konter'
+    const itemRows = (tx.lines || []).map((line) => {
+      const quantity = Number(line.quantity) > 0 && line.unitLabel ? ` · ${Number(line.quantity).toLocaleString('id-ID')} ${esc(line.unitLabel)}` : ''
+      const basis = Number(line.assetsValue) > 0 ? `<small class="receipt-line-detail">Dasar perhitungan: ${money(line.assetsValue)}</small>` : ''
+      return `<div class="mini-item receipt-line-item"><span>${esc(line.category)} · ${line.type === 'beras' ? 'Beras' : 'Uang'}${quantity}${basis}</span><b>${line.type === 'beras' ? kilos(line.value) : money(line.value)}</b></div>`
+    }).join('')
     const token = transactionToken(tx)
-    const inactive = ['batal', 'expired', 'kedaluwarsa'].includes(tx.status)
-    const receiptTitle = tx.status === 'batal'
-      ? 'CATATAN RENCANA DIBATALKAN'
-      : ['expired', 'kedaluwarsa'].includes(tx.status)
-        ? 'CATATAN RENCANA KEDALUWARSA'
-        : ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
-    const msg = inactive
-      ? `Rencana ${tx.serial} berstatus ${tx.status === 'batal' ? 'Dibatalkan' : 'Kedaluwarsa'}. QR transaksi ini tidak berlaku dan tidak dapat dipakai untuk verifikasi.`
-      : `${person?.name || 'Muzakki'}, terima kasih telah menunaikan zakat melalui ${tenant?.name || 'lembaga'}. Tercatat ${tx.jiwa || 1} jiwa dengan ${tx.lines.map((x) => x.category).join(', ')}. Total ${money(totals.money)} dan ${kilos(totals.rice)}. Tunjukkan QR ini kepada Amil ${tenant?.name || ''}. Ttd, Amil ${tenant?.name || ''}.`
-    const inactiveNote = inactive
-      ? `<div class="alert danger">${tx.status === 'batal' ? 'Transaksi dibatalkan' : 'Rencana kedaluwarsa'} — QR tidak aktif dan tidak dapat dipindai oleh Amil.${tx.cancelReason ? `<p>Alasan pembatalan: ${esc(tx.cancelReason)}</p>` : ''}</div>`
-      : ''
-    const qrBlock = inactive ? '' : `<div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div>`
-    const exportActions = inactive ? '' : `<div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`
-    A.modal(`Struk digital ${tx.serial}`, `${inactiveNote}<div class="receipt-preview"><div class="receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${receiptTitle}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah tanggungan</span><b>${tx.jiwa || 1} orang</b></div><div><span>Jenis zakat</span><b>${esc(tx.lines.map((x) => x.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totals.money)}</b></div><div><span>Total beras</span><b>${kilos(totals.rice)}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div>${qrBlock}<p class="receipt-thanks">${esc(msg)}</p><small>Struk simulasi prototype. Belum menjadi bukti setor resmi.</small></div>${exportActions}`, true)
+    const qr = inactive ? '<div class="alert danger">QR tidak aktif dan tidak dapat dipindai untuk verifikasi transaksi.</div>' : `<div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div>`
+    return `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(institution?.name || 'SiZisNur')}</b><small>${heading}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial || tx.id)}</b></div><div><span>ID transaksi</span><b class="mono">${esc(tx.id)}</b></div><div><span>Tanggal</span><b>${esc(tx.createdAt ? new Date(tx.createdAt).toLocaleString('id-ID') : '—')}</b></div><div><span>Nama Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah jiwa / unit</span><b>${Number(tx.jiwa || 1).toLocaleString('id-ID')}</b></div><div><span>Sumber input</span><b>${source}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu QR</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-lines"><b>Rincian pembayaran</b><div class="mini-list">${itemRows || '<div class="mini-item"><span>Rincian tidak tersedia</span><b>—</b></div>'}</div></div><div class="receipt-totals"><div class="mini-item"><b>Total uang</b><b>${money(totals.money)}</b></div><div class="mini-item"><b>Total beras</b><b>${kilos(totals.rice)}</b></div></div>${qr}<p class="receipt-thanks">${inactive ? `Catatan arsip transaksi berstatus ${esc(tx.status)}. QR tidak berlaku.` : `Rencana pembayaran tercatat pada ${esc(institution?.name || 'lembaga')}. Tunjukkan QR ini kepada Amil untuk pemeriksaan, akad, dan pengesahan pembayaran.`}</p><small>Dokumen simulasi prototype. Struk rencana berstatus Pending bukan bukti pembayaran resmi.</small></div>`
   }
-  function makeReceiptPrint(tx, thermal = false) {
-    const html = A.receiptHtml(tx)
-    const style = thermal ? '<style>@page{size:80mm auto;margin:3mm}body{width:74mm;margin:0 auto;font-family:monospace}.receipt{width:100%;max-width:100%;box-sizing:border-box;border:0;padding:2mm}.receipt svg{width:36mm;height:36mm}</style>' : ''
-    A.printWindow(`SiZisNur ${tx.serial}`, style + html, false)
+  function receiptPrintHtmlV5(tx) {
+    return `<style>.receipt{font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#182b25}.receipt-preview{border:1px solid #ccd9d3;border-radius:12px;padding:22px}.receipt-brand{text-align:center;border-bottom:1px solid #ccd9d3;padding-bottom:14px;margin-bottom:14px}.receipt-brand b{display:block;font-size:22px}.receipt-brand small{display:block;margin-top:6px;font-weight:700}.receipt-data>div,.receipt .mini-item{display:flex;justify-content:space-between;gap:20px;padding:7px 0;border-bottom:1px solid #e6ece9}.receipt-data span,.receipt .mini-item span{color:#52635c}.receipt-lines{margin-top:16px}.receipt-lines>.mini-list{margin-top:6px}.receipt-totals{border-top:2px solid #52635c;margin-top:14px;padding-top:8px}.receipt-qr{text-align:center;margin:18px auto 8px}.receipt-qr svg{width:180px;height:180px}.receipt-token{font-size:10px;overflow-wrap:anywhere;text-align:center}.receipt-thanks{text-align:center;margin-top:18px}.receipt-preview>small{display:block;text-align:center;color:#64746e;margin-top:12px}</style><div class="receipt">${receiptMarkupV5(tx)}</div>`
+  }
+  function showReceiptV5(tx) {
+    const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(String(tx.status || '').toLowerCase())
+    const exportActions = inactive ? '' : `<div class="form-actions">${actionFor('Unduh gambar PNG', 'receipt-png', tx.id, 'sm primary')}${actionFor('Cetak / Simpan PDF', 'receipt-pdf', tx.id, 'sm')}${actionFor('Cetak thermal 80 mm', 'receipt-thermal', tx.id, 'sm')}</div>`
+    A.modal(`Struk digital ${tx.serial}`, `${receiptMarkupV5(tx)}${exportActions}`, true)
   }
   async function downloadReceiptPng(tx) {
+    const inactive = ['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(String(tx.status || '').toLowerCase())
     const canvas = document.createElement('canvas')
+    const lineItems = Array.isArray(tx.lines) ? tx.lines : []
     canvas.width = 900
-    canvas.height = 1320
+    canvas.height = Math.max(1040, 520 + lineItems.length * 54 + (inactive ? 130 : 390))
     const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Browser tidak menyediakan Canvas untuk membuat bukti PNG')
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = '#115b43'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center'
     ctx.fillText(db.tenants.find((x) => x.id === tx.tenantId)?.name || 'SiZisNur', 450, 70)
-    ctx.fillStyle = '#333333'; ctx.font = '24px Arial'; ctx.fillText(['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI', 450, 112)
+    ctx.fillStyle = '#333333'; ctx.font = 'bold 24px Arial'
+    const paid = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status)
+    const heading = tx.status === 'batal' ? 'CATATAN RENCANA DIBATALKAN' : ['expired', 'kedaluwarsa'].includes(tx.status) ? 'CATATAN RENCANA KEDALUWARSA' : paid ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
+    ctx.fillText(heading, 450, 112)
     const person = db.persons.find((x) => x.id === tx.personId && x.tenantId === tx.tenantId)
     const total = effectiveTotals(tx)
     const rows = [
-      ['Nomor', tx.serial], ['Nama', person?.name || 'Muzakki'], ['Jumlah tanggungan', `${tx.jiwa || 1} orang`],
-      ['Kategori', tx.lines.map((x) => x.category).join(', ')], ['Uang', money(total.money)], ['Beras', kilos(total.rice)], ['Status', tx.status],
+      ['Nomor transaksi', tx.serial || tx.id], ['ID transaksi', tx.id],
+      ['Tanggal', tx.createdAt ? new Date(tx.createdAt).toLocaleString('id-ID') : '—'],
+      ['Nama Muzakki', person?.name || 'Muzakki'], ['Jumlah jiwa / unit', `${tx.jiwa || 1}`],
+      ['Status', String(tx.status || '—').toUpperCase()],
     ]
-    ctx.textAlign = 'left'; ctx.fillStyle = '#222'; ctx.font = '26px Arial'
-    let y = 190
-    rows.forEach(([label, value]) => { ctx.fillText(label, 80, y); ctx.textAlign = 'right'; ctx.fillText(String(value), 820, y); ctx.textAlign = 'left'; y += 66 })
-    const svg = A.qr(transactionToken(tx))
-    const qrSvg = svg.match(/<svg[\s\S]*?<\/svg>/i)?.[0]
-    if (qrSvg) {
-      const blob = new Blob([qrSvg], { type: 'image/svg+xml;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      try {
-        const img = new Image()
-        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = url })
-        ctx.drawImage(img, 320, y + 20, 260, 260)
-      } finally { URL.revokeObjectURL(url) }
+    ctx.textAlign = 'left'; ctx.fillStyle = '#222222'; ctx.font = '23px Arial'
+    let y = 180
+    rows.forEach(([label, value]) => {
+      ctx.textAlign = 'left'; ctx.fillText(label, 75, y)
+      ctx.textAlign = 'right'; ctx.fillText(String(value), 825, y, 510)
+      y += 48
+    })
+    y += 16
+    ctx.textAlign = 'left'; ctx.font = 'bold 24px Arial'; ctx.fillText('Rincian pembayaran', 75, y)
+    y += 42
+    ctx.font = '21px Arial'
+    lineItems.forEach((line) => {
+      const quantity = Number(line.quantity) > 0 && line.unitLabel ? ` · ${Number(line.quantity).toLocaleString('id-ID')} ${line.unitLabel}` : ''
+      const label = `${line.category} · ${line.type === 'beras' ? 'Beras' : 'Uang'}${quantity}`
+      const value = line.type === 'beras' ? kilos(line.value) : money(line.value)
+      ctx.textAlign = 'left'; ctx.fillText(label, 75, y, 500)
+      ctx.textAlign = 'right'; ctx.fillText(value, 825, y, 300)
+      y += 46
+    })
+    y += 12
+    ctx.beginPath(); ctx.moveTo(75, y); ctx.lineTo(825, y); ctx.strokeStyle = '#6b7d75'; ctx.lineWidth = 2; ctx.stroke()
+    y += 42
+    for (const [label, value] of [['Total uang', money(total.money)], ['Total beras', kilos(total.rice)]]) {
+      ctx.font = 'bold 23px Arial'; ctx.textAlign = 'left'; ctx.fillText(label, 75, y)
+      ctx.textAlign = 'right'; ctx.fillText(value, 825, y)
+      y += 48
     }
-    ctx.textAlign = 'center'; ctx.font = '18px Arial'; ctx.fillText(transactionToken(tx), 450, 1210, 800)
-    ctx.fillText('Tunjukkan QR ini kepada petugas Amil lembaga', 450, 1260)
+    if (!inactive) {
+      const svg = A.qr(transactionToken(tx))
+      const qrSvg = svg.match(/<svg[\s\S]*?<\/svg>/i)?.[0]
+      if (qrSvg) {
+        const blob = new Blob([qrSvg], { type: 'image/svg+xml;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        try {
+          const img = new Image()
+          await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = url })
+          ctx.drawImage(img, 320, y + 18, 260, 260)
+        } finally { URL.revokeObjectURL(url) }
+      }
+      y += 300
+      ctx.font = '15px Arial'; ctx.textAlign = 'center'; ctx.fillText(transactionToken(tx), 450, y, 780)
+      y += 42
+      ctx.font = '18px Arial'; ctx.fillText('Tunjukkan QR ini kepada Amil untuk pemeriksaan dan verifikasi.', 450, y)
+    } else {
+      y += 22
+      ctx.fillStyle = '#a12626'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'
+      ctx.fillText('QR TIDAK AKTIF DAN TIDAK DAPAT DIPINDAI', 450, y)
+    }
+    y += 52
+    ctx.fillStyle = '#59665f'; ctx.font = '16px Arial'; ctx.textAlign = 'center'
+    ctx.fillText('Dokumen simulasi prototype. Struk berstatus Pending bukan bukti pembayaran resmi.', 450, y, 800)
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
     if (!blob) throw new Error('Browser tidak dapat membuat gambar struk')
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `SiZisNur-${tx.serial}.png`; link.click(); URL.revokeObjectURL(link.href)
@@ -1095,146 +1145,252 @@
     return { ...estimate, type, paid, excess, shortfall }
   }
 
+  function transactionLineMarkup(prefix, index, units = 1, defaultValue = '') {
+    const catOptions = TRANSACTION_CATEGORIES.map(([value, label]) => `<option value="${esc(value)}" ${value === 'Zakat Fitrah' ? 'selected' : ''}>${esc(label)}</option>`).join('')
+    return `<section class="transaction-line card" data-transaction-line data-line-index="${index}">
+      <div class="transaction-line-head"><div><b>Rincian pembayaran ${index + 1}</b><small>Satu baris untuk satu jenis zakat dan satu media</small></div><button type="button" class="btn sm danger" data-shared-transaction-action="remove-line" ${index === 0 ? 'hidden' : ''}>Hapus baris</button></div>
+      <div class="grid-form transaction-line-fields">
+        <div class="field"><label>Jenis zakat / donasi</label><select name="lines[${index}][category]" data-line-field="category" required>${catOptions}</select></div>
+        <div class="field" data-line-wrap="media"><label>Media pembayaran</label><select name="lines[${index}][type]" data-line-field="type"><option value="uang" selected>Uang (Rp)</option><option value="beras">Beras (kg)</option></select></div>
+        <div class="field" data-line-wrap="quantity"><label data-line-label="quantity">Jumlah jiwa</label><input name="lines[${index}][jiwa]" data-line-field="jiwa" type="number" min="1" step="1" value="${Math.max(1, Number(units) || 1)}" required></div>
+        <div class="field" data-line-wrap="assets" hidden><label data-line-label="assets">Harta bersih yang menjadi objek zakat (Rp)</label><input name="lines[${index}][assetsValue]" data-line-field="assetsValue" type="text" inputmode="numeric" data-format="idr" value=""></div>
+        <div class="field" data-line-wrap="profession-period" hidden><label>Periode penghasilan profesi</label><select name="lines[${index}][professionPeriod]" data-line-field="professionPeriod"><option value="monthly">Penghasilan bulanan</option><option value="annual">Akumulasi penghasilan satu tahun</option></select></div>
+        <div class="field" data-line-wrap="haul" hidden><label>Status haul</label><select name="lines[${index}][haulComplete]" data-line-field="haulComplete"><option value="no">Belum / tidak mencapai haul</option><option value="yes">Ya, sudah mencapai haul satu tahun</option></select></div>
+        <div class="field" data-line-wrap="kafarat" hidden><label>Jenis kafarat</label><select name="lines[${index}][kafaratType]" data-line-field="kafaratType"><option value="yamin">Melanggar sumpah — opsi memberi makan 10 orang</option><option value="puasa">Hubungan suami-istri pada siang Ramadan</option><option value="zihar">Zihar</option></select></div>
+        <div class="field" data-line-wrap="kafarat-stage" hidden><label>Tidak mampu menunaikan tahapan sebelumnya?</label><select name="lines[${index}][kafaratFeedingConfirmed]" data-line-field="kafaratFeedingConfirmed"><option value="no">Belum dipastikan / masih mampu tahapan sebelumnya</option><option value="yes">Ya, tidak mampu; hitung opsi memberi makan 60 orang</option></select></div>
+        <div class="field transaction-line-amount"><label data-line-label="value">Nominal dibayarkan (Rp)</label><input name="lines[${index}][value]" data-line-field="value" type="text" inputmode="numeric" data-format="idr" data-auto-fill="true" value="${esc(defaultValue)}" required></div>
+      </div>
+      <div class="alert light transaction-line-preview" data-line-preview aria-live="polite">Kewajiban akan dihitung otomatis mengikuti tarif lembaga.</div>
+      <label class="check transaction-line-excess" data-line-wrap="excess" hidden><input type="checkbox" name="lines[${index}][autoExcess]" data-line-field="autoExcess" value="yes"> Pisahkan kelebihan pembayaran baris ini sebagai infak/sedekah.</label>
+    </section>`
+  }
+
   function transactionCalculatorFields(prefix, units = 1, defaultValue = '45.000') {
-    return `<div class="grid-form transaction-calculator-fields">
-      ${A.sel('Jenis pembayaran', 'category', TRANSACTION_CATEGORIES, 'Zakat Fitrah')}
-      <div data-calc-field="media">${A.sel('Media pembayaran', 'type', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}</div>
-      <div data-calc-field="quantity">${A.fld('Jumlah jiwa', 'jiwa', units, 'number', 'min="1" step="1" required')}</div>
-      <div data-calc-field="assets" hidden>${A.fld('Harta bersih yang menjadi objek zakat (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}</div>
-      <div data-calc-field="profession-period" hidden>${A.sel('Periode penghasilan profesi', 'professionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}</div>
-      <div data-calc-field="haul" hidden>${A.sel('Apakah harta sudah dimiliki satu tahun (haul)?', 'haulComplete', [['no', 'Belum / tidak'], ['yes', 'Ya, sudah mencapai haul']], 'no')}</div>
-      <div data-calc-field="kafarat" hidden>${A.sel('Jenis kafarat', 'kafaratType', [['yamin', 'Melanggar sumpah — opsi memberi makan 10 orang'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}</div>
-      <div data-calc-field="kafarat-stage" hidden>${A.sel('Apakah tidak mampu menunaikan tahapan kafarat sebelumnya?', 'kafaratFeedingConfirmed', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Ya, tidak mampu; hitung opsi memberi makan 60 orang']], 'no')}</div>
-      <div data-calc-field="amount">${A.fld('Nominal dibayarkan (Rp) / beras (kg)', 'value', defaultValue, 'text', 'inputmode="decimal" data-format="idr" required')}</div>
-    </div>
-    <div id="${esc(prefix)}-calculation-preview" class="alert light transaction-calculation-preview" aria-live="polite">Kewajiban akan dihitung otomatis mengikuti jenis pembayaran dan tarif lembaga.</div>
-    <label class="check transaction-excess-check" data-calc-field="excess" hidden><input type="checkbox" name="autoExcess" value="yes"> Jika pembayaran zakat melebihi kewajiban, pisahkan kelebihannya sebagai infak/sedekah sesuai media pembayaran.</label>`
+    return `<div class="shared-transaction-form" data-shared-transaction="yes" data-transaction-prefix="${esc(prefix)}" data-default-fitrah-count="${Math.max(1, Number(units) || 1)}" data-next-line-index="1">
+      <div class="alert light shared-transaction-intro"><b>Satu transaksi, beberapa jenis pembayaran.</b><br>Tambahkan beberapa baris untuk menggabungkan zakat fitrah, maal, profesi, fidyah, kafarat, atau infak/sedekah dalam satu nomor transaksi dan satu QR. Setiap baris memiliki jenis dan media sendiri. Sesuai aturan kalkulasi prototype saat ini, media beras hanya tersedia untuk zakat fitrah; kategori lainnya menggunakan uang.</div>
+      <div class="shared-transaction-lines" data-transaction-lines>${transactionLineMarkup(prefix, 0, units, defaultValue)}</div>
+      <div class="form-actions"><button type="button" class="btn" data-shared-transaction-action="add-line">＋ Tambah jenis zakat / media</button></div>
+      <div class="alert light transaction-calculation-preview" data-transaction-summary aria-live="polite">Total kewajiban dan pembayaran akan dihitung otomatis.</div>
+    </div>`
   }
 
-  function updateTransactionPreview(form) {
-    if (!form || !['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form)) return
-    const data = Object.fromEntries(new FormData(form).entries())
-    let result
-    try { result = transactionFormEstimate(data) } catch (error) { return }
-    const category = data.category || 'Zakat Fitrah'
-    const isFitrah = category === 'Zakat Fitrah'
-    const isMaal = category === 'Zakat Maal'
-    const isProfession = category === 'Zakat Profesi'
-    const isKafarat = category === 'Kafarat'
-    const isFidyah = category === 'Fidyah'
-    const isAssetBased = isMaal || isProfession
-    const countWrap = form.querySelector('[data-calc-field="quantity"]')
-    const countLabel = countWrap?.querySelector('label')
-    if (countLabel) countLabel.textContent = isFitrah ? 'Jumlah jiwa' : isFidyah ? 'Jumlah hari puasa yang ditinggalkan' : isKafarat ? 'Jumlah kasus kafarat' : 'Jumlah unit'
-    if (countWrap) countWrap.hidden = isAssetBased || category === 'Infak/Sedekah'
-    const assetsWrap = form.querySelector('[data-calc-field="assets"]')
-    const haulWrap = form.querySelector('[data-calc-field="haul"]')
-    const professionPeriodWrap = form.querySelector('[data-calc-field="profession-period"]')
-    const kafaratWrap = form.querySelector('[data-calc-field="kafarat"]')
-    const kafaratStageWrap = form.querySelector('[data-calc-field="kafarat-stage"]')
-    const mediaWrap = form.querySelector('[data-calc-field="media"]')
-    const excessWrap = form.querySelector('[data-calc-field="excess"]')
-    if (assetsWrap) assetsWrap.hidden = !isAssetBased
-    if (haulWrap) haulWrap.hidden = !isMaal
-    if (professionPeriodWrap) professionPeriodWrap.hidden = !isProfession
-    const assetsInput = form.elements.assetsValue
-    if (assetsInput) { const label = assetsInput.closest('.field')?.querySelector('label'); if (label) label.textContent = isMaal ? 'Harta bersih yang menjadi objek zakat (Rp)' : (data.professionPeriod === 'annual' ? 'Akumulasi penghasilan satu tahun (Rp)' : 'Total penghasilan bulanan (Rp)') }
-    if (kafaratWrap) kafaratWrap.hidden = !isKafarat
-    if (kafaratStageWrap) kafaratStageWrap.hidden = !isKafarat || data.kafaratType === 'yamin'
-    if (mediaWrap) mediaWrap.hidden = !isFitrah
-    if (excessWrap) excessWrap.hidden = !result.splitExcessEligible
-    const amount = form.elements.value
-    if (amount) {
-      amount.dataset.format = result.type === 'beras' ? 'kg' : 'idr'
-      const amountLabel = amount.closest('.field')?.querySelector('label')
-      if (amountLabel) amountLabel.textContent = result.type === 'beras' ? 'Beras dibayarkan (kg)' : 'Nominal dibayarkan (Rp)'
-    }
-    const preview = form.querySelector('.transaction-calculation-preview')
-    if (!preview) return
-    const dueText = result.type === 'beras' ? kilos(result.due) : money(result.due)
-    const paidText = result.type === 'beras' ? kilos(result.paid) : money(result.paid)
-    let body = `<b>Perhitungan otomatis — ${esc(category)}</b><p>${esc(result.detail)}</p><div class="mini-list"><div class="mini-item"><span>Kewajiban / estimasi</span><b>${dueText}</b></div><div class="mini-item"><span>Nilai yang dibayarkan</span><b>${paidText}</b></div>`
-    if (isFitrah) {
-      const moneyDue = estimateZakat('Zakat Fitrah', 'uang', result.count).due
-      const riceDue = estimateZakat('Zakat Fitrah', 'beras', result.count).due
-      body += `<div class="mini-item"><span>Kewajiban bila seluruhnya uang</span><b>${money(moneyDue)}</b></div><div class="mini-item"><span>Kewajiban bila seluruhnya beras</span><b>${kilos(riceDue)}</b></div>`
-    }
-    if (result.shortfall > 0.001) body += `<div class="mini-item"><span>Masih kurang dari kewajiban</span><b>${result.type === 'beras' ? kilos(result.shortfall) : money(result.shortfall)}</b></div>`
-    if (result.excess > 0.001) body += `<div class="mini-item"><span>Kelebihan dari kewajiban</span><b>${result.type === 'beras' ? kilos(result.excess) : money(result.excess)}</b></div>`
-    body += '</div>'
-    const splitChecked = Boolean(form.elements.autoExcess?.checked && result.excess > 0.001)
-    const categoryRecorded = splitChecked ? result.due : result.paid
-    const infakRecorded = splitChecked ? result.excess : 0
-    const categoryRecordedText = result.type === 'beras' ? kilos(categoryRecorded) : money(categoryRecorded)
-    const totalRecordedText = result.type === 'beras' ? `Rp0 dan ${kilos(result.paid)}` : `${money(result.paid)} dan 0 kg`
-    body += `<div class="mini-list transaction-allocation-preview"><div class="mini-item"><span>Masuk kategori ${esc(category)}</span><b>${categoryRecordedText}</b></div>${infakRecorded > 0 ? `<div class="mini-item"><span>Masuk Infak/Sedekah</span><b>${result.type === 'beras' ? kilos(infakRecorded) : money(infakRecorded)}</b></div>` : ''}<div class="mini-item"><span>Total semua kategori</span><b>${totalRecordedText}</b></div></div>`
-    if ((isMaal && data.haulComplete !== 'yes') || (isMaal && result.nisabAnnual > toNumber(data.assetsValue || 0))) body += '<small>Belum memenuhi nisab dan/atau haul pada data yang diinput; periksa kembali komponen harta serta masa kepemilikan.</small>'
-    else if (isProfession && toNumber(data.assetsValue || 0) < (data.professionPeriod === 'annual' ? result.professionNisabAnnual : result.professionNisabMonthly)) body += `<small>${data.professionPeriod === 'annual' ? 'Akumulasi penghasilan setahun' : 'Penghasilan bulanan'} belum mencapai nisab ${data.professionPeriod === 'annual' ? 'tahunan' : 'bulanan'}; zakat profesi tidak terhitung wajib berdasarkan parameter ini.</small>`
-    if (result.note) body += `<p>${esc(result.note)}</p>`
-    if (result.excess > 0.001 && result.splitExcessEligible) body += '<p class="caption">Kelebihan zakat dapat dialihkan ke infak/sedekah setelah dikonfirmasi.</p>'
-    else if (result.excess > 0.001) body += '<p class="caption">Ada pembayaran di atas estimasi kewajiban. Kelebihan kategori ini tidak otomatis dialihkan; perlakuannya perlu dikonfirmasi kepada pengelola.</p>'
-    body += '<small>Estimasi mengikuti parameter lembaga. Untuk penetapan ibadah, verifikasi kondisi harta, haul, jenis kafarat, dan keputusan syariah setempat.</small>'
-    preview.innerHTML = body
+  function parseTransactionLineData(data = {}) {
+    const indexed = new Map()
+    Object.entries(data || {}).forEach(([key, value]) => {
+      const match = key.match(/^lines\[(\d+)\]\[([A-Za-z]+)\]$/)
+      if (!match) return
+      const index = Number(match[1])
+      if (!indexed.has(index)) indexed.set(index, {})
+      indexed.get(index)[match[2]] = value
+    })
+    if (indexed.size) return [...indexed.entries()].sort((a, b) => a[0] - b[0]).map(([index, line]) => ({ ...line, _index: index }))
+    // Compatibility for old saved drafts/tests that still use the original single-line field names.
+    if (data && (data.category || data.value !== undefined)) return [{ ...data, _index: 0 }]
+    return []
   }
 
-  function setTransactionAmount(form) {
-    if (!form || !['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form)) return
-    const category = form.elements.category?.value || 'Zakat Fitrah'
-    const type = category === 'Zakat Fitrah' && form.elements.type?.value === 'beras' ? 'beras' : 'uang'
-    if (form.elements.type) form.elements.type.value = type
-    const data = Object.fromEntries(new FormData(form).entries())
-    data.type = type
-    let estimate
-    try { estimate = transactionFormEstimate(data) } catch { estimate = null }
-    const amount = form.elements.value
-    if (amount) {
-      amount.dataset.format = type === 'beras' ? 'kg' : 'idr'
-      if (estimate && estimate.due > 0) amount.value = String(estimate.due)
-      else if (['Infak/Sedekah', 'Kafarat', 'Zakat Maal', 'Zakat Profesi'].includes(category)) amount.value = ''
-      formatInputValue(amount)
-    }
-    updateTransactionPreview(form)
+  function lineEstimate(line, rules = A.rule()) {
+    return transactionFormEstimate({
+      category: line.category || 'Zakat Fitrah', type: line.type || 'uang', jiwa: line.jiwa || 1,
+      assetsValue: line.assetsValue || 0, value: line.value || 0, haulComplete: line.haulComplete || 'no',
+      kafaratType: line.kafaratType || 'yamin', professionPeriod: line.professionPeriod || 'monthly',
+      kafaratFeedingConfirmed: line.kafaratFeedingConfirmed || 'no',
+    }, rules)
   }
 
   function transactionPaymentFromData(data, rules = A.rule()) {
-    const result = transactionFormEstimate(data, rules)
-    if (!Number.isFinite(result.paid) || result.paid <= 0) throw new Error('Nominal yang dibayarkan harus lebih besar dari nol')
-    const splitExcess = result.splitExcessEligible && data.autoExcess === 'yes' && result.excess > 0.001
-    const zakatLineValue = splitExcess ? result.due : result.paid
-    const lines = [{ category: result.category, type: result.type, value: zakatLineValue }]
-    if (splitExcess) lines.push({ category: 'Infak/Sedekah', type: result.type, value: result.excess })
-    return { lines, type: result.type, value: result.paid, estimate: result, excessAllocated: splitExcess ? result.excess : 0 }
+    const rows = parseTransactionLineData(data)
+    if (!rows.length) throw new Error('Tambahkan minimal satu jenis pembayaran.')
+    const lines = []
+    const breakdown = []
+    let paidMoney = 0, paidRice = 0, dueMoney = 0, dueRice = 0
+    let excessMoney = 0, excessRice = 0, excessAllocatedMoney = 0, excessAllocatedRice = 0
+    let fitrahUnits = 0, otherUnits = 0
+    rows.forEach((row, index) => {
+      const category = String(row.category || '').trim()
+      if (!TRANSACTION_CATEGORIES.some(([value]) => value === category)) throw new Error(`Pilih jenis zakat yang valid pada baris ${index + 1}.`)
+      const result = lineEstimate(row, rules)
+      if (!Number.isFinite(result.paid) || result.paid <= 0) throw new Error(`Nominal pembayaran pada baris ${index + 1} harus lebih besar dari nol.`)
+      const quantity = Number(row.jiwa || 1)
+      if (!Number.isInteger(quantity) || quantity < 1) throw new Error(`Jumlah jiwa / unit pada baris ${index + 1} harus bilangan bulat positif.`)
+      if (result.type === 'beras') { paidRice += result.paid; dueRice += result.due; excessRice += result.excess }
+      else { paidMoney += result.paid; dueMoney += result.due; excessMoney += result.excess }
+      if (category === 'Zakat Fitrah') fitrahUnits += quantity
+      else otherUnits += quantity
+      const splitExcess = result.splitExcessEligible && row.autoExcess === 'yes' && result.excess > 0.001
+      const zakatValue = splitExcess ? result.due : result.paid
+      const unitLabel = category === 'Zakat Fitrah' ? 'jiwa' : category === 'Fidyah' ? 'hari' : category === 'Kafarat' ? 'kasus' : category === 'Zakat Profesi' ? (row.professionPeriod === 'annual' ? 'tahun penghasilan' : 'bulan penghasilan') : category === 'Zakat Maal' ? 'perhitungan harta' : ''
+      lines.push({ category, type: result.type, value: zakatValue, quantity: unitLabel ? quantity : null, unitLabel, assetsValue: toNumber(row.assetsValue || 0) })
+      if (splitExcess) {
+        lines.push({ category: 'Infak/Sedekah', type: result.type, value: result.excess, quantity: null, unitLabel: '' })
+        if (result.type === 'beras') excessAllocatedRice += result.excess
+        else excessAllocatedMoney += result.excess
+      }
+      breakdown.push({
+        category, type: result.type, quantity, assetsValue: toNumber(row.assetsValue || 0), due: result.due,
+        paid: result.paid, excess: result.excess, excessAllocated: splitExcess ? result.excess : 0,
+        detail: result.detail, eligible: result.eligible, note: result.note || '',
+        haulComplete: row.haulComplete || 'no', professionPeriod: row.professionPeriod || 'monthly',
+        kafaratType: row.kafaratType || 'yamin', kafaratFeedingConfirmed: row.kafaratFeedingConfirmed || 'no',
+      })
+    })
+    const jiwa = fitrahUnits || otherUnits || 1
+    const estimate = {
+      due: dueMoney, dueMoney, dueRice, paid: paidMoney, paidMoney, paidRice,
+      excess: excessMoney, excessMoney, excessRice, excessAllocated: excessAllocatedMoney,
+      excessAllocatedMoney, excessAllocatedRice, category: breakdown.map((item) => item.category).join(', '),
+      type: paidRice > 0 && paidMoney === 0 ? 'beras' : 'uang', breakdown,
+    }
+    return {
+      lines, breakdown, jiwa, value: paidMoney, valueRice: paidRice, paidMoney, paidRice,
+      excessAllocated: excessAllocatedMoney, excessAllocatedMoney, excessAllocatedRice,
+      estimate,
+    }
+  }
+
+  function rulesForSharedTransaction(form) {
+    const parentForm = form?.matches?.('form') ? form : form?.closest?.('form')
+    const tenantId = parentForm?.dataset?.tenantId || parentForm?.dataset?.sharedTenantId || currentTenantId()
+    return db.rules.find((item) => item.tenantId === tenantId) || A.rule()
+  }
+
+  function updateSharedTransactionForm(form) {
+    if (!form) return
+    if (!form.matches?.('[data-shared-transaction="yes"]')) form = form.querySelector?.('[data-shared-transaction="yes"]')
+    if (!form?.matches?.('[data-shared-transaction="yes"]')) return
+    const formRules = rulesForSharedTransaction(form)
+    const rows = [...form.querySelectorAll('[data-transaction-line]')]
+    let totalMoney = 0, totalRice = 0, dueMoney = 0, dueRice = 0
+    const previews = []
+    rows.forEach((row, idx) => {
+      const field = (name) => row.querySelector(`[data-line-field="${name}"]`)
+      const wrap = (name) => row.querySelector(`[data-line-wrap="${name}"]`)
+      const categoryInput = field('category')
+      const category = categoryInput?.value || 'Zakat Fitrah'
+      const fitrah = category === 'Zakat Fitrah'
+      const assetsBased = ['Zakat Maal', 'Zakat Profesi'].includes(category)
+      const typeInput = field('type')
+      if (typeInput) { if (!fitrah) typeInput.value = 'uang'; typeInput.disabled = !fitrah }
+      const type = fitrah && typeInput?.value === 'beras' ? 'beras' : 'uang'
+      if (wrap('quantity')) wrap('quantity').hidden = assetsBased || category === 'Infak/Sedekah'
+      if (wrap('assets')) wrap('assets').hidden = !assetsBased
+      if (wrap('profession-period')) wrap('profession-period').hidden = category !== 'Zakat Profesi'
+      if (wrap('haul')) wrap('haul').hidden = category !== 'Zakat Maal'
+      if (wrap('kafarat')) wrap('kafarat').hidden = category !== 'Kafarat'
+      if (wrap('kafarat-stage')) wrap('kafarat-stage').hidden = category !== 'Kafarat' || field('kafaratType')?.value === 'yamin'
+      const quantityLabel = row.querySelector('[data-line-label="quantity"]')
+      if (quantityLabel) quantityLabel.textContent = fitrah ? 'Jumlah jiwa' : category === 'Fidyah' ? 'Jumlah hari puasa yang ditinggalkan' : category === 'Kafarat' ? 'Jumlah kasus kafarat' : 'Jumlah unit'
+      const amount = field('value')
+      if (amount) {
+        amount.dataset.format = type === 'beras' ? 'kg' : 'idr'
+        const amountLabel = row.querySelector('[data-line-label="value"]')
+        if (amountLabel) amountLabel.textContent = type === 'beras' ? 'Beras dibayarkan (kg)' : 'Nominal dibayarkan (Rp)'
+      }
+      const data = {
+        category, type, jiwa: field('jiwa')?.value || 1, assetsValue: field('assetsValue')?.value || 0,
+        value: amount?.value || 0, haulComplete: field('haulComplete')?.value || 'no',
+        professionPeriod: field('professionPeriod')?.value || 'monthly', kafaratType: field('kafaratType')?.value || 'yamin',
+        kafaratFeedingConfirmed: field('kafaratFeedingConfirmed')?.value || 'no',
+      }
+      let estimate
+      try { estimate = lineEstimate(data, formRules) } catch (_) { estimate = null }
+      if (amount && amount.dataset.autoFill !== 'false' && estimate?.due > 0) {
+        amount.value = type === 'beras' ? String(estimate.due).replace('.', ',') : new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(estimate.due))
+      }
+      if (amount && type === 'uang') formatInputValue(amount)
+      const paid = estimate?.paid || 0
+      if (type === 'beras') { totalRice += paid; dueRice += estimate?.due || 0 }
+      else { totalMoney += paid; dueMoney += estimate?.due || 0 }
+      if (wrap('excess')) wrap('excess').hidden = !estimate?.splitExcessEligible || !(estimate?.excess > 0.001)
+      const preview = row.querySelector('[data-line-preview]')
+      if (preview && estimate) {
+        const dueText = type === 'beras' ? kilos(estimate.due) : money(estimate.due)
+        const paidText = type === 'beras' ? kilos(estimate.paid) : money(estimate.paid)
+        const diff = estimate.excess > 0.001 ? `<div class="mini-item"><span>Kelebihan dari kewajiban</span><b>${type === 'beras' ? kilos(estimate.excess) : money(estimate.excess)}</b></div>` : estimate.shortfall > 0.001 ? `<div class="mini-item"><span>Masih kurang dari kewajiban</span><b>${type === 'beras' ? kilos(estimate.shortfall) : money(estimate.shortfall)}</b></div>` : ''
+        preview.innerHTML = `<b>${esc(category)} · ${type === 'beras' ? 'Beras' : 'Uang'}</b><p>${esc(estimate.detail)}</p><div class="mini-list"><div class="mini-item"><span>Kewajiban / estimasi</span><b>${dueText}</b></div><div class="mini-item"><span>Nilai dibayarkan</span><b>${paidText}</b></div>${diff}</div>${estimate.note ? `<small>${esc(estimate.note)}</small>` : ''}`
+      }
+      const remove = row.querySelector('[data-shared-transaction-action="remove-line"]')
+      if (remove) remove.hidden = rows.length <= 1
+      const title = row.querySelector('.transaction-line-head b')
+      if (title) title.textContent = `Rincian pembayaran ${idx + 1}`
+    })
+    const summary = form.querySelector('[data-transaction-summary]')
+    if (summary) summary.innerHTML = `<b>Ringkasan seluruh transaksi</b><div class="mini-list"><div class="mini-item"><span>Total kewajiban dalam uang</span><b>${money(dueMoney)}</b></div><div class="mini-item"><span>Total kewajiban dalam beras</span><b>${kilos(dueRice)}</b></div><div class="mini-item"><span>Total pembayaran uang</span><b>${money(totalMoney)}</b></div><div class="mini-item"><span>Total pembayaran beras</span><b>${kilos(totalRice)}</b></div></div><small>Setiap baris disimpan sebagai satu rincian dalam satu nomor transaksi dan satu QR.</small>`
+  }
+
+  function addSharedTransactionLine(form) {
+    const container = form?.querySelector('[data-transaction-lines]')
+    if (!container) return
+    const rows = container.querySelectorAll('[data-transaction-line]')
+    if (rows.length >= 12) throw new Error('Satu transaksi dibatasi maksimal 12 rincian untuk menjaga keterbacaan struk.')
+    const index = Number(form.dataset.nextLineIndex || rows.length)
+    form.dataset.nextLineIndex = String(index + 1)
+    container.insertAdjacentHTML('beforeend', transactionLineMarkup(form.dataset.transactionPrefix || 'tx', index, 1, ''))
+    updateSharedTransactionForm(form)
+  }
+
+  function removeSharedTransactionLine(button) {
+    const form = button.closest('[data-shared-transaction="yes"]')
+    const row = button.closest('[data-transaction-line]')
+    const rows = form?.querySelectorAll('[data-transaction-line]')
+    if (!row || !rows || rows.length <= 1) return
+    row.remove()
+    updateSharedTransactionForm(form)
+  }
+
+  function transactionExcessRows(data, rules = A.rule()) {
+    return parseTransactionLineData(data).map((line, index) => {
+      const result = lineEstimate(line, rules)
+      return { index: line._index ?? index, category: line.category, type: result.type, excess: result.excess, eligible: result.splitExcessEligible, checked: line.autoExcess === 'yes' }
+    }).filter((line) => line.eligible && line.excess > 0.001 && !line.checked)
   }
 
   function maybeConfirmExcess(form, data) {
-    if (data.autoExcess === 'yes' || form.dataset.excessConfirmed === 'yes') return false
-    const result = transactionFormEstimate(data)
-    if (!result.splitExcessEligible || result.excess <= 0.001) return false
-    const amount = result.type === 'beras' ? kilos(result.excess) : money(result.excess)
-    const amountUnit = result.type === 'beras' ? 'beras' : 'uang'
+    if (form.dataset.excessDecision) return false
+    const excessRows = transactionExcessRows(data, rulesForSharedTransaction(form.querySelector?.('[data-shared-transaction="yes"]') || form))
+    if (!excessRows.length) return false
+    const descriptions = excessRows.map((line) => `<div class="mini-item"><span>${esc(line.category)} · ${line.type === 'beras' ? 'Beras' : 'Uang'}</span><b>${line.type === 'beras' ? kilos(line.excess) : money(line.excess)}</b></div>`).join('')
     const overlay = document.createElement('div')
     overlay.className = 'excess-confirm-backdrop'
-    overlay.innerHTML = `<section class="excess-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="excess-confirm-title"><h3 id="excess-confirm-title">Konfirmasi kelebihan pembayaran</h3><p>Total yang kamu bayarkan melebihi jumlah kewajiban yang harus dibayarkan sebesar <b>${esc(amount)}</b> (${amountUnit}). Apakah kamu mau memasukkan selebihnya ke infak/sedekah?</p><div class="actions"><button type="button" class="btn" data-excess-action="cancel">Tidak, kembali ke formulir</button><button type="button" class="btn primary" data-excess-action="accept">Ya, pisahkan ke infak/sedekah</button></div></section>`
+    overlay.innerHTML = `<section class="excess-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="excess-confirm-title"><h3 id="excess-confirm-title">Konfirmasi kelebihan pembayaran</h3><p>Satu atau beberapa rincian melebihi estimasi kewajiban. Periksa kembali sebelum menyimpan satu transaksi gabungan ini.</p><div class="mini-list">${descriptions}</div><div class="actions"><button type="button" class="btn" data-excess-action="keep">Tidak, tetap catat sesuai kategori di atas</button><button type="button" class="btn primary" data-excess-action="accept">Ya, pisahkan kelebihannya menjadi infak/sedekah</button><button type="button" class="btn ghost" data-excess-action="back">Kembali periksa formulir</button></div></section>`
     overlay.__transactionForm = form
+    overlay.__excessRows = excessRows
     document.body.appendChild(overlay)
     overlay.querySelector('[data-excess-action="accept"]')?.focus()
     return true
   }
 
   document.addEventListener('click', (event) => {
+    const actionButton = event.target.closest('[data-shared-transaction-action]')
+    if (actionButton) {
+      const form = actionButton.closest('[data-shared-transaction="yes"]')
+      try {
+        if (actionButton.dataset.sharedTransactionAction === 'add-line') addSharedTransactionLine(form)
+        else if (actionButton.dataset.sharedTransactionAction === 'remove-line') removeSharedTransactionLine(actionButton)
+      } catch (error) { A.toast(error.message || String(error), 'error') }
+      return
+    }
     const button = event.target.closest('[data-excess-action]')
     if (!button) return
     const overlay = button.closest('.excess-confirm-backdrop')
     const form = overlay?.__transactionForm
     if (!overlay || !form) return
-    const accept = button.dataset.excessAction === 'accept'
+    const action = button.dataset.excessAction
     overlay.remove()
-    if (!accept) return
-    const checkbox = form.elements.autoExcess
-    if (checkbox) checkbox.checked = true
-    form.dataset.excessConfirmed = 'yes'
+    if (action === 'back') return
+    if (action === 'accept') {
+      for (const line of overlay.__excessRows || []) {
+        const checkbox = form.querySelector(`[name="lines[${line.index}][autoExcess]"]`)
+        if (checkbox) checkbox.checked = true
+      }
+      form.dataset.excessDecision = 'split'
+    } else form.dataset.excessDecision = 'keep'
     form.requestSubmit()
   })
+
+  function setTransactionAmount(form) { updateSharedTransactionForm(form) }
+  function setOperatorAmount(form) { updateSharedTransactionForm(form) }
+  function setSelfTransactionAmount(form) { updateSharedTransactionForm(form) }
 
   function openSelfTransaction() {
     const account = accountForUser()
@@ -1253,7 +1409,7 @@
       ${formButton('Simpan dan terbitkan QR')}
     </form>`, true)
     const form = document.querySelector('[data-v5-form="self-transaction"]')
-    if (form) { form.dataset.defaultFitrahCount = String(householdCount); setTransactionAmount(form) }
+    if (form) { form.dataset.defaultFitrahCount = String(householdCount); updateSharedTransactionForm(form) }
   }
   function tenantFullAddress(tenant) {
     if (!tenant) return 'Alamat lembaga belum tersedia'
@@ -1367,7 +1523,7 @@
     if (d.confirm !== 'yes') throw new Error('Konfirmasi transaksi wajib dicentang')
     if (oneTxPerTenantPeriod(account.id, currentTenantId(), period.id, member.personId)) throw new Error('Satu transaksi aktif per lembaga dan periode telah dibuat')
     const payment = transactionPaymentFromData(d)
-    const jiwa = Math.max(1, Math.floor(Number(d.jiwa || 1)))
+    const jiwa = payment.jiwa
     const person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     if (!person) throw new Error('Lengkapi profil Muzakki pada lembaga ini terlebih dahulu')
     const seq = db.transactions.filter((x) => x.tenantId === currentTenantId()).length + 1
@@ -1375,13 +1531,13 @@
       id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial: `MS-${String(seq).padStart(6, '0')}`,
       personId: person.id, accountId: account.id, accountUserId: activeUser().id, recordedBy: activeUser().id,
       handledBy: null, operatorId: null, assignedAmilId: null, source: 'self-service', jiwa,
-      lines: payment.lines, paymentEstimate: { due: payment.estimate.due, paid: payment.value, excessAllocated: payment.excessAllocated, method: 'tenant-calculator' },
+      lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
       createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending', note: d.note || '',
     }
     db.transactions.push(tx)
     db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, accountId: account.id, channel: d.channel || 'app', status: 'lokal', date: dateToday(), subject: `Terima kasih ${person.name}`, message: `Terima kasih telah menunaikan ${payment.estimate.category} melalui ${A.tenant().name}. Total ${money(effectiveTotals(tx).money)} dan ${kilos(effectiveTotals(tx).rice)}. Tunjukkan QR kepada petugas Amil ${A.tenant().name}.` })
-    A.aud('TRANSAKSI_PENDING', `Muzakki membuat ${tx.serial} dari layanan mandiri${payment.excessAllocated ? `; kelebihan ${payment.excessAllocated} dialihkan ke infak/sedekah` : ''}`)
+    A.aud('TRANSAKSI_PENDING', `Muzakki membuat ${tx.serial} dari layanan mandiri${payment.excessAllocatedMoney || payment.excessAllocatedRice ? `; kelebihan dialihkan ke infak/sedekah: ${money(payment.excessAllocatedMoney)} dan ${kilos(payment.excessAllocatedRice)}` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
     A.persist()
@@ -1848,16 +2004,15 @@
       ${A.textarea('Catatan (opsional)', 'note', '')}${formButton('Simpan dan terbitkan QR')}
     </form>`, true)
     const form = document.querySelector('[data-v5-form="operator-transaction"]')
-    if (form) { form.dataset.defaultFitrahCount = '1'; setTransactionAmount(form) }
+    if (form) { form.dataset.defaultFitrahCount = '1'; updateSharedTransactionForm(form) }
   }
 
   function submitOperatorTransaction(d) {
     if (!['Operator', 'Amil'].includes(activeUser()?.role)) throw new Error('Hanya Operator atau Amil yang dapat membuat transaksi konter')
     const period = currentPeriod()
     if (!period || ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())) throw new Error('Periode tidak menerima transaksi baru')
-    const jiwa = Math.max(1, Math.floor(Number(d.jiwa || 1)))
-    if (!Number.isInteger(jiwa) || jiwa < 1) throw new Error('Jumlah jiwa / hari / kasus harus bilangan bulat positif')
     const payment = transactionPaymentFromData(d)
+    const jiwa = payment.jiwa
     let person = d.personId ? db.persons.find((x) => x.id === d.personId && x.tenantId === currentTenantId()) : null
     if (d.personId && !person) throw new Error('Muzakki tidak ditemukan pada lembaga aktif')
     const isNewPerson = !person
@@ -1878,13 +2033,13 @@
     const tx = {
       id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial, personId: person.id,
       recordedBy: owner.id, handledBy: null, operatorId: owner.id, assignedAmilId: null, jiwa,
-      lines: payment.lines, paymentEstimate: { due: payment.estimate.due, paid: payment.value, excessAllocated: payment.excessAllocated, method: 'tenant-calculator' },
+      lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
       source: 'counter', createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending', note: d.note || '',
     }
     db.transactions.push(tx)
     db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, channel: 'app', status: 'lokal', date: dateToday(), subject: `Konfirmasi rencana zakat ${serial}`, message: `${person.name}, terima kasih telah mendaftar di ${A.tenant().name}. Tunjukkan QR ini kepada Amil.` })
-    A.aud('TRANSAKSI_PENDING', `${owner.role} membuat transaksi konter ${serial} sebagai Pending${payment.excessAllocated ? `; kelebihan ${payment.excessAllocated} dialihkan ke infak/sedekah` : ''}`)
+    A.aud('TRANSAKSI_PENDING', `${owner.role} membuat transaksi konter ${serial} sebagai Pending${payment.excessAllocatedMoney || payment.excessAllocatedRice ? `; kelebihan dialihkan ke infak/sedekah: ${money(payment.excessAllocatedMoney)} dan ${kilos(payment.excessAllocatedRice)}` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
     A.persist()
@@ -2285,9 +2440,22 @@
     return parsed
   }
   function formatInputValue(input) {
+    if (!input?.dataset) return
     if (input.dataset.format === 'idr') {
-      const digits = String(input.value || '').replace(/\D/g, '')
-      input.value = digits ? new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Number(digits)) : ''
+      const raw = String(input.value || '')
+      const start = Number.isInteger(input.selectionStart) ? input.selectionStart : null
+      const digitsBeforeCaret = start === null ? null : raw.slice(0, start).replace(/\D/g, '').length
+      const digits = raw.replace(/\D/g, '')
+      const formatted = digits ? new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Number(digits)) : ''
+      input.value = formatted
+      if (digitsBeforeCaret !== null && input.ownerDocument?.activeElement === input && typeof input.setSelectionRange === 'function') {
+        let position = 0, seen = 0
+        while (position < formatted.length && seen < digitsBeforeCaret) {
+          if (/\d/.test(formatted[position])) seen += 1
+          position += 1
+        }
+        try { input.setSelectionRange(position, position) } catch (_) { /* Some input mocks/browsers do not support caret updates. */ }
+      }
     } else if (input.dataset.format === 'kg') {
       const normalized = String(input.value || '').replace(/[^\d,.]/g, '').replace(/,/g, '.')
       const parts = normalized.split('.')
@@ -2560,30 +2728,55 @@
   document.addEventListener('input', (event) => {
     const field = event.target
     if (field?.dataset?.format) formatInputValue(field)
-    if (field?.form && ['self-transaction', 'operator-transaction'].includes(field.form.dataset.v5Form)) updateTransactionPreview(field.form)
+    const shared = field?.closest?.('[data-shared-transaction="yes"]')
+    if (shared) {
+      const parentForm = shared.closest('form')
+      if (parentForm) delete parentForm.dataset.excessDecision
+      if (field.matches('[data-line-field="value"], [data-line-field="assetsValue"]')) field.dataset.autoFill = 'false'
+      updateSharedTransactionForm(shared)
+      return
+    }
+    if (field?.form && ['self-transaction', 'operator-transaction'].includes(field.form.dataset.v5Form)) updateSharedTransactionForm(field.form.querySelector('[data-shared-transaction="yes"]'))
   })
   document.addEventListener('change', (event) => {
-    if (event.target.name === 'autoExcess' && ['self-transaction', 'operator-transaction'].includes(event.target.form?.dataset?.v5Form)) updateTransactionPreview(event.target.form)
-    if (event.target.name === 'kafaratType' && ['self-transaction', 'operator-transaction'].includes(event.target.form?.dataset?.v5Form) && event.target.form.elements.kafaratFeedingConfirmed) event.target.form.elements.kafaratFeedingConfirmed.value = 'no'
-    if (['type', 'category', 'jiwa', 'assetsValue', 'haulComplete', 'kafaratType', 'kafaratFeedingConfirmed', 'professionPeriod'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'operator-transaction') {
-      if (event.target.name === 'category' && event.target.form.elements.jiwa) event.target.form.elements.jiwa.value = event.target.value === 'Zakat Fitrah' ? (event.target.form.dataset.defaultFitrahCount || '1') : '1'
-      setOperatorAmount(event.target.form, event.target.name === 'type')
+    const field = event.target
+    const shared = field?.closest?.('[data-shared-transaction="yes"]')
+    if (shared) {
+      const parentForm = shared.closest('form')
+      if (parentForm) delete parentForm.dataset.excessDecision
+      const row = field.closest('[data-transaction-line]')
+      if (field.matches('[data-line-field="category"]')) {
+        const quantity = row?.querySelector('[data-line-field="jiwa"]')
+        if (quantity) quantity.value = '1'
+        const amount = row?.querySelector('[data-line-field="value"]')
+        if (amount) { amount.dataset.autoFill = 'true'; amount.value = '' }
+        const media = row?.querySelector('[data-line-field="type"]')
+        if (media && field.value !== 'Zakat Fitrah') media.value = 'uang'
+        const kafaratStage = row?.querySelector('[data-line-field="kafaratFeedingConfirmed"]')
+        if (kafaratStage) kafaratStage.value = 'no'
+      }
+      if (field.matches('[data-line-field="type"]')) {
+        const amount = row?.querySelector('[data-line-field="value"]')
+        if (amount) { amount.dataset.autoFill = 'true'; amount.value = '' }
+      }
+      if (field.matches('[data-line-field="kafaratType"]')) {
+        const stage = row?.querySelector('[data-line-field="kafaratFeedingConfirmed"]')
+        if (stage) stage.value = 'no'
+      }
+      updateSharedTransactionForm(shared)
+      return
     }
-    if (['type', 'category', 'jiwa', 'assetsValue', 'haulComplete', 'kafaratType', 'kafaratFeedingConfirmed', 'professionPeriod'].includes(event.target.name) && event.target.form?.dataset?.v5Form === 'self-transaction') {
-      if (event.target.name === 'category' && event.target.form.elements.jiwa) event.target.form.elements.jiwa.value = event.target.value === 'Zakat Fitrah' ? (event.target.form.dataset.defaultFitrahCount || '1') : '1'
-      setSelfTransactionAmount(event.target.form, event.target.name === 'type')
-    }
-    const domicileForm = event.target.form
-    if (domicileForm && ['domicileStatus', 'rwId'].includes(event.target.name)) refreshDomicileControls(domicileForm, event.target.name === 'rwId' ? { rwId: event.target.value } : {})
-    if (event.target.name === 'tenantId' && domicileForm?.dataset?.v5Form === 'join-tenant') {
+    const domicileForm = field?.form
+    if (domicileForm && ['domicileStatus', 'rwId'].includes(field.name)) refreshDomicileControls(domicileForm, field.name === 'rwId' ? { rwId: field.value } : {})
+    if (field.name === 'tenantId' && domicileForm?.dataset?.v5Form === 'join-tenant') {
       const wrapper = domicileForm.querySelector('[data-domicile-fields]')
-      if (wrapper) { wrapper.innerHTML = domicileFieldMarkup(null, event.target.value); refreshDomicileControls(domicileForm) }
+      if (wrapper) { wrapper.innerHTML = domicileFieldMarkup(null, field.value); refreshDomicileControls(domicileForm) }
       const tenantPreview = domicileForm.querySelector('#tenant-join-preview')
-      const selectedTenant = db.tenants.find((tenant) => tenant.id === event.target.value && tenant.status === 'aktif')
-      if (tenantPreview && selectedTenant) tenantPreview.innerHTML = tenantJoinProfileMarkup(selectedTenant)
+      const selectedInstitution = db.tenants.find((institution) => institution.id === field.value && institution.status === 'aktif')
+      if (tenantPreview && selectedInstitution) tenantPreview.innerHTML = tenantJoinProfileMarkup(selectedInstitution)
     }
-    if (event.target.name === 'personId' && domicileForm?.dataset?.v5Form === 'operator-transaction') {
-      const person = db.persons.find((x) => x.id === event.target.value && x.tenantId === currentTenantId())
+    if (field.name === 'personId' && domicileForm?.dataset?.v5Form === 'operator-transaction') {
+      const person = db.persons.find((x) => x.id === field.value && x.tenantId === currentTenantId())
       if (person) {
         for (const key of ['name', 'phone', 'email', 'address']) { const input = domicileForm.elements[key]; if (input) input.value = person[key] || '' }
         if (domicileForm.elements.domicileStatus) domicileForm.elements.domicileStatus.value = person.domicileStatus || 'non_daerah'
@@ -2594,19 +2787,19 @@
         refreshDomicileControls(domicileForm)
       }
     }
-    if (event.target.id === 'muzakki-tenant-switch') {
-      try { switchTenant(event.target.value, state.page) } catch (error) { A.toast(error.message, 'error') }
+    if (field.id === 'muzakki-tenant-switch') {
+      try { switchTenant(field.value, state.page) } catch (error) { A.toast(error.message, 'error') }
     }
-    if (event.target.id === 'dashboard-medium-filter') {
-      state.filters.dashboardMedium = event.target.value === 'beras' ? 'beras' : 'uang'
+    if (field.id === 'dashboard-medium-filter') {
+      state.filters.dashboardMedium = field.value === 'beras' ? 'beras' : 'uang'
       A.render()
     }
-    if (event.target.id === 'dashboard-status-filter') {
-      state.filters.dashboardStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(event.target.value) ? event.target.value : 'tercatat'
+    if (field.id === 'dashboard-status-filter') {
+      state.filters.dashboardStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(field.value) ? field.value : 'tercatat'
       A.render()
     }
-    if (event.target.id === 'report-period') { state.filters.reportPeriod = event.target.value; A.render() }
-    if (event.target.id === 'report-type') { state.filters.reportType = event.target.value; A.render() }
+    if (field.id === 'report-period') { state.filters.reportPeriod = field.value; A.render() }
+    if (field.id === 'report-type') { state.filters.reportType = field.value; A.render() }
   })
 
   function openDepositBatchModal() {
@@ -2914,9 +3107,18 @@
     else A.toast('Buka menu Acuan Workbook untuk menyiapkan tahap', 'info')
   })
 
+
   window.__SIZISNUR_CALCULATE_ZAKAT = (category, type, units, assets, haul, kafaratType, rules, options) => estimateZakat(category, type, units, assets, haul, kafaratType, rules || A.rule(), options || {})
   window.__SIZISNUR_TRANSACTION_PAYMENT = (data, rules) => transactionPaymentFromData(data, rules || A.rule())
+  window.__SIZISNUR_OPEN_OPERATOR_TRANSACTION = () => openOperatorTransactionModal()
   window.__SIZISNUR_TRANSACTION_FORM_FIELDS = (prefix, units, defaultValue) => transactionCalculatorFields(prefix, units, defaultValue)
+  window.__SIZISNUR_UPDATE_TRANSACTION_FORM = (form) => updateSharedTransactionForm(form)
+  window.__SIZISNUR_FORMAT_INPUT_VALUE = (input) => formatInputValue(input)
+  window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS = (form, data) => maybeConfirmExcess(form, data)
+  window.__SIZISNUR_RECEIPT_MARKUP = (tx) => receiptMarkupV5(tx)
+  window.__SIZISNUR_RECEIPT_PRINT_HTML = (tx) => receiptPrintHtmlV5(tx)
+  window.__SIZISNUR_DOWNLOAD_RECEIPT_PNG = (tx) => downloadReceiptPng(tx)
+  A.set('receiptHtml', receiptPrintHtmlV5)
 
   // Keep the old legacy action for receipt printing compatible while upgrading its output.
   const legacyShowReceipt = A.showReceipt

@@ -114,8 +114,8 @@ assert.equal(uncheckedExcess.excessAllocated, 0);
 const checkedExcess = makePayment({ category: 'Zakat Fitrah', type: 'uang', jiwa: '1', value: '50.000', autoExcess: 'yes' }, rules);
 assert.equal(checkedExcess.lines.length, 2);
 assert.deepEqual(JSON.parse(JSON.stringify(checkedExcess.lines)), [
-  { category: 'Zakat Fitrah', type: 'uang', value: 45000 },
-  { category: 'Infak/Sedekah', type: 'uang', value: 5000 },
+  { category: 'Zakat Fitrah', type: 'uang', value: 45000, quantity: 1, unitLabel: 'jiwa', assetsValue: 0 },
+  { category: 'Infak/Sedekah', type: 'uang', value: 5000, quantity: null, unitLabel: '' },
 ]);
 assert.equal(checkedExcess.excessAllocated, 5000);
 const noFidyahSplit = makePayment({ category: 'Fidyah', jiwa: '1', value: '70.000', autoExcess: 'yes' }, rules);
@@ -123,25 +123,111 @@ assert.equal(noFidyahSplit.lines.length, 1, 'fidyah is not automatically reclass
 assert.equal(noFidyahSplit.lines[0].value, 70000);
 assert.equal(noFidyahSplit.estimate.excess, 5000, 'non-splittable excess is still visible in the calculation result');
 
+
+// One unified transaction may contain multiple categories and both fitrah payment media.
+const mixedPayment = makePayment({
+  'lines[0][category]': 'Zakat Fitrah', 'lines[0][type]': 'uang', 'lines[0][jiwa]': '2', 'lines[0][value]': '90.000',
+  'lines[1][category]': 'Zakat Fitrah', 'lines[1][type]': 'beras', 'lines[1][jiwa]': '1', 'lines[1][value]': '2,5',
+  'lines[2][category]': 'Fidyah', 'lines[2][type]': 'uang', 'lines[2][jiwa]': '2', 'lines[2][value]': '130.000',
+  'lines[3][category]': 'Zakat Maal', 'lines[3][type]': 'uang', 'lines[3][jiwa]': '1', 'lines[3][assetsValue]': '100.000.000', 'lines[3][haulComplete]': 'yes', 'lines[3][value]': '2.500.000',
+}, rules);
+assert.equal(mixedPayment.lines.length, 4);
+assert.equal(mixedPayment.paidMoney, 2720000, 'dot-grouped IDR strings parse into numeric totals');
+assert.equal(mixedPayment.paidRice, 2.5, 'decimal comma is accepted for rice kilograms');
+assert.equal(mixedPayment.estimate.dueMoney, 2720000, 'Fitrah and Maal liabilities are combined without merging their detail rows');
+assert.equal(mixedPayment.estimate.dueRice, 2.5);
+assert.equal(mixedPayment.jiwa, 3, 'fitrah headcount aggregates across money and rice line items');
+assert.deepEqual(JSON.parse(JSON.stringify(mixedPayment.lines.map((row) => [row.category, row.type, row.value, row.quantity, row.unitLabel]))), [
+  ['Zakat Fitrah', 'uang', 90000, 2, 'jiwa'],
+  ['Zakat Fitrah', 'beras', 2.5, 1, 'jiwa'],
+  ['Fidyah', 'uang', 130000, 2, 'hari'],
+  ['Zakat Maal', 'uang', 2500000, 1, 'perhitungan harta'],
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(mixedPayment.breakdown.map((row) => [row.category, row.type, row.quantity]))), [
+  ['Zakat Fitrah', 'uang', 2], ['Zakat Fitrah', 'beras', 1], ['Fidyah', 'uang', 2], ['Zakat Maal', 'uang', 1],
+]);
+
+// Dot-grouped asset values are parsed consistently for maal/annual income calculations.
+const mixedMaal = makePayment({
+  'lines[0][category]': 'Zakat Maal', 'lines[0][type]': 'uang', 'lines[0][jiwa]': '1',
+  'lines[0][assetsValue]': '10.000.000', 'lines[0][haulComplete]': 'yes', 'lines[0][value]': '250.000',
+}, { ...rules, goldPricePerGram: 100000 });
+assert.equal(mixedMaal.estimate.dueMoney, 250000);
+
 // The same field builder is used by Muzakki self-service and Operator/Amil counter forms.
 for (const prefix of ['self', 'operator']) {
   const html = formFields(prefix, 2, '90.000');
-  assert.match(html, /name="category"/);
-  assert.match(html, /name="assetsValue"/);
-  assert.match(html, /name="haulComplete"/);
-  assert.match(html, /name="kafaratType"/);
-  assert.match(html, /name="kafaratFeedingConfirmed"/);
-  assert.match(html, /name="professionPeriod"/);
-  assert.match(html, /name="autoExcess"/);
+  assert.match(html, /name="lines\[0\]\[category\]"/);
+  assert.match(html, /name="lines\[0\]\[assetsValue\]"/);
+  assert.match(html, /name="lines\[0\]\[haulComplete\]"/);
+  assert.match(html, /name="lines\[0\]\[kafaratType\]"/);
+  assert.match(html, /name="lines\[0\]\[kafaratFeedingConfirmed\]"/);
+  assert.match(html, /name="lines\[0\]\[professionPeriod\]"/);
+  assert.match(html, /name="lines\[0\]\[autoExcess\]"/);
+  assert.match(html, /data-format="idr"/);
+  assert.match(html, /type="text" inputmode="numeric" data-format="idr"/, 'currency input must use a text field so grouped dots remain visible');
+  assert.match(html, /Tambah jenis zakat \/ media/);
   assert.match(html, /Zakat Profesi/);
 }
 
 const appSource = fs.readFileSync(path.join(root, 'js', 'revision-v5.js'), 'utf8');
 assert.match(appSource, /function maybeConfirmExcess/);
-assert.match(appSource, /Total yang kamu bayarkan melebihi jumlah kewajiban/);
-assert.match(appSource, /Ya, pisahkan ke infak\/sedekah/);
+assert.match(appSource, /function openSelfTransaction\(\)[\s\S]*?transactionCalculatorFields\('self'/);
+assert.match(appSource, /function openOperatorTransactionModal\(\)[\s\S]*?transactionCalculatorFields\('operator'/);
+assert.match(appSource, /__SIZISNUR_OPEN_OPERATOR_TRANSACTION/);
+assert.match(appSource, /function receiptMarkupV5\(tx\)/);
+assert.match(appSource, /line\.unitLabel/);
+assert.match(appSource, /function formatInputValue\(input\)/);
+assert.equal((appSource.match(/delete parentForm\.dataset\.excessDecision/g) || []).length, 2, 'editing any shared transaction field must invalidate a previous excess-confirmation choice and require re-confirmation');
+const coreSource = fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8');
+assert.match(coreSource, /data-format=\\?"idr\\?"/);
+assert.match(coreSource, /replace\(/);
+assert.match(coreSource, /__SIZISNUR_OPEN_OPERATOR_TRANSACTION/);
+const publicSource = fs.readFileSync(path.join(root, 'js', 'public-intake.js'), 'utf8');
+assert.match(publicSource, /__SIZISNUR_TRANSACTION_FORM_FIELDS\('public'/);
+assert.match(publicSource, /__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS/);
+assert.match(appSource, /Satu atau beberapa rincian melebihi estimasi kewajiban/);
+assert.match(appSource, /Ya, pisahkan kelebihannya menjadi infak\/sedekah/);
 assert.match(appSource, /data-excess-action="accept"/);
-assert.match(appSource, /Kewajiban bila seluruhnya uang/);
-assert.match(appSource, /Total semua kategori/);
+assert.match(appSource, /Total kewajiban dalam uang/);
+assert.match(appSource, /Total pembayaran beras/);
+assert.match(appSource, /__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS/);
+assert.match(appSource, /Satu transaksi, beberapa jenis pembayaran/);
+assert.match(appSource, /data-format=\"idr\"/);
+assert.match(publicSource, /Lembaga/);
+
+// Counter entry opens the exact same multi-line calculator used by Muzakki and public intake.
+const bridge = window.__SiZisNurBridge;
+assert.match(bridge.fld('Nominal uji', 'sampleMoney', 1234567890, 'text', 'inputmode="numeric" data-format="idr"'), /value="1\.234\.567\.890"/);
+bridge.login('US-OPR');
+window.__SIZISNUR_OPEN_OPERATOR_TRANSACTION();
+const operatorModal = elements['modal-root'].innerHTML;
+assert.match(operatorModal, /data-shared-transaction=\"yes\"/);
+assert.match(operatorModal, /name="lines\[0\]\[category\]"/);
+assert.match(operatorModal, /name=\"domicileStatus\"/);
+assert.match(operatorModal, /name=\"rwId\"/);
+assert.match(operatorModal, /name=\"rtId\"/);
+assert.match(operatorModal, /Satu transaksi, beberapa jenis pembayaran/);
+assert.match(operatorModal, /<option value=\"warga_daerah\" selected/, 'new counter identities default to local area when Master Wilayah is configured');
+assert.match(operatorModal, /name=\"rwId\"/);
+assert.match(operatorModal, /name=\"rtId\"/);
+const nonArea = window.__SIZISNUR_SAVE_DOMICILE({}, { domicileStatus: 'non_daerah' }, 'TN-ANNUR');
+assert.equal(nonArea.rwId, null, 'Non-daerah identities do not store an institution RW');
+assert.equal(nonArea.rtId, null, 'Non-daerah identities do not store an institution RT');
+const localFields = window.__SIZISNUR_DOMICILE_FIELDS(null, 'TN-ANNUR');
+assert.match(localFields, /<option value=\"warga_daerah\" selected/);
+assert.match(localFields, /name=\"rwId\"/);
+assert.match(localFields, /name=\"rtId\"/);
+assert.match(appSource, /new Intl\.NumberFormat\('id-ID', \{ maximumFractionDigits: 0 \}\)\.format/, 'IDR formatter must group thousands with Indonesian separators');
+const formatted = { dataset: { format: 'idr' }, value: '1234567890' };
+window.__SIZISNUR_FORMAT_INPUT_VALUE(formatted);
+assert.equal(formatted.value, '1.234.567.890', 'nominal uang uses a dot for every three digits');
+const formattedAssets = { dataset: { format: 'idr' }, value: '100000000' };
+window.__SIZISNUR_FORMAT_INPUT_VALUE(formattedAssets);
+assert.equal(formattedAssets.value, '100.000.000', 'harta Maal/Profesi uses the same Rupiah grouping');
+const formattedRice = { dataset: { format: 'kg' }, value: '2.5' };
+window.__SIZISNUR_FORMAT_INPUT_VALUE(formattedRice);
+assert.equal(formattedRice.value, '2,5', 'beras uses an Indonesian decimal comma rather than a Rupiah thousands separator');
+assert.match(appSource, /Satu atau beberapa rincian melebihi estimasi kewajiban/, 'same excess confirmation is used by all transaction channels');
 
 console.log('transaction-calculator.test.cjs: all assertions passed');

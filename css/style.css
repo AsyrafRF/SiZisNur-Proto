@@ -865,3 +865,35 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
 
 .pi-consent{margin:12px 0;align-items:flex-start;line-height:1.55;font-size:12px}
 .pi-consent input{margin-top:2px;flex:0 0 auto}
+
+/* One consistent multi-line zakat transaction form for staff, Muzakki and public intake. */
+.shared-transaction-form{display:grid;gap:12px;margin:12px 0 16px;min-width:0}
+.shared-transaction-intro{margin:0;line-height:1.65}
+.shared-transaction-lines{display:grid;gap:12px;min-width:0}
+.transaction-line{margin:0;padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:none;min-width:0}
+.transaction-line-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.transaction-line-head>div{display:grid;gap:4px;min-width:0}
+.transaction-line-head b{font-size:13px;color:var(--text)}
+.transaction-line-head small{font-size:10px;line-height:1.5;color:var(--muted)}
+.transaction-line-fields{align-items:end}
+.transaction-line-fields .field{min-width:0}
+.transaction-line-amount input,.transaction-line-fields input[data-format="idr"]{font-variant-numeric:tabular-nums;letter-spacing:.15px}
+.transaction-line-preview{margin:10px 0 0;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--soft);line-height:1.55}
+.transaction-line-preview>p{margin:5px 0 8px;color:var(--muted);font-size:11px}
+.transaction-line-preview .mini-list{margin-top:6px}
+.transaction-line-preview small{display:block;margin-top:8px;color:var(--muted);font-size:10px}
+.transaction-line-excess{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--soft);font-size:11px;line-height:1.5}
+.transaction-line-excess input{margin-top:2px;flex:0 0 auto}
+.shared-transaction-form>.form-actions{margin:0}
+.shared-transaction-form>.form-actions .btn{white-space:normal}
+.transaction-calculation-preview{margin:0;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+.receipt-line-item{align-items:flex-start}
+.receipt-line-item>span{min-width:0;line-height:1.55}
+.receipt-line-detail{display:block;margin-top:3px;color:var(--muted);font-size:10px;font-weight:400}
+@media(max-width:620px){
+ .transaction-line{padding:12px}
+ .transaction-line-head{align-items:center}
+ .transaction-line-fields{grid-template-columns:1fr}
+ .transaction-line-head .btn{flex:0 0 auto}
+ .transaction-line-preview .mini-item{gap:10px}
+}

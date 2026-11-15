@@ -73,6 +73,51 @@ assert.ok(annurForm.includes('Non-Perumahan Villa Pesona Asri'));
 assert.ok(annurForm.includes('name="rwId"'));
 assert.ok(annurForm.includes('name="rtId"'));
 assert.ok(!annurForm.includes('name="rt"'));
+
+// Dynamic RW -> RT filtering follows the selected Lembaga's Master Wilayah.
+const refreshDomicile = window.__SIZISNUR_REFRESH_DOMICILE;
+const alhikmahRw1 = alhikmahRws[0];
+const alhikmahRw2 = alhikmahRws[1];
+const rtForRw1 = db.rts.find((item) => item.tenantId === 'TN-ALHIKMAH' && item.rwId === alhikmahRw1.id);
+const rtForRw2 = db.rts.find((item) => item.tenantId === 'TN-ALHIKMAH' && item.rwId === alhikmahRw2.id);
+const domicileNodes = {
+  detail: { hidden: false },
+  label: { textContent: '' },
+  rw: { value: alhikmahRw1.id, innerHTML: '', required: false, disabled: false },
+  rt: { value: rtForRw1.id, innerHTML: '', required: false, disabled: false },
+};
+const domicileForm = {
+  dataset: { tenantId: 'TN-ALHIKMAH' },
+  elements: {
+    domicileStatus: { value: 'warga_daerah' },
+    rwId: domicileNodes.rw,
+    rtId: domicileNodes.rt,
+  },
+  querySelector(selector) {
+    if (selector === '[data-domicile-detail]') return domicileNodes.detail;
+    if (selector === '[data-domicile-area-label]') return domicileNodes.label;
+    return null;
+  },
+};
+refreshDomicile(domicileForm);
+assert.equal(domicileNodes.detail.hidden, false);
+assert.equal(domicileNodes.rw.disabled, false);
+assert.equal(domicileNodes.rt.disabled, false);
+assert.ok(domicileNodes.rt.innerHTML.includes(rtForRw1.id));
+assert.ok(!domicileNodes.rt.innerHTML.includes(rtForRw2.id));
+domicileNodes.rw.value = alhikmahRw2.id;
+refreshDomicile(domicileForm, { rwId: alhikmahRw2.id });
+assert.ok(domicileNodes.rt.innerHTML.includes(rtForRw2.id));
+assert.ok(!domicileNodes.rt.innerHTML.includes(rtForRw1.id));
+assert.equal(domicileNodes.rt.value, rtForRw2.id, 'changing RW selects an RT belonging to the new RW');
+domicileForm.elements.domicileStatus.value = 'non_daerah';
+refreshDomicile(domicileForm);
+assert.equal(domicileNodes.detail.hidden, true);
+assert.equal(domicileNodes.rw.disabled, true);
+assert.equal(domicileNodes.rt.disabled, true);
+assert.equal(domicileNodes.rw.required, false);
+assert.equal(domicileNodes.rt.required, false);
+assert.match(domicileNodes.label.textContent, /Non-Kompleks Buana Citra/);
 const annurRt = db.rts.find((x) => x.tenantId === 'TN-ANNUR');
 const annurPersonTest = { id: 'PS-TERRITORY-TEST', tenantId: 'TN-ANNUR' };
 window.__SIZISNUR_SAVE_DOMICILE(annurPersonTest, { domicileStatus: 'warga_daerah', rwId: annurRws[0].id, rtId: annurRt.id }, 'TN-ANNUR');

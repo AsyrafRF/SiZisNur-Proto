@@ -50,6 +50,8 @@ assert.ok(elements.app.innerHTML.includes('Masjid Al-Hikmah'))
 assert.ok(elements.app.innerHTML.includes('Verifikasi struk publik'))
 assert.ok(elements.app.innerHTML.includes('public-camera'), 'public camera scanner should be available')
 assert.ok(elements.app.innerHTML.includes('public-scan-token'), 'manual token entry should remain available')
+assert.ok(elements.app.innerHTML.includes('SIZISNUR|ID_LEMBAGA|ID_TRANSAKSI|NOMOR_SERI'), 'visible QR example uses Lembaga terminology, not tenant terminology')
+assert.ok(!elements.app.innerHTML.includes('SIZISNUR|tenant|id|seri'), 'visible UI must not expose the internal tenant label')
 assert.ok(!elements.app.innerHTML.includes('demo@annur.invalid'), 'lembaga email must not be public')
 assert.ok(!elements.app.innerHTML.includes('0778-000000'), 'lembaga phone must not be public')
 

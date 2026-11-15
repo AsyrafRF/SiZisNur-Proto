@@ -126,7 +126,7 @@
       const isActive = item.active && linkPeriod?.status === 'aktif' && tenant.status === 'aktif'
       return `<tr><td><b>${esc(item.label || 'Formulir publik')}</b><div class="tiny mono">${esc(item.id)}</div></td><td>${esc(linkPeriod?.name || 'Periode arsip')}</td><td>${esc(new Date(item.createdAt).toLocaleString('id-ID'))}</td><td>${isActive ? '<span class="tag ok">Aktif</span>' : '<span class="tag bad">Tidak aktif</span>'}</td><td><div class="actions"><button type="button" class="btn sm" data-public-intake-action="select-link" data-id="${esc(item.id)}">${isSelected ? 'Dipilih' : 'QR'}</button>${item.active ? `<button type="button" class="btn sm danger" data-public-intake-action="revoke" data-id="${esc(item.id)}">Cabut</button>` : ''}</div></td></tr>`
     }).join('')
-    return `${A.boxhead('Formulir Publik & QR Warga', 'Terbitkan tautan khusus tenant agar warga dapat mengisi identitas dan rencana zakat tanpa akun SiZisNur.', period ? `<button class="btn primary" type="button" data-public-intake-action="create-link">Terbitkan tautan / QR</button>` : '')}
+    return `${A.boxhead('Formulir Publik & QR Warga', 'Terbitkan tautan khusus lembaga agar warga dapat mengisi identitas dan rencana zakat tanpa akun SiZisNur.', period ? `<button class="btn primary" type="button" data-public-intake-action="create-link">Terbitkan tautan / QR</button>` : '')}
       <div class="alert warn pi-simulation-notice"><b>TAHAP EVALUASI SIMULASI — BELUM SIAP PRODUKSI.</b><br>${esc(DEMO_NOTICE)}</div>
       <section class="card pi-tenant-summary"><div><small>LEMBAGA</small><b>${esc(tenant.name)}</b><span>${esc(tenant.publicCode || tenant.id)} · ${esc(tenant.daerah || 'Daerah belum diatur')}</span></div><div><small>PERIODE</small><b>${esc(period?.name || 'Belum ada periode aktif')}</b><span>${period ? 'Formulir dapat menerima rencana zakat' : 'Aktifkan periode dari menu Periode Zakat terlebih dahulu'}</span></div></section>
       ${!period ? '<div class="alert warn">Belum ada periode zakat aktif. QR formulir belum dapat diterbitkan sampai Admin membuka periode.</div>' : ''}
@@ -167,9 +167,23 @@
     return `<header class="pi-public-head"><div class="pi-public-brand"><img src="assets/sizisnur-logo-mark.png" alt="SiZisNur"><div><b>${esc(tenant.name)}</b><small>${esc(tenant.publicCode || tenant.id)} · ${esc(locationLabel || 'Wilayah lembaga')}</small></div></div><span class="tag info">${esc(period.name || 'Periode aktif')}</span></header>`
   }
   function identityForm(ctx, session) {
-    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 1 DARI 3 · IDENTITAS</div><h2>Isi data diri Anda</h2><p>Anda tidak perlu mendaftar akun atau login SiZisNur. Gunakan kontak aktif untuk menerima kode verifikasi simulasi.</p><form data-public-intake-form="identity">
-      <div class="grid-form"><div class="field"><label for="pi-name">Nama lengkap *</label><input id="pi-name" name="name" required autocomplete="name" value="${esc(session.identity?.name || '')}"></div><div class="field"><label for="pi-phone">Nomor WhatsApp / HP *</label><input id="pi-phone" name="phone" type="tel" required autocomplete="tel" placeholder="08xxxxxxxxxx" value="${esc(session.identity?.phone || '')}"></div><div class="field"><label for="pi-email">Email (opsional)</label><input id="pi-email" name="email" type="email" autocomplete="email" placeholder="nama@email.com" value="${esc(session.identity?.email || '')}"></div><div class="field"><label for="pi-domicile">Domisili *</label><select id="pi-domicile" name="domicile" required><option value="warga_daerah" ${session.identity?.domicile !== 'luar_daerah' ? 'selected' : ''}>Warga daerah lembaga</option><option value="luar_daerah" ${session.identity?.domicile === 'luar_daerah' ? 'selected' : ''}>Dari luar daerah</option></select></div><div class="field full"><label for="pi-address">Alamat lengkap *</label><textarea id="pi-address" name="address" rows="3" required>${esc(session.identity?.address || '')}</textarea></div><div class="field"><label for="pi-otp-channel">Kirim OTP simulasi ke *</label><select id="pi-otp-channel" name="otpChannel"><option value="whatsapp">Nomor WhatsApp</option><option value="email">Email (isi email terlebih dahulu)</option></select></div></div>
-      <div class="alert light">Sistem akan memeriksa transaksi pada lembaga dan periode ini setelah kode diverifikasi. Nama, HP, dan alamat tidak akan ditampilkan sebelum proses verifikasi kontak selesai.</div>
+    const tenantId = ctx.link.tenantId
+    let domicilePerson = session.identity ? {
+      domicileStatus: session.identity.domicileStatus, areaId: session.identity.areaId,
+      rwId: session.identity.rwId, rtId: session.identity.rtId,
+    } : null
+    if (!domicilePerson) {
+      const area = db().areas?.find((item) => item.tenantId === tenantId && item.active !== false)
+      const rw = area && db().rws?.find((item) => item.tenantId === tenantId && item.areaId === area.id && item.active !== false)
+      const rt = rw && db().rts?.find((item) => item.tenantId === tenantId && item.rwId === rw.id && item.active !== false)
+      domicilePerson = area && rw && rt ? { domicileStatus: 'warga_daerah', areaId: area.id, rwId: rw.id, rtId: rt.id } : { domicileStatus: 'non_daerah' }
+    }
+    const domicileFields = window.__SIZISNUR_DOMICILE_FIELDS
+      ? window.__SIZISNUR_DOMICILE_FIELDS(domicilePerson, tenantId)
+      : '<div class="alert warn">Master wilayah lembaga belum tersedia. Hubungi Admin lembaga.</div>'
+    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 1 DARI 3 · IDENTITAS</div><h2>Isi data diri Anda</h2><p>Anda tidak perlu mendaftar akun atau login SiZisNur. Gunakan kontak aktif untuk menerima kode verifikasi simulasi.</p><form data-public-intake-form="identity" data-tenant-id="${esc(tenantId)}">
+      <div class="grid-form"><div class="field"><label for="pi-name">Nama lengkap *</label><input id="pi-name" name="name" required autocomplete="name" value="${esc(session.identity?.name || '')}"></div><div class="field"><label for="pi-phone">Nomor WhatsApp / HP *</label><input id="pi-phone" name="phone" type="tel" required autocomplete="tel" placeholder="08xxxxxxxxxx" value="${esc(session.identity?.phone || '')}"></div><div class="field"><label for="pi-email">Email (opsional)</label><input id="pi-email" name="email" type="email" autocomplete="email" placeholder="nama@email.com" value="${esc(session.identity?.email || '')}"></div><div class="full" data-domicile-fields>${domicileFields}</div><div class="field full"><label for="pi-address">Alamat lengkap *</label><textarea id="pi-address" name="address" rows="3" required>${esc(session.identity?.address || '')}</textarea></div><div class="field"><label for="pi-otp-channel">Kirim OTP simulasi ke *</label><select id="pi-otp-channel" name="otpChannel"><option value="whatsapp" ${session.identity?.otpChannel !== 'email' ? 'selected' : ''}>Nomor WhatsApp</option><option value="email" ${session.identity?.otpChannel === 'email' ? 'selected' : ''}>Email (isi email terlebih dahulu)</option></select></div></div>
+      <div class="alert light">Jika memilih warga daerah, pilih RW dan RT sesuai Master Wilayah yang diatur Admin lembaga. Warga dari luar daerah tidak perlu memilih RW/RT lembaga. Sistem akan memeriksa transaksi pada lembaga dan periode ini setelah kode diverifikasi.</div>
       <label class="check pi-consent"><input type="checkbox" name="consent" value="yes" required> Saya memahami bahwa ini formulir evaluasi simulasi, data disimpan lokal pada browser, dan saya tidak boleh memasukkan data pribadi atau pembayaran nyata.</label>
       <div class="form-actions"><button type="submit" class="btn primary">Lanjutkan · Buat OTP demo</button></div></form></section>`
   }
@@ -260,22 +274,13 @@
   function paymentForm(ctx, session) {
     const rules = db().rules.find((item) => item.tenantId === ctx.link.tenantId) || { moneyRate: 45000, riceRate: 2.5 }
     const defaultDue = Number(rules.moneyRate || 45000)
-    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 3 DARI 3 · RENCANA ZAKAT</div><h2>Rencana pembayaran zakat</h2><p>Identitas sudah diverifikasi melalui OTP simulasi. Lengkapi rencana pembayaran berikut.</p><div class="pi-identity-summary"><b>${esc(session.identity.name)}</b><span>${esc(session.identity.phone)} · ${esc(session.identity.domicile === 'luar_daerah' ? 'Dari luar daerah' : 'Warga daerah lembaga')}</span><small>${esc(session.identity.address)}</small></div><form data-public-intake-form="transaction">
-      <div class="grid-form">
-        <div class="field"><label for="pi-category">Jenis zakat / donasi *</label><select id="pi-category" name="category"><option>Zakat Fitrah</option><option>Zakat Maal</option><option>Zakat Profesi</option><option>Fidyah</option><option>Kafarat</option><option>Infak/Sedekah</option></select></div>
-        <div class="field" data-pi-field="media"><label for="pi-type">Media pembayaran *</label><select id="pi-type" name="type"><option value="uang">Uang (Rp)</option><option value="beras">Beras (kg)</option></select></div>
-        <div class="field" data-pi-field="quantity"><label for="pi-jiwa">Jumlah jiwa / unit *</label><input id="pi-jiwa" name="jiwa" type="number" min="1" step="1" value="1" required></div>
-        <div class="field" data-pi-field="assets" hidden><label for="pi-assets">Nilai harta / penghasilan (Rp)</label><input id="pi-assets" name="assetsValue" type="number" min="0" step="1" value="0"></div>
-        <div class="field" data-pi-field="profession" hidden><label for="pi-profession-period">Periode penghasilan</label><select id="pi-profession-period" name="professionPeriod"><option value="monthly">Bulanan</option><option value="annual">Tahunan</option></select></div>
-        <div class="field" data-pi-field="haul" hidden><label for="pi-haul">Sudah mencapai haul?</label><select id="pi-haul" name="haulComplete"><option value="no">Belum / tidak</option><option value="yes">Ya</option></select></div>
-        <div class="field" data-pi-field="kafarat" hidden><label for="pi-kafarat">Jenis kafarat</label><select id="pi-kafarat" name="kafaratType"><option value="yamin">Melanggar sumpah</option><option value="puasa">Hubungan suami-istri pada siang Ramadan</option><option value="zihar">Zihar</option></select></div>
-        <div class="field" data-pi-field="kafarat-stage" hidden><label for="pi-kafarat-stage">Tidak mampu tahapan sebelumnya?</label><select id="pi-kafarat-stage" name="kafaratFeedingConfirmed"><option value="no">Belum dipastikan / masih mampu</option><option value="yes">Ya, tidak mampu</option></select></div>
-        <div class="field"><label for="pi-value">Nominal dibayarkan (Rp) / beras (kg) *</label><input id="pi-value" name="value" type="number" min="0.001" step="any" value="${defaultDue}" required></div>
-      </div>
-      <div id="pi-calculation-preview" class="alert light pi-calc-preview">Estimasi kewajiban mengikuti tarif dan parameter lembaga.</div>
-      <label class="check pi-excess-option"><input type="checkbox" name="autoExcess" value="yes"> Jika pembayaran melebihi kewajiban, pisahkan kelebihannya sebagai infak/sedekah apabila kategori dan media mendukung.</label>
+    const sharedFields = window.__SIZISNUR_TRANSACTION_FORM_FIELDS
+      ? window.__SIZISNUR_TRANSACTION_FORM_FIELDS('public', 1, String(defaultDue))
+      : '<div class="alert danger">Modul kalkulator transaksi bersama belum dimuat. Muat ulang prototype.</div>'
+    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 3 DARI 3 · RENCANA ZAKAT</div><h2>Rencana pembayaran zakat</h2><p>Identitas sudah diverifikasi melalui OTP simulasi. Rincian pembayaran menggunakan modul transaksi yang sama dengan input petugas dan Layanan Mandiri.</p><div class="pi-identity-summary"><b>${esc(session.identity.name)}</b><span>${esc(session.identity.phone)} · ${esc(session.identity.domicileStatus === 'non_daerah' ? 'Dari luar daerah' : 'Warga daerah lembaga')}</span><small>${esc(session.identity.address)}</small></div><form data-public-intake-form="transaction" data-tenant-id="${esc(ctx.link.tenantId)}" data-shared-tenant-id="${esc(ctx.link.tenantId)}">
+      ${sharedFields}
       <div class="field"><label for="pi-note">Catatan untuk Amil (opsional)</label><textarea id="pi-note" name="note" rows="2"></textarea></div>
-      <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami ini baru rencana pembayaran berstatus Pending. Pembayaran baru sah setelah diterima, diperiksa, dan disahkan Amil.</label>
+      <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami ini rencana pembayaran berstatus Pending. Pembayaran baru sah setelah diterima, diperiksa, dan disahkan Amil.</label>
       <div class="form-actions"><button type="submit" class="btn primary">Simpan rencana & terbitkan QR</button></div>
     </form></section>`
   }
@@ -303,20 +308,17 @@
     const ctx = currentPublicContext()
     if (ctx.error) return `<div class="pi-public-shell"><div class="pi-public-card"><div class="pi-logo"><img src="assets/sizisnur-logo-mark.png" alt="SiZisNur"><b>SiZisNur</b></div>${simulationBanner()}<div class="alert danger"><b>Formulir tidak dapat dibuka</b><br>${esc(ctx.error)}</div><button type="button" class="btn" data-public-intake-action="back-home">Kembali ke beranda</button></div></div>`
     const session = sessionFor(ctx.token)
-    return `<div class="pi-public-shell"><main class="pi-public-card">${simulationBanner()}${publicHeader(ctx.tenant, ctx.period)}<section class="pi-welcome"><span class="eyebrow">LAYANAN PENDATAAN MANDIRI</span><h1>Assalamu'alaikum!</h1><p>Silakan isi data dan rencana zakat untuk <b>${esc(ctx.tenant.name)}</b>. Anda tidak perlu mempunyai akun atau login SiZisNur.</p><div class="pi-mini-facts"><span>${esc(ctx.tenant.daerah || 'Wilayah lembaga')}</span><span>${esc(ctx.period.name || 'Periode aktif')}</span></div></section>${session.stage === 'identity' ? identityForm(ctx, session) : session.stage === 'otp' ? otpForm(ctx, session) : session.stage === 'match' ? `<section class="pi-verified-banner"><span>✓</span><div><b>Kontak terverifikasi (simulasi)</b><small>Hasil pencarian dibatasi pada lembaga dan periode ini.</small></div></section>${Date.now() > session.verifiedUntil ? `<div class="alert warn">Sesi verifikasi telah berakhir. Ulangi verifikasi kontak sebelum melihat atau mengubah transaksi.</div><button type="button" class="btn primary" data-public-intake-action="back-identity">Verifikasi ulang</button>` : session.lookupError ? `<div class="alert warn"><b>Perlu pemeriksaan petugas</b><br>${esc(session.lookupError)}<p>Untuk mencegah data warga tertukar, formulir transaksi baru dan akses transaksi lama dinonaktifkan sampai identitas diperiksa.</p></div><button type="button" class="btn" data-public-intake-action="back-identity">Periksa kembali data</button>` : renderExistingTransactions(ctx, session)}` : `<section class="card pi-form-card"><h2>Rencana zakat berhasil dicatat</h2><div class="alert ok">Rencana transaksi disimpan dengan status Pending. Ini belum menjadi bukti pembayaran resmi.</div>${session.createdTransactionId ? `<button type="button" class="btn primary" data-public-intake-action="view-receipt" data-id="${esc(session.createdTransactionId)}">Lihat / unduh bukti dan QR</button>` : ''}<button type="button" class="btn" data-public-intake-action="restart">Kembali ke awal formulir</button></section>`}<footer class="pi-public-footer">SiZisNur · Formulir publik tenant · Evaluasi simulasi, bukan layanan transaksi nyata.</footer><button type="button" class="btn ghost" data-public-intake-action="back-home">Keluar dari formulir</button></main><div id="modal-root"></div></div>`
+    return `<div class="pi-public-shell"><main class="pi-public-card">${simulationBanner()}${publicHeader(ctx.tenant, ctx.period)}<section class="pi-welcome"><span class="eyebrow">LAYANAN PENDATAAN MANDIRI</span><h1>Assalamu'alaikum!</h1><p>Silakan isi data dan rencana zakat untuk <b>${esc(ctx.tenant.name)}</b>. Anda tidak perlu mempunyai akun atau login SiZisNur.</p><div class="pi-mini-facts"><span>${esc(ctx.tenant.daerah || 'Wilayah lembaga')}</span><span>${esc(ctx.period.name || 'Periode aktif')}</span></div></section>${session.stage === 'identity' ? identityForm(ctx, session) : session.stage === 'otp' ? otpForm(ctx, session) : session.stage === 'match' ? `<section class="pi-verified-banner"><span>✓</span><div><b>Kontak terverifikasi (simulasi)</b><small>Hasil pencarian dibatasi pada lembaga dan periode ini.</small></div></section>${Date.now() > session.verifiedUntil ? `<div class="alert warn">Sesi verifikasi telah berakhir. Ulangi verifikasi kontak sebelum melihat atau mengubah transaksi.</div><button type="button" class="btn primary" data-public-intake-action="back-identity">Verifikasi ulang</button>` : session.lookupError ? `<div class="alert warn"><b>Perlu pemeriksaan petugas</b><br>${esc(session.lookupError)}<p>Untuk mencegah data warga tertukar, formulir transaksi baru dan akses transaksi lama dinonaktifkan sampai identitas diperiksa.</p></div><button type="button" class="btn" data-public-intake-action="back-identity">Periksa kembali data</button>` : renderExistingTransactions(ctx, session)}` : `<section class="card pi-form-card"><h2>Rencana zakat berhasil dicatat</h2><div class="alert ok">Rencana transaksi disimpan dengan status Pending. Ini belum menjadi bukti pembayaran resmi.</div>${session.createdTransactionId ? `<button type="button" class="btn primary" data-public-intake-action="view-receipt" data-id="${esc(session.createdTransactionId)}">Lihat / unduh bukti dan QR</button>` : ''}<button type="button" class="btn" data-public-intake-action="restart">Kembali ke awal formulir</button></section>`}<footer class="pi-public-footer">SiZisNur · Formulir publik lembaga · Evaluasi simulasi, bukan layanan transaksi nyata.</footer><button type="button" class="btn ghost" data-public-intake-action="back-home">Keluar dari formulir</button></main><div id="modal-root"></div></div>`
   }
   function renderReceipt(tx) {
-    const tenant = tenantById(tx.tenantId)
-    const person = db().persons.find((item) => item.id === tx.personId && item.tenantId === tx.tenantId)
-    const totalMoney = (tx.lines || []).filter((line) => line.type === 'uang').reduce((sum, line) => sum + Number(line.value || 0), 0)
-    const totalRice = (tx.lines || []).filter((line) => line.type === 'beras').reduce((sum, line) => sum + Number(line.value || 0), 0)
     const inactive = terminal(tx) || (tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now())
-    const token = `SIZISNUR|${tx.tenantId}|${tx.id}|${tx.serial}`
-    const title = ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(tx.status) ? 'BUKTI SETOR ZAKAT · SIMULASI' : 'STRUK RENCANA ZAKAT · SIMULASI'
-    const html = `<div class="pi-receipt-preview"><div class="pi-receipt-brand"><b>${esc(tenant?.name || 'SiZisNur')}</b><small>${inactive ? 'QR TIDAK AKTIF' : title}</small></div><div class="pi-receipt-facts"><div><span>Nomor transaksi</span><b>${esc(tx.serial)}</b></div><div><span>Nama Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Tanggal</span><b>${esc(new Date(tx.createdAt).toLocaleString('id-ID'))}</b></div><div><span>Jenis zakat</span><b>${esc((tx.lines || []).map((line) => line.category).join(', '))}</b></div><div><span>Total uang</span><b>${money(totalMoney)}</b></div><div><span>Total beras</span><b>${kilos(totalRice)}</b></div><div><span>Status</span><b>${esc(tx.status)}</b></div></div>${inactive ? '<div class="alert danger">Transaksi batal atau kedaluwarsa. QR ini tidak berlaku.</div>' : `<div class="pi-receipt-qr">${A.qr(token)}</div><p class="mono pi-token">${esc(token)}</p>`}<p class="caption">${inactive ? 'Dokumen arsip simulasi; QR tidak berlaku.' : 'Struk rencana pembayaran. Belum menjadi bukti pembayaran resmi sampai Amil memeriksa penerimaan fisik dan mengesahkan transaksi.'}</p></div><div class="form-actions">${!inactive ? `<button type="button" class="btn primary" data-public-intake-action="print-receipt" data-id="${esc(tx.id)}">Cetak / Simpan PDF</button><button type="button" class="btn" data-public-intake-action="download-receipt-png" data-id="${esc(tx.id)}">Unduh gambar PNG</button>` : ''}<button type="button" class="btn" data-modal-close>Tutup</button></div>`
-    A.modal(`Bukti transaksi ${tx.serial}`, html, true)
+    const sharedMarkup = window.__SIZISNUR_RECEIPT_MARKUP?.(tx)
+    const fallback = `<div class="alert warn">Struk standar belum tersedia. Muat ulang prototype untuk memuat modul transaksi bersama.</div>`
+    const actions = `${!inactive ? `<div class="form-actions"><button type="button" class="btn primary" data-public-intake-action="print-receipt" data-id="${esc(tx.id)}">Cetak / Simpan PDF</button><button type="button" class="btn" data-public-intake-action="download-receipt-png" data-id="${esc(tx.id)}">Unduh gambar PNG</button></div>` : ''}<div class="form-actions"><button type="button" class="btn" data-modal-close>Tutup</button></div>`
+    A.modal(`Bukti transaksi ${tx.serial}`, `${sharedMarkup || fallback}${actions}`, true)
   }
   async function downloadReceiptPng(tx) {
+    if (window.__SIZISNUR_DOWNLOAD_RECEIPT_PNG) return window.__SIZISNUR_DOWNLOAD_RECEIPT_PNG(tx)
     if (!window.document?.createElement || !window.URL?.createObjectURL) throw new Error('Fitur unduh gambar tidak didukung browser ini. Gunakan Cetak / Simpan PDF.')
     const canvas = document.createElement('canvas')
     canvas.width = 900; canvas.height = 1260
@@ -351,18 +353,21 @@
     if (!ctx.link || !session?.personId) return null
     return db().transactions.find((tx) => tx.id === txId && tx.tenantId === ctx.link.tenantId && tx.personId === session.personId) || null
   }
-  function beginIdentity(form, session) {
+  function beginIdentity(form, session, ctx) {
     const data = Object.fromEntries(new FormData(form).entries())
-    const identity = {
-      name: String(data.name || '').trim(), phone: String(data.phone || '').trim(), email: String(data.email || '').trim(),
-      address: String(data.address || '').trim(), domicile: data.domicile || 'warga_daerah', otpChannel: data.otpChannel || 'whatsapp',
-    }
-    if (!identity.name || !identity.phone || !identity.address) throw new Error('Nama lengkap, nomor HP, dan alamat wajib diisi.')
+    const name = String(data.name || '').trim()
+    const phone = String(data.phone || '').trim()
+    const email = String(data.email || '').trim()
+    const address = String(data.address || '').trim()
+    const otpChannel = data.otpChannel || 'whatsapp'
+    if (!name || !phone || !address) throw new Error('Nama lengkap, nomor HP, dan alamat wajib diisi.')
     if (data.consent !== 'yes') throw new Error('Konfirmasi bahwa Anda memahami batas simulasi wajib dicentang.')
-    if (identity.otpChannel === 'email' && !identity.email) throw new Error('Email wajib diisi untuk jalur verifikasi email simulasi.')
-    if (normalizePhone(identity.phone).length < 9) throw new Error('Nomor HP belum valid. Periksa kembali nomor yang dimasukkan.')
-    if (identity.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.email)) throw new Error('Format email belum valid.')
-    session.identity = identity
+    if (otpChannel === 'email' && !email) throw new Error('Email wajib diisi untuk jalur verifikasi email simulasi.')
+    if (normalizePhone(phone).length < 9) throw new Error('Nomor HP belum valid. Periksa kembali nomor yang dimasukkan.')
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
+    if (!window.__SIZISNUR_SAVE_DOMICILE) throw new Error('Modul Master Wilayah belum tersedia. Muat ulang prototype.')
+    const domicile = window.__SIZISNUR_SAVE_DOMICILE({}, data, ctx.link.tenantId)
+    session.identity = { name, phone, email, address, ...domicile, otpChannel }
     session.otp = createOtp()
     session.otpExpiresAt = Date.now() + 5 * 60 * 1000
     session.otpAttempts = 0
@@ -388,37 +393,6 @@
     A.render()
   }
   function transactionData(form) { return Object.fromEntries(new FormData(form).entries()) }
-  function transactionEstimate(data, tenantId) {
-    const rules = db().rules.find((item) => item.tenantId === tenantId)
-    if (!rules || typeof window.__SIZISNUR_CALCULATE_ZAKAT !== 'function') return null
-    try { return window.__SIZISNUR_CALCULATE_ZAKAT(data.category, data.type || 'uang', data.jiwa || 1, data.assetsValue || 0, data.haulComplete || 'no', data.kafaratType || 'yamin', rules, { professionPeriod: data.professionPeriod || 'monthly', kafaratFeedingConfirmed: data.kafaratFeedingConfirmed || 'no' }) } catch (_) { return null }
-  }
-  function updateCalculation(form) {
-    const context = currentPublicContext()
-    if (!context.link) return
-    const data = transactionData(form)
-    const category = data.category || 'Zakat Fitrah'
-    const isFitrah = category === 'Zakat Fitrah'
-    const isAssets = ['Zakat Maal', 'Zakat Profesi'].includes(category)
-    const isProfession = category === 'Zakat Profesi'
-    const isKafarat = category === 'Kafarat'
-    const show = (selector, visible) => { const element = form.querySelector(selector); if (element) element.hidden = !visible }
-    show('[data-pi-field="media"]', isFitrah)
-    show('[data-pi-field="quantity"]', !isAssets && category !== 'Infak/Sedekah')
-    show('[data-pi-field="assets"]', isAssets)
-    show('[data-pi-field="profession"]', isProfession)
-    show('[data-pi-field="haul"]', category === 'Zakat Maal')
-    show('[data-pi-field="kafarat"]', isKafarat)
-    show('[data-pi-field="kafarat-stage"]', isKafarat && data.kafaratType !== 'yamin')
-    const estimate = transactionEstimate(data, context.link.tenantId)
-    const preview = form.querySelector('#pi-calculation-preview')
-    if (preview && estimate) {
-      const due = estimate.type === 'beras' ? kilos(estimate.due) : money(estimate.due)
-      preview.innerHTML = `<b>Estimasi kewajiban: ${esc(due)}</b><p>${esc(estimate.detail || '')}</p><small>Perhitungan simulasi mengikuti tarif lembaga. Nominal akhir akan disimpan pada rencana dan diperiksa kembali oleh Amil.</small>`
-      const amount = form.elements.value
-      if (amount && amount.dataset.autoFill === 'true' && estimate.due > 0) amount.value = String(estimate.due)
-    }
-  }
   function createPublicTransaction(form, ctx, session) {
     if (!session.personId && !session.identity) throw new Error('Identitas belum diverifikasi. Ulangi proses OTP.')
     if (Date.now() > session.verifiedUntil) throw new Error('Sesi verifikasi sudah berakhir. Silakan verifikasi kontak kembali.')
@@ -434,11 +408,10 @@
     if (!rules) throw new Error('Tarif lembaga belum tersedia. Hubungi Admin lembaga.')
     const payment = window.__SIZISNUR_TRANSACTION_PAYMENT?.(data, rules)
     if (!payment?.lines?.length) throw new Error('Kalkulator transaksi belum tersedia. Muat ulang prototype.')
-    const units = Math.max(1, Math.floor(Number(data.jiwa || 1)))
-    if (!Number.isInteger(units) || units < 1) throw new Error('Jumlah jiwa / unit harus bilangan bulat positif.')
+    const units = payment.jiwa
     const dataStore = ensureCollections()
     if (!person) {
-      person = { id: A.id('PS'), tenantId: ctx.link.tenantId, name: session.identity.name, phone: session.identity.phone, email: session.identity.email, address: session.identity.address, domicileStatus: session.identity.domicile, intakeSource: 'public-intake' }
+      person = { id: A.id('PS'), tenantId: ctx.link.tenantId, name: session.identity.name, phone: session.identity.phone, email: session.identity.email, address: session.identity.address, domicileStatus: session.identity.domicileStatus, areaId: session.identity.areaId || null, rwId: session.identity.rwId || null, rtId: session.identity.rtId || null, intakeSource: 'public-intake' }
       dataStore.persons.push(person)
     }
     if (!dataStore.muzakki.some((item) => item.tenantId === ctx.link.tenantId && item.personId === person.id)) {
@@ -450,7 +423,7 @@
     const tx = {
       id: A.id('TR'), tenantId: ctx.link.tenantId, periodId: period.id, serial, personId: person.id,
       recordedBy: null, handledBy: null, operatorId: null, assignedAmilId: null, jiwa: units,
-      lines: payment.lines, paymentEstimate: { due: payment.estimate.due, paid: payment.value, excessAllocated: payment.excessAllocated, method: 'tenant-calculator' },
+      lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
       source: 'public-intake', publicIntakeLinkId: ctx.link.id, contactVerifiedChannel: session.identity.otpChannel,
       contactVerifiedAt: A.now(), createdAt: A.now(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending', note: String(data.note || '').trim(),
@@ -527,13 +500,11 @@
     }
   }
   function renderReceiptPrint(tx) {
-    const tenant = tenantById(tx.tenantId)
-    const person = db().persons.find((item) => item.id === tx.personId && item.tenantId === tx.tenantId)
-    const token = `SIZISNUR|${tx.tenantId}|${tx.id}|${tx.serial}`
-    const totals = (tx.lines || []).reduce((result, line) => { if (line.type === 'beras') result.rice += Number(line.value || 0); else result.money += Number(line.value || 0); return result }, { money: 0, rice: 0 })
-    const inactive = terminal(tx)
-    return `<h2>${esc(tenant?.name || 'SiZisNur')}</h2><p>${tx.status === 'pending' ? 'STRUK RENCANA ZAKAT · BELUM DISETUJUI' : `STATUS ${esc(tx.status)}`}</p><hr><p>Nomor: <b>${esc(tx.serial)}</b></p><p>Nama: ${esc(person?.name || '')}</p><p>Tanggal: ${esc(new Date(tx.createdAt).toLocaleString('id-ID'))}</p>${(tx.lines || []).map((line) => `<p>${esc(line.category)}: ${line.type === 'beras' ? kilos(line.value) : money(line.value)}</p>`).join('')}<hr><p>Total uang: ${money(totals.money)}</p><p>Total beras: ${kilos(totals.rice)}</p><p>Status: ${esc(tx.status)}</p>${inactive ? '<p>QR tidak berlaku.</p>' : `<div style="text-align:center">${A.qr(token)}</div><p style="word-break:break-all">${esc(token)}</p>`}<p><b>SIMULASI — Bukan bukti pembayaran resmi.</b></p>`
+    if (window.__SIZISNUR_RECEIPT_PRINT_HTML) return window.__SIZISNUR_RECEIPT_PRINT_HTML(tx)
+    return `<div class="alert warn">Modul cetak struk bersama belum dimuat. Muat ulang prototype.</div>`
   }
+
+
   function onClick(event) {
     const button = event.target.closest?.('[data-public-intake-action]')
     if (!button) return
@@ -551,28 +522,18 @@
     if (!ctx.link) return A.toast(ctx.error || 'Tautan tidak tersedia.', 'error')
     const session = sessionFor(ctx.token)
     try {
-      if (form.dataset.publicIntakeForm === 'identity') beginIdentity(form, session)
+      if (form.dataset.publicIntakeForm === 'identity') beginIdentity(form, session, ctx)
       else if (form.dataset.publicIntakeForm === 'otp') verifyIdentityOtp(form, session, ctx)
       else if (form.dataset.publicIntakeForm === 'transaction') {
+        const payload = transactionData(form)
+        if (window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS?.(form, payload)) return
         const tx = createPublicTransaction(form, ctx, session)
+        form.dataset.excessDecision = ''
         A.toast(`Rencana ${tx.serial} tersimpan sebagai Pending.`, 'success')
         A.render()
         renderReceipt(tx)
       } else if (form.dataset.publicIntakeForm === 'cancel') cancelPublicTransaction(form, ctx, session)
     } catch (error) { A.toast(error.message || String(error), 'error') }
-  }
-  function onInput(event) {
-    const form = event.target.form
-    if (!form || form.dataset.publicIntakeForm !== 'transaction') return
-    if (event.target.name === 'value') event.target.dataset.autoFill = 'false'
-    updateCalculation(form)
-  }
-  function onChange(event) {
-    const form = event.target.form
-    if (!form || form.dataset.publicIntakeForm !== 'transaction') return
-    updateCalculation(form)
-    const amount = form.elements.value
-    if (amount && amount.dataset.autoFill !== 'false') amount.dataset.autoFill = 'true'
   }
 
   // Manager UI route is included in the tenant role navigation.
@@ -585,14 +546,16 @@
   }
   document.addEventListener('click', onClick)
   document.addEventListener('submit', onSubmit)
-  document.addEventListener('input', onInput)
-  document.addEventListener('change', onChange)
 
   const previousRender = A.render
   A.set('render', function renderWithPublicIntake() {
     if (state.page === 'public-intake') {
       const root = $('app')
-      if (root) root.innerHTML = renderIntake()
+      if (root) {
+        root.innerHTML = renderIntake()
+        const sharedForm = root.querySelector?.('[data-shared-transaction="yes"]')
+        if (sharedForm) window.__SIZISNUR_UPDATE_TRANSACTION_FORM?.(sharedForm)
+      }
       const modalRoot = $('modal-root')
       if (modalRoot) modalRoot.innerHTML = ''
       return

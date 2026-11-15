@@ -15,7 +15,7 @@ Fitur ini menyatukan tiga jalur input pada model data transaksi yang sama:
 2. Input mandiri dari tautan publik yang dibagikan kepada warga.
 3. Input mandiri di lokasi melalui QR banner yang menuju tautan publik lembaga.
 
-QR formulir publik dan QR transaksi adalah dua artefak berbeda. QR formulir hanya membuka formulir tenant; QR transaksi mewakili satu rencana transaksi.
+QR formulir publik dan QR transaksi adalah dua artefak berbeda. QR formulir hanya membuka formulir publik satu Lembaga; QR transaksi mewakili satu rencana transaksi.
 
 ## 2. Penanda evaluasi yang wajib terlihat
 
@@ -52,7 +52,7 @@ Petugas dapat:
 6. Melihat pratinjau halaman publik.
 7. Mencabut tautan; tautan yang dicabut tidak dapat membuka formulir.
 
-Tautan terikat pada satu `tenantId` dan `periodId` pada saat diterbitkan. Halaman publik menolak tautan bila token tidak ditemukan, dicabut, lembaga tidak aktif, portal publik dinonaktifkan, atau periode yang ditautkan bukan lagi periode aktif. Periode baru memerlukan tautan baru.
+Tautan terikat pada satu Lembaga (kunci internal `tenantId`) dan satu `periodId` pada saat diterbitkan. Halaman publik menolak tautan bila token tidak ditemukan, dicabut, lembaga tidak aktif, portal publik dinonaktifkan, atau periode yang ditautkan bukan lagi periode aktif. Periode baru memerlukan tautan baru.
 
 Token demo dibuat memakai `crypto.getRandomValues` di browser dan disimpan sebagai nilai biasa pada database lokal prototype. Token ini hanya cukup untuk demonstrasi opaque-link; ia bukan credential produksi, belum di-hash di server, dan tidak membuktikan keamanan akses.
 
@@ -79,7 +79,7 @@ Ini hanya simulasi antarmuka. OTP tidak membuktikan penguasaan kontak pada peran
 
 ### Langkah 3 — Pemeriksaan identitas dan transaksi
 
-Setelah OTP demo dianggap benar, aplikasi mencari identitas hanya pada `tenantId` dan periode terkait. Pencocokan dilakukan pada kontak sesuai kanal verifikasi, dinormalisasi, serta nama yang harus cocok dengan identitas tersimpan.
+Setelah OTP demo dianggap benar, aplikasi mencari identitas hanya pada Lembaga yang membuka tautan (kunci internal `tenantId`) dan periode terkait. Pencocokan dilakukan pada kontak sesuai kanal verifikasi, dinormalisasi, serta nama yang harus cocok dengan identitas tersimpan.
 
 Kasus ambigu dihentikan dan diarahkan ke petugas, antara lain:
 
@@ -104,6 +104,25 @@ Transaksi disimpan dengan:
 - kontak dan kanal OTP simulasi yang digunakan.
 
 Transaksi muncul pada daftar transaksi lembaga yang sama sehingga petugas dapat melanjutkan pemeriksaan QR, penerimaan fisik, akad, dan verifikasi memakai alur operasional yang sudah tersedia.
+
+### Langkah 5 — Domisili dan Master Wilayah
+
+- Formulir publik memakai kontrol domisili yang sama dengan input identitas Operator/Amil.
+- Bila memilih **Warga daerah**, warga memilih RW dan RT dari Master Wilayah Lembaga yang aktif; daftar RT mengikuti RW yang dipilih.
+- Bila memilih **Non-daerah**, kolom RW/RT disembunyikan dan nilai relasi wilayah Lembaga tidak disimpan.
+- Master Wilayah yang kosong harus dilengkapi Admin Lembaga sebelum opsi Warga daerah dapat dipakai. Warga luar daerah tetap dapat melanjutkan dengan pilihan Non-daerah.
+
+### Langkah 6 — Modul input transaksi bersama
+
+Formulir publik menggunakan pembangun form, mesin kalkulasi, parser baris, pemeriksaan kelebihan, model rincian, dan renderer struk yang sama dengan Layanan Mandiri Muzakki serta input konter Operator/Amil. Satu transaksi dapat memuat beberapa baris jenis/media (maksimal 12), misalnya Fitrah uang, Fitrah beras, dan Fidyah uang dalam satu nomor transaksi/QR. Dalam aturan prototype, media beras tersedia untuk Fitrah; kategori lain menggunakan uang. Total uang (Rp) dan beras (kg) dihitung terpisah.
+
+- Input Rupiah diformat dengan titik ribuan sesuai lokal Indonesia, misalnya `1.250.000`.
+- Input beras menerima koma desimal, misalnya `2,5` kg.
+- Setiap baris menampilkan kewajiban, nilai dibayar, kekurangan/kelebihan, dan parameter kategori yang relevan.
+- Jika kelebihan pada Fitrah/Maal/Profesi belum dicentang untuk dialihkan menjadi Infak/Sedekah, dialog konfirmasi bersama muncul sebelum penyimpanan.
+- Struk publik memakai renderer yang sama dengan transaksi petugas dan Muzakki: identitas Lembaga, nomor, status, semua baris dan media, unit, total uang/beras, serta QR aktif bila transaksi belum terminal.
+
+Rincian kalkulasi dan aturan yang sama lintas jalur tercatat pada `docs/INPUT_TRANSAKSI_TERPADU.md`.
 
 ## 5. Deteksi transaksi yang sudah ada
 
@@ -195,13 +214,13 @@ Semua item berikut merupakan pekerjaan sebelum Portal Zakat Publik boleh dipakai
 
 ### 8.5 Pencocokan identitas dan anti-duplikasi
 
-- Cocokkan berdasarkan tenant dan periode; tetapkan algoritma normalisasi nomor Indonesia/email dan aturan perubahan kontak.
+- Cocokkan berdasarkan Lembaga dan periode; tetapkan algoritma normalisasi nomor Indonesia/email dan aturan perubahan kontak.
 - Jangan menggabungkan person otomatis hanya berdasarkan nomor HP; nomor keluarga bersama harus dapat ditangani.
 - Bila lebih dari satu person cocok, nama tidak cocok, atau email/HP mengarah ke orang berbeda, hentikan alur mandiri dan buat tugas verifikasi petugas tanpa membocorkan data lain.
 - Terapkan unique/partial index atau mekanisme lock transaksi untuk mencegah lebih dari satu transaksi terbuka untuk kunci bisnis yang disepakati (tenant, periode, person/account, jenis aturan bila diperlukan).
 - Periksa status transaksi pada server tepat sebelum insert.
 - Gunakan idempotency key untuk mencegah double-submit akibat klik berulang, jaringan terputus, refresh, atau retry.
-- Tetapkan kebijakan bisnis bila satu orang ingin membayar beberapa jenis zakat dalam satu periode: satu bundel multi-line atau beberapa transaksi terpisah.
+- Prototype saat ini mendukung satu bundel multi-rincian (multi-line) dalam satu nomor transaksi/QR, maksimal 12 baris; setiap baris menyimpan kategori dan media terpisah. Sebelum produksi, stakeholder tetap harus mengesahkan kebijakan kombinasi kategori, batas transaksi aktif per periode, pencatatan akuntansi, dan perlakuan pembayaran bertahap.
 
 ### 8.6 State machine transaksi, QR transaksi, dan bukti
 
@@ -234,7 +253,7 @@ Semua item berikut merupakan pekerjaan sebelum Portal Zakat Publik boleh dipakai
 
 ### 8.9 Uji pra-produksi dan operasi
 
-- Threat modeling serta security review berdasarkan alur warga, petugas, tenant, provider OTP, QR, dan transaksi.
+- Threat modeling serta security review berdasarkan alur warga, petugas, Lembaga, provider OTP, QR, dan transaksi.
 - Unit/integration tests untuk tenant isolation, OTP abuse, duplicate concurrency, state transition, pembatalan race, token revoke, dan akses lintas person.
 - Penetration test eksternal dan pengujian OWASP ASVS/Top 10 yang relevan.
 - Uji perangkat Android/iOS, browser, aksesibilitas, jaringan lambat/putus, provider OTP gagal, dan beban puncak Ramadan.

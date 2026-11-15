@@ -96,10 +96,15 @@ assert.ok(elements.app.innerHTML.includes('Isi data diri Anda'))
 assert.ok(elements.app.innerHTML.includes('BELUM MENGGUNAKAN BACKEND STANDAR AMAN PRODUKSI'))
 assert.ok(!elements.app.innerHTML.includes('Muzakki Demo 01'), 'private tenant records must not be exposed before OTP')
 
-// Submit identity, verify the simulated OTP, and create a real tenant-scoped pending transaction in the local dataset.
+// Submit identity using the selected RW/RT from the institution's Master Wilayah.
+const annurArea = A.db.areas.find((item) => item.tenantId === 'TN-ANNUR' && item.active !== false)
+const annurRw = A.db.rws.find((item) => item.tenantId === 'TN-ANNUR' && item.areaId === annurArea?.id && item.active !== false)
+const annurRt = A.db.rts.find((item) => item.tenantId === 'TN-ANNUR' && item.rwId === annurRw?.id && item.active !== false)
+assert.ok(annurArea && annurRw && annurRt, 'default institution should provide a valid Master Wilayah hierarchy')
 const identity = newForm('identity', {
   name: 'Warga Uji Publik', phone: '081299998877', email: 'warga.uji@example.invalid',
-  address: 'Alamat simulasi, RT 01', domicile: 'warga_daerah', otpChannel: 'whatsapp', consent: 'yes',
+  address: 'Alamat simulasi, RT 01', domicileStatus: 'warga_daerah', areaId: annurArea.id, rwId: annurRw.id, rtId: annurRt.id,
+  otpChannel: 'whatsapp', consent: 'yes',
 })
 fireSubmit(identity)
 let session = portal.getSession()
@@ -112,10 +117,14 @@ session = portal.getSession()
 assert.equal(session.stage, 'match')
 assert.equal(session.personId, null, 'new verified identity should not be merged to an unrelated person')
 assert.ok(elements.app.innerHTML.includes('Rencana pembayaran zakat'))
+assert.ok(elements.app.innerHTML.includes('lines[0][category]'), 'public form uses the same indexed multi-line calculator as other channels')
+assert.ok(elements.app.innerHTML.includes('Tambah jenis zakat / media'), 'public form supports additional payment lines')
 
 const txForm = newForm('transaction', {
-  category: 'Zakat Fitrah', type: 'uang', jiwa: '2', value: '90000',
-  confirm: 'yes', autoExcess: '', note: 'Uji transaksi publik',
+  'lines[0][category]': 'Zakat Fitrah', 'lines[0][type]': 'uang', 'lines[0][jiwa]': '2', 'lines[0][value]': '90.000',
+  'lines[1][category]': 'Zakat Fitrah', 'lines[1][type]': 'beras', 'lines[1][jiwa]': '1', 'lines[1][value]': '2,5',
+  'lines[2][category]': 'Fidyah', 'lines[2][type]': 'uang', 'lines[2][jiwa]': '2', 'lines[2][value]': '130.000',
+  confirm: 'yes', note: 'Uji transaksi publik multi-jenis dan multi-media',
 })
 fireSubmit(txForm)
 const tx = A.db.transactions.find((item) => item.source === 'public-intake' && item.personId === session.personId)
@@ -126,10 +135,42 @@ assert.equal(tx.status, 'pending')
 assert.match(tx.serial, /^PU-\d{6}$/)
 assert.ok(tx.expiresAt)
 assert.equal(A.db.persons.find((person) => person.id === tx.personId).phone, '081299998877')
+assert.equal(A.db.persons.find((person) => person.id === tx.personId).rwId, annurRw.id, 'public form stores RW from the institution master')
+assert.equal(A.db.persons.find((person) => person.id === tx.personId).rtId, annurRt.id, 'public form stores RT from the institution master')
+assert.equal(tx.lines.length, 3, 'one public transaction can contain multiple zakat types and payment media')
+assert.equal(tx.paymentEstimate.paid, 220000)
+assert.equal(tx.paymentEstimate.paidRice, 2.5)
+assert.deepEqual(JSON.parse(JSON.stringify(tx.lines)), [
+  { category: 'Zakat Fitrah', type: 'uang', value: 90000, quantity: 2, unitLabel: 'jiwa', assetsValue: 0 },
+  { category: 'Zakat Fitrah', type: 'beras', value: 2.5, quantity: 1, unitLabel: 'jiwa', assetsValue: 0 },
+  { category: 'Fidyah', type: 'uang', value: 130000, quantity: 2, unitLabel: 'hari', assetsValue: 0 },
+])
 assert.equal(A.db.muzakki.some((item) => item.personId === tx.personId && item.tenantId === 'TN-ANNUR'), true)
 assert.ok(A.db.audit.some((item) => item.type === 'PUBLIC_INTAKE_TRANSACTION_CREATED'))
 assert.ok(elements['modal-root'].innerHTML.includes('STRUK RENCANA ZAKAT'))
-assert.ok(elements['modal-root'].innerHTML.includes('Belum menjadi bukti pembayaran resmi'))
+assert.ok(elements['modal-root'].innerHTML.includes('bukan bukti pembayaran resmi'))
+assert.ok(elements['modal-root'].innerHTML.includes('Zakat Fitrah · Beras'), 'public receipt uses shared receipt layout for mixed media')
+assert.ok(elements['modal-root'].innerHTML.includes('Fidyah · Uang'), 'public receipt lists every line item')
+assert.ok(elements['modal-root'].innerHTML.includes('2 jiwa'), 'public receipt includes quantity/unit for mixed transaction detail')
+assert.ok(elements['modal-root'].innerHTML.includes('2 hari'), 'public receipt includes Fidyah day count')
+assert.ok(typeof window.__SIZISNUR_RECEIPT_PRINT_HTML === 'function' && window.__SIZISNUR_RECEIPT_PRINT_HTML(tx).includes('receipt-preview'), 'public receipt printing uses common receipt renderer')
+
+// Public form invokes the same excess-payment confirmation gate as Muzakki and counter forms.
+let excessPrompted = false
+const originalExcessGate = window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS
+window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS = (form, data) => {
+  excessPrompted = true
+  assert.equal(data['lines[0][category]'], 'Zakat Fitrah')
+  assert.equal(data['lines[0][value]'], '50.000')
+  return true
+}
+const excessForm = newForm('transaction', {
+  'lines[0][category]': 'Zakat Fitrah', 'lines[0][type]': 'uang', 'lines[0][jiwa]': '1', 'lines[0][value]': '50.000',
+  confirm: 'yes',
+})
+fireSubmit(excessForm)
+assert.equal(excessPrompted, true, 'public form checks for excess-payment confirmation before saving')
+window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS = originalExcessGate
 
 // An unpaid transaction is rediscovered after contact verification and blocks another submission.
 const ctx = portal.currentPublicContext()
@@ -178,5 +219,5 @@ A.state.publicIntakeToken = secondLink.token
 assert.match(portal.currentPublicContext().error, /telah dicabut/i)
 
 Promise.resolve(window.__SIZISNUR_AUTH?.ready).then(() => {
-  console.log('PASS — Portal Zakat Publik: tautan tenant, role Admin/Amil/Operator, OTP demo, privasi sebelum verifikasi, deteksi Pending, bukti, pembatalan, riwayat Paid, isolasi tenant, dan pencabutan tautan')
+  console.log('PASS — Portal Zakat Publik: tautan per Lembaga, OTP demo, domisili RW/RT, transaksi multi-jenis/media, konfirmasi kelebihan, struk bersama, privasi, pembatalan, dan pencabutan tautan')
 }).catch((error) => { console.error(error); process.exitCode = 1 })

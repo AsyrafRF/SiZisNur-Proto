@@ -1,3 +1,28 @@
+## 15 November 2026 — Penyatuan Modul Input Transaksi (Operator/Amil, Muzakki, dan Formulir Publik)
+
+- Menyatukan pembangun form, parser rincian, kalkulasi, validasi, dialog konfirmasi kelebihan, model `lines`, dan renderer struk untuk ketiga kanal input: konter Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik.
+- Mendukung maksimal 12 rincian dalam satu transaksi/nomor/QR. Setiap baris memilih kategori dan media sendiri; Fitrah mendukung uang atau beras, sedangkan Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah menggunakan uang pada aturan prototype saat ini. Kombinasi Fitrah uang + Fitrah beras + kategori lain dapat dibuat dalam satu transaksi.
+- Menyamakan pemilihan domisili pada input Operator/Amil dan Formulir Publik: Warga daerah harus memilih RW lalu RT dari Master Wilayah Lembaga; Non-daerah tidak menyimpan RW/RT Lembaga.
+- Menyamakan konfirmasi kelebihan pembayaran pada semua kanal. Jika pemisahan kelebihan belum dicentang dan baris Fitrah/Maal/Profesi melebihi estimasi, dialog yang sama meminta keputusan sebelum transaksi disimpan.
+- Memformat input Rupiah dengan titik ribuan (contoh `1.250.000`) dan beras memakai koma desimal (contoh `2,5 kg`). Nilai harta Maal/Profesi juga menggunakan formatter Rupiah.
+- Menyamakan pratinjau dan struk cetak/PDF, PNG, serta thermal agar mencantumkan semua rincian jenis/media, kuantitas/satuan, dasar harta bila relevan, dan total uang/beras.
+- Memperbarui panduan `docs/INPUT_TRANSAKSI_TERPADU.md`, README, dokumentasi Portal Publik, dan versi cache service worker.
+- Memperluas pengujian untuk transaksi campuran Fitrah uang/beras, Maal dan Fidyah dalam satu nomor, pemisah ribuan Rupiah, domisili Master Wilayah, konfirmasi kelebihan, serta penggunaan renderer struk bersama.
+- Batas: fitur tetap simulasi browser/localStorage; backend, validasi server, idempotensi atomik, OTP provider, serta sinkronisasi lintas perangkat diperlukan sebelum produksi.
+
+## 15 November 2026 — Modul Input Transaksi Terpadu Multi-Jenis dan Multi-Media
+
+- Menyatukan form input konter Operator/Amil, rencana transaksi akun Muzakki, dan formulir publik melalui satu kalkulator transaksi bersama.
+- Satu transaksi kini dapat memuat beberapa baris jenis zakat/donasi dan media pembayaran secara bersamaan, termasuk Fitrah uang + Fitrah beras + Fidyah/Maal/Profesi/Infak dalam satu nomor transaksi, satu QR, dan satu struk; dibatasi maksimal 12 baris.
+- Menghitung kewajiban dan pembayaran uang/beras secara terpisah, menjumlahkan jiwa Fitrah lintas media, menampilkan kuantitas/satuan pada rincian, serta menyegarkan nominal otomatis saat kategori atau media berubah.
+- Menyamakan konfirmasi kelebihan pembayaran pada tiga kanal. Pengguna dapat mempertahankan kategori, memisahkan kelebihan menjadi Infak/Sedekah bila memenuhi aturan split, atau kembali mengedit.
+- Menyamakan struk digital/cetak/PNG untuk semua kanal; satu QR mengacu pada seluruh rincian transaksi.
+- Menegakkan domisili Warga daerah dengan pilihan RW dan RT dari Master Wilayah Lembaga; pilihan RT difilter oleh RW aktif. Non-daerah tidak diwajibkan mengisi RW/RT.
+- Menampilkan nominal uang dengan titik pemisah ribuan sejak nilai awal maupun saat diketik; input kilogram tetap menggunakan koma desimal. Istilah teknis internal `tenant` tetap dipertahankan pada struktur data, tetapi label antarmuka menggunakan **Lembaga**.
+- Menambahkan pengujian multi-baris, media campuran, modal Operator bersama, format Rupiah, filter RW/RT, Non-daerah, konfirmasi kelebihan, dan struk publik bersama.
+- Batas: data tetap lokal pada prototype; backend, sinkronisasi lintas perangkat, dan otorisasi produksi belum tersedia.
+- Dokumentasi: `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md`.
+
 ## 15 November 2026 — Bukti transaksi periode aktif dan pembatalan rencana oleh Muzakki
 
 - Mengaktifkan tombol **Lihat bukti / QR** pada kolom Bukti di tabel transaksi periode berjalan pada Dashboard Zakat Saya. Tombol membuka kembali struk transaksi yang sama dengan layar setelah pembuatan rencana, termasuk QR serta opsi unduh PNG, cetak/simpan PDF, dan cetak thermal.
