@@ -236,3 +236,12 @@ Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook y
 - Untuk akun yang belum terhubung ke lembaga, halaman Layanan Mandiri mengarahkan Muzakki memilih lembaga; halaman Rencana Bayar menjelaskan bahwa keanggotaan dan periode aktif diperlukan sebelum membuat rencana.
 - Navigasi sidebar untuk role Muzakki menggunakan kelompok **Menu Akun Muzakki** dan hanya menampilkan halaman yang sesuai; kedua halaman baru dibatasi pada role Muzakki.
 - Uji regresi khusus memastikan menu baru muncul untuk Muzakki, dropdown tidak lagi ada di Dashboard, formulir layanan tersedia di halaman terpisah, rencana bayar membuka alur QR yang sama, dan role selain Muzakki tidak memperoleh akses.
+
+
+## Perbaikan cetak thermal 80 mm (15 November 2026)
+
+- Memulihkan helper `makeReceiptPrint` yang tertinggal setelah penyatuan renderer bukti transaksi. Tombol Cetak thermal 80 mm sebelumnya masih memanggil nama fungsi lama yang sudah tidak didefinisikan sehingga memunculkan `makeReceiptPrint is not defined`.
+- Cetak thermal sekarang menggunakan HTML struk bersama yang juga dipakai oleh Cetak / Simpan PDF, dengan layout kertas 80 mm, area konten 74 mm, QR, seluruh rincian multi-jenis/multi-media, total uang dan beras, serta label simulasi.
+- Layout PDF biasa tidak berubah dan tetap menggunakan ukuran halaman normal browser.
+- Menambahkan pengujian regresi untuk aksi thermal dan PDF menggunakan transaksi gabungan Fitrah uang, Fitrah beras, dan Fidyah.
+- Menaikkan versi cache service worker agar browser mengambil modul revisi terbaru setelah pembaruan.

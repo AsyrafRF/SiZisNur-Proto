@@ -86,7 +86,7 @@ Konfirmasi tidak mengesahkan pembayaran. Seluruh transaksi tetap berstatus `pend
 
 ## 7. Struk yang seragam
 
-Satu renderer menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal. Renderer dipakai untuk transaksi yang berasal dari:
+Satu renderer menghasilkan pratinjau, cetak/simpan PDF melalui dialog cetak browser, gambar PNG, dan tampilan cetak thermal 80 mm. Cetak thermal memakai lebar konten 74 mm untuk kertas 80 mm dan menggunakan isi struk bersama yang sama dengan PDF. Renderer dipakai untuk transaksi yang berasal dari:
 
 - Input petugas Operator/Amil.
 - Layanan Mandiri Muzakki.

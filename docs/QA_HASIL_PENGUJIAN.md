@@ -11,7 +11,7 @@ Tanggal pembaruan: 15 November 2026
 | `node --check js/authentication.js` | Lulus |
 | `node --check js/public-intake.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 17 suite, 17/17 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 18 suite, 18/18 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
@@ -159,5 +159,14 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Formulir menggunakan kalkulator zakat tenant yang sama dan membuat transaksi `source=public-intake`, `status=pending`, lengkap dengan person/kartu Muzakki, nomor PU, notifikasi lokal, audit, dan QR/struk rencana.
 - Pending/tercatat menjadi kondisi unpaid yang memblokir transaksi ganda. Bukti transaksi dapat dibuka kembali. Pembatalan hanya tersedia untuk Pending mandiri yang belum diproses petugas/setoran, dengan alasan, konfirmasi, pencatatan audit, dan tanpa menghapus record. Paid/riwayat yang selesai tidak memblokir rencana baru.
 - Service worker tidak menyimpan URL yang berisi parameter token `portal` di cache shell. Cache dinaikkan ke `sizisnur-shell-v5-20261115-public-intake-v2`.
-- `node tests/public-intake.test.cjs` dan seluruh 17 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
+- `node tests/public-intake.test.cjs` dan seluruh 18 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
 - Batasan: `localStorage` hanya pada browser saat ini. QR yang dibuka pada perangkat berbeda tidak dapat mengakses database demo petugas. OTP hanya tampilan simulasi, tidak dikirim ke provider. Jangan masukkan PII atau transaksi nyata. Dokumen lengkap tahap implementasi, batasan, dan checklist keamanan produksi tersedia pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`.
+
+
+## Cetak struk thermal 80 mm — 15 November 2026
+
+- Memperbaiki tombol **Cetak thermal 80 mm** yang sebelumnya memanggil helper `makeReceiptPrint` yang tidak tersedia setelah renderer struk disatukan. Kini helper didefinisikan kembali pada lapisan V5 dan menggunakan `A.receiptHtml(tx)` / `receiptPrintHtmlV5(tx)` sebagai sumber konten yang sama dengan PDF.
+- Layout thermal menetapkan ukuran halaman 80 mm, margin 3 mm, lebar konten 74 mm, QR 35 mm, dan seluruh rincian multi-jenis/multi-media.
+- `node tests/receipt-printing.test.cjs` lulus: aksi thermal membuka jendela cetak, mencakup transaksi Fitrah uang + Fitrah beras + Fidyah dan token QR; aksi PDF tetap memakai layout normal serta renderer yang sama.
+- Jumlah suite otomatis menjadi 18/18. Pengujian fisik dengan printer thermal dan driver tertentu tetap perlu dilakukan saat UAT perangkat.
+- Service worker dinaikkan ke `sizisnur-shell-v5-20261115-shared-transaction-multi-line-v4-thermal-print-fix` agar browser mengambil JS terbaru.
