@@ -31,6 +31,27 @@
   let pendingImport = null
   let pendingImportSummary = null
 
+  function preservedRootAccount() {
+    const root = (activeDb().platformAdmins || []).find((item) => item.id === ROOT_ACCOUNT.id)
+    return { ...clone(root || ROOT_ACCOUNT), ...clone(ROOT_ACCOUNT), ...(root ? clone(root) : {}), id: ROOT_ACCOUNT.id, role: ROOT_ACCOUNT.role, scope: 'platform', active: true }
+  }
+  function preparePreset(profile) {
+    if (profile === 'multi-tenant') return A.seedMultiTenant()
+    if (profile === 'annur-default') return A.seed()
+    throw new Error('Dataset tidak dikenal. Pilih Dataset Multi-Lembaga atau Dataset Masjid An-Nur.')
+  }
+  function finalizePreset(fresh, profile) {
+    DB_ARRAYS.forEach((key) => { if (!Array.isArray(fresh[key])) fresh[key] = [] })
+    fresh.platformAdmins = [preservedRootAccount()]
+    fresh.users = (fresh.users || []).filter((item) => item.id !== ROOT_ACCOUNT.id)
+    fresh.platformAudit = []
+    fresh.platformSettings = clone(DEFAULT_PLATFORM_SETTINGS)
+    fresh.datasetProfile = profile
+    fresh.datasetLabel = profile === 'multi-tenant' ? 'Dataset Multi-Lembaga' : 'Dataset Masjid An-Nur'
+    fresh.seedRevision = Math.max(Number(fresh.seedRevision || 0), 3)
+    return fresh
+  }
+
   function clone(value) { return JSON.parse(JSON.stringify(value)) }
   function activeDb() { return A.db }
   function bytes(value) { return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(value).length : unescape(encodeURIComponent(value)).length }
@@ -124,23 +145,35 @@
     A.toast('Cadangan penuh berhasil disiapkan. Simpan berkas di lokasi yang aman.', 'success')
     return payload
   }
-  function resetToDefault(options = {}) {
-    if (!rootUser()) throw new Error('Reset global hanya tersedia untuk Admin SiZisNur.')
-    const fresh = A.seed()
-    DB_ARRAYS.forEach((key) => { if (!Array.isArray(fresh[key])) fresh[key] = [] })
+  function loadDatasetPreset(profile, options = {}) {
+    if (!rootUser()) throw new Error('Penggantian dataset hanya tersedia untuk Admin SiZisNur.')
+    const fresh = finalizePreset(preparePreset(profile), profile)
     replaceDatabase(fresh)
+    // Rebuild data derived by the V5 layer on first boot because switching a
+    // preset replaces the database in-place without reloading the script bundle.
+    window.__SIZISNUR_REBUILD_DEMO_MUZAKKI?.()
+    window.__SIZISNUR_REBUILD_TENANT_TERRITORIES?.()
+    window.__SIZISNUR_REBUILD_AUDIT_HASHES?.()
+    A.persist()
     confirmMode = ''; pendingImport = null; pendingImportSummary = null
     if (options.reload !== false && window.location?.reload) window.location.reload()
     else A.render()
-    return { tenants: fresh.tenants.length, users: fresh.users.length, mustahiks: fresh.mustahiks.length }
+    return { profile, label: fresh.datasetLabel, tenants: fresh.tenants.length, applications: fresh.applications.length, users: fresh.users.length, mustahiks: fresh.mustahiks.length }
+  }
+  function resetToDefault(options = {}) {
+    // The default reset is intentionally Masjid An-Nur only.
+    return loadDatasetPreset('annur-default', options)
   }
   function emptyDatabaseFromSeed() {
     const empty = A.seed()
     DB_ARRAYS.forEach((key) => { empty[key] = [] })
-    empty.platformAdmins = [clone(ROOT_ACCOUNT)]
+    empty.platformAdmins = [preservedRootAccount()]
+    empty.users = []
     empty.platformAudit = []
     empty.platformSettings = clone(DEFAULT_PLATFORM_SETTINGS)
-    empty.seedRevision = Number(empty.seedRevision || 2)
+    empty.datasetProfile = 'empty'
+    empty.datasetLabel = 'Data simulasi telah dikosongkan'
+    empty.seedRevision = Math.max(Number(empty.seedRevision || 0), 3)
     empty.clearedAt = new Date().toISOString()
     return empty
   }
@@ -182,7 +215,8 @@
     const personKeys = new Set((db.persons || []).map((item) => `${item.tenantId}|${item.id}`))
     const transactionKeys = new Set((db.transactions || []).map((item) => `${item.tenantId}|${item.id}`))
     const counts = {
-      usersWithoutTenant: (db.users || []).filter((item) => !tenantIds.has(item.tenantId)).length,
+      // A Muzakki account may exist independently before the user joins any institution.
+      usersWithoutTenant: (db.users || []).filter((item) => item.role !== 'Muzakki' && !tenantIds.has(item.tenantId)).length,
       periodsWithoutTenant: (db.periods || []).filter((item) => !tenantIds.has(item.tenantId)).length,
       transactionsWithoutTenant: (db.transactions || []).filter((item) => !tenantIds.has(item.tenantId)).length,
       transactionsWithoutPerson: (db.transactions || []).filter((item) => item.personId && !personKeys.has(`${item.tenantId}|${item.personId}`)).length,
@@ -204,11 +238,20 @@
       const info = pendingImportSummary || {}
       return `<section class="card proto-confirm-card"><div class="proto-confirm-head"><span class="tag warn">KONFIRMASI IMPOR</span><h3>Ganti database dengan file cadangan?</h3><p>Semua data lokal saat ini akan diganti dengan isi cadangan. Data Mustahik dalam berkas juga akan menggantikan dataset yang sekarang.</p></div><div class="proto-confirm-stats"><span>${info.tenants || 0}<small>Lembaga</small></span><span>${info.users || 0}<small>Akun lembaga</small></span><span>${info.transactions || 0}<small>Transaksi</small></span><span>${info.mustahiks || 0}<small>Mustahik</small></span></div><div class="form-actions"><button type="button" class="btn primary" data-proto-action="import-confirm">Ya, ganti data sekarang</button><button type="button" class="btn" data-proto-action="cancel-confirm">Batalkan</button></div></section>`
     }
+    if (confirmMode === 'dataset-multi' || confirmMode === 'dataset-annur') {
+      const profile = confirmMode === 'dataset-multi' ? 'multi-tenant' : 'annur-default'
+      const preview = preparePreset(profile)
+      const label = profile === 'multi-tenant' ? 'Dataset Multi-Lembaga' : 'Dataset Masjid An-Nur'
+      const detail = profile === 'multi-tenant'
+        ? 'Mengganti seluruh data lokal dengan dua lembaga contoh (Masjid An-Nur dan Masjid Al-Hikmah) serta satu pengajuan lembaga Masjid Al-Falah berstatus menunggu. Catatan dan data acuan workbook tidak ditambahkan sebagai skenario simulasi baru di dataset multi-lembaga.'
+        : 'Mengganti seluruh data lokal dengan satu lembaga, yaitu Masjid An-Nur, beserta data operasional dan dataset Mustahik acuan 1447H yang dipertahankan dalam prototype.'
+      return `<section class="card proto-confirm-card"><div class="proto-confirm-head"><span class="tag warn">KONFIRMASI GANTI DATASET</span><h3>Aktifkan ${label}?</h3><p>${detail}</p></div><div class="proto-confirm-stats"><span>${preview.tenants.length}<small>Lembaga</small></span><span>${preview.applications.length}<small>Pengajuan</small></span><span>${preview.users.length}<small>Akun lembaga</small></span><span>${preview.mustahiks.length}<small>Mustahik</small></span></div><form data-proto-form="dataset-confirm" data-profile="${profile}"><div class="field"><label>Ketik <b>GANTI DATASET</b> untuk melanjutkan</label><input name="confirmText" autocomplete="off" required></div><div class="form-actions"><button type="submit" class="btn primary">Aktifkan ${label}</button><button type="button" class="btn" data-proto-action="cancel-confirm">Batal</button></div></form></section>`
+    }
     const isClear = confirmMode === 'clear'
     const title = isClear ? 'Hapus semua data simulasi?' : 'Kembalikan ke dataset bawaan?'
     const detail = isClear
-      ? 'Seluruh Lembaga, akun pengguna lembaga, transaksi, Muzakki, Mustahik, pengaturan tarif, setoran, alokasi, penyaluran, notifikasi dan audit akan dikosongkan. Satu akun Admin SiZisNur dan pengaturan platform default tetap disimpan agar prototype masih dapat diakses. Ekspor cadangan terlebih dahulu bila data simulasi masih diperlukan.'
-      : 'Seluruh perubahan simulasi akan diganti dengan dataset bawaan versi terbaru. Dataset Mustahik dikembalikan ke salinan bawaan yang dipertahankan tanpa perubahan; perubahan uji pada Mustahik akan hilang. Ekspor cadangan terlebih dahulu bila perubahan simulasi masih diperlukan.'
+      ? 'Seluruh lembaga, akun Panitia dan Muzakki, transaksi, Mustahik, tarif, wilayah, dan data operasional akan dihapus. Hanya satu akun Admin SiZisNur (Root) yang dipertahankan, termasuk kredensial root saat ini. Fitur aplikasi tetap tersedia; setelah lembaga ditambahkan kembali, Master Wilayah akan dibuat otomatis untuk lembaga tersebut.'
+      : 'Seluruh perubahan simulasi akan diganti dengan Dataset Masjid An-Nur sebagai dataset default. Hanya akun Root yang dipertahankan dari sesi saat ini; akun dan data contoh akan dibuat ulang. Dataset Mustahik kembali ke seed acuan yang sama.'
     const phrase = isClear ? 'HAPUS SEMUA' : 'RESET DEFAULT'
     const action = isClear ? 'clear-confirm' : 'reset-confirm'
     return `<section class="card proto-confirm-card ${isClear ? 'danger' : ''}"><div class="proto-confirm-head"><span class="tag ${isClear ? 'bad' : 'warn'}">TINDAKAN DESTRUKTIF</span><h3>${title}</h3><p>${detail}</p></div><form data-proto-form="${action}"><div class="field"><label>Ketik <b>${phrase}</b> untuk melanjutkan</label><input name="confirmText" autocomplete="off" required></div><div class="form-actions"><button type="submit" class="btn ${isClear ? 'danger' : 'primary'}">Konfirmasi ${isClear ? 'hapus semua data' : 'reset ke default'}</button><button type="button" class="btn" data-proto-action="cancel-confirm">Batal</button></div></form></section>`
@@ -227,11 +270,14 @@
     return `${A.boxhead('Pengaturan Prototype', 'Pusat kendali data untuk menjalankan demo, mengembalikan dataset awal, membuat cadangan, dan memindahkan skenario antar perangkat.')}
       <div class="alert light"><b>Mode simulasi lokal.</b> Semua data tersimpan pada browser ini. Fitur ini hanya untuk menyiapkan demonstrasi dan UAT, bukan administrasi database produksi.</div>
       <div class="cards proto-settings-stats">${A.stat('Lembaga', (db.tenants || []).length, 'Terdaftar pada browser ini')}${A.stat('Transaksi', (db.transactions || []).length, 'Semua Lembaga')}${A.stat('Mustahik', mustahikCount, 'Record seed dipertahankan saat reset')}${A.stat('Ukuran data', storageSize, 'Perkiraan JSON lokal')}</div>
+      <div class="alert light"><b>Dataset aktif:</b> ${esc(db.datasetLabel || (db.datasetProfile === 'empty' ? 'Data kosong' : 'Dataset kustom / impor'))}. Dataset dapat diganti kapan saja melalui pilihan di bawah. Semua pergantian mengganti data lokal; ekspor cadangan terlebih dahulu bila ingin menyimpan perubahan.</div>
       <section class="proto-settings-grid">
         <article class="card proto-setting-card"><div class="proto-setting-icon">⬇</div><h3>Ekspor cadangan lengkap</h3><p>Unduh satu file JSON berisi semua Lembaga, akun, konfigurasi, transaksi, dataset Mustahik, QR terkait, dan audit. Dapat dipakai untuk memulihkan simulasi ini.</p><button type="button" class="btn primary" data-proto-action="export">Ekspor seluruh data (.json)</button><small>Cadangan mencakup data pribadi simulasi dan seluruh dataset Mustahik. Simpan di lokasi tepercaya; jangan unggah atau bagikan sembarangan.</small></article>
         <article class="card proto-setting-card"><div class="proto-setting-icon">⬆</div><h3>Impor cadangan</h3><p>Pulihkan database dari file cadangan SiZisNur V5. Impor akan menggantikan seluruh data browser yang sedang aktif setelah konfirmasi.</p><label class="proto-file-label" for="prototype-import-file">Pilih file cadangan JSON</label><input class="proto-file-input" id="prototype-import-file" data-proto-import-file type="file" accept=".json,application/json"><small>Menerima cadangan lengkap schema V5 atau file database V5 mentah. Maksimum 30 MB. Impor akan mengganti seluruh database lokal.</small></article>
-        <article class="card proto-setting-card"><div class="proto-setting-icon">↺</div><h3>Reset ke data bawaan</h3><p>Kembalikan seluruh simulasi ke kondisi awal versi ini. Data operasional, akun contoh, konfigurasi tarif, transaksi, dan pengaturan lembaga akan dibuat ulang.</p><div class="alert light">Dataset Mustahik bawaan (${mustahikCount} record saat ini) dipertahankan tanpa perubahan. Catatan proyek menjelaskan bahwa record individu ini sintetis non-identifying untuk mereproduksi agregat workbook terverifikasi.</div><button type="button" class="btn" data-proto-action="ask-reset">Reset ke dataset default</button></article>
-        <article class="card proto-setting-card danger"><div class="proto-setting-icon">⌫</div><h3>Hapus semua data simulasi</h3><p>Kosongkan seluruh data Lembaga dan data operasional, termasuk seluruh Mustahik dan pengaturan tarif. Akun Admin SiZisNur tetap disimpan supaya Anda dapat membuat Lembaga baru.</p><button type="button" class="btn danger" data-proto-action="ask-clear">Hapus semua data</button></article>
+        <article class="card proto-setting-card"><div class="proto-setting-icon">↺</div><h3>Reset ke dataset default</h3><p>Memulihkan dataset bawaan utama: satu lembaga Masjid An-Nur beserta data operasional dan acuan 1447H.</p><div class="alert light">Dataset Mustahik (${mustahikCount} record pada data aktif) memakai 129 record sintetis non-identifying; angka agregat dan catatan acuan workbook tetap ditampilkan pada modul An-Nur.</div><button type="button" class="btn" data-proto-action="ask-reset">Kembali ke data default An-Nur</button></article>
+        <article class="card proto-setting-card"><div class="proto-setting-icon">⌫</div><h3>Hapus semua data simulasi</h3><p>Hapus seluruh data lembaga, akun pengguna, akun Muzakki, transaksi, wilayah dan data operasional. Hanya akun Admin SiZisNur (Root) yang tetap ada.</p><button type="button" class="btn danger" data-proto-action="ask-clear">Hapus semua data</button></article>
+        <article class="card proto-setting-card"><div class="proto-setting-icon">▦</div><h3>Dataset Multi-Lembaga</h3><p>Memuat dua lembaga contoh: Masjid An-Nur dan Masjid Al-Hikmah, beserta satu pengajuan Masjid Al-Falah yang menunggu persetujuan. Cocok untuk menguji pemisahan data antar lembaga.</p><div class="mini-list"><div class="mini-item"><span>Jumlah lembaga</span><b>2 masjid</b></div><div class="mini-item"><span>Pengajuan tambahan</span><b>Masjid Al-Falah</b></div></div><button type="button" class="btn" data-proto-action="ask-dataset-multi">Gunakan Dataset Multi-Lembaga</button></article>
+        <article class="card proto-setting-card"><div class="proto-setting-icon">⌂</div><h3>Dataset Masjid An-Nur</h3><p>Memuat hanya Masjid An-Nur dengan data operasional, modul acuan workbook 1447H, dan 129 record Mustahik sintetis sesuai agregat referensi. Ini adalah dataset default prototype.</p><div class="mini-list"><div class="mini-item"><span>Jumlah lembaga</span><b>1 masjid</b></div><div class="mini-item"><span>Dataset acuan</span><b>1447H / 2026M</b></div></div><button type="button" class="btn primary" data-proto-action="ask-dataset-annur">Gunakan Dataset Masjid An-Nur</button></article>
       </section>
       ${renderConfirmPanel()}
       <div class="two-col proto-settings-bottom"><section class="card"><h3>Ringkasan isi database</h3>${A.table(['Koleksi', 'Jumlah'], collections.map(([label, key]) => [esc(label), (db[key] || []).length]))}</section><section class="card"><div class="card-top"><h3>Pemeriksaan integritas sederhana</h3><button type="button" class="btn sm" data-proto-action="integrity">Periksa ulang</button></div><div class="mini-list"><div class="mini-item"><span>Pengguna tanpa Lembaga</span><b>${report.counts.usersWithoutTenant}</b></div><div class="mini-item"><span>Periode tanpa Lembaga</span><b>${report.counts.periodsWithoutTenant}</b></div><div class="mini-item"><span>Transaksi tanpa Muzakki terkait</span><b>${report.counts.transactionsWithoutPerson}</b></div><div class="mini-item"><span>Mustahik tanpa identitas orang</span><b>${report.counts.mustahiksWithoutPerson}</b></div></div><div class="alert ${report.issues ? 'warn' : 'light'}">${report.issues ? `${report.issues} relasi perlu diperiksa.` : 'Tidak ditemukan relasi orphan pada pemeriksaan dasar.'} Pemeriksaan ini bukan validasi akuntansi atau audit keamanan.</div></section></div>
@@ -269,6 +315,8 @@
         case 'export': exportFullBackup(); break
         case 'ask-reset': ask('reset'); break
         case 'ask-clear': ask('clear'); break
+        case 'ask-dataset-multi': ask('dataset-multi'); break
+        case 'ask-dataset-annur': ask('dataset-annur'); break
         case 'cancel-confirm': confirmMode = ''; pendingImport = null; pendingImportSummary = null; A.render(); break
         case 'import-confirm': applyImport(); break
         case 'integrity': {
@@ -280,7 +328,7 @@
         case 'logout': A.logout(); break
         default: break
       }
-      if (action === 'ask-reset' || action === 'ask-clear' || action === 'cancel-confirm') return
+      if (action.startsWith('ask-') || action === 'cancel-confirm') return
       if (action !== 'export' && action !== 'logout') A.render()
     } catch (error) { A.toast(error.message || String(error), 'error') }
   })
@@ -298,6 +346,9 @@
       } else if (form.dataset.protoForm === 'clear-confirm') {
         if (value.trim() !== 'HAPUS SEMUA') throw new Error('Ketik HAPUS SEMUA persis untuk mengonfirmasi penghapusan.')
         clearAllData()
+      } else if (form.dataset.protoForm === 'dataset-confirm') {
+        if (value.trim() !== 'GANTI DATASET') throw new Error('Ketik GANTI DATASET persis untuk mengonfirmasi penggantian dataset.')
+        loadDatasetPreset(form.dataset.profile)
       }
     } catch (error) { A.toast(error.message || String(error), 'error') }
   })
@@ -310,7 +361,7 @@
 
   window.__SIZISNUR_PROTOTYPE_SETTINGS = {
     backupPayload, validateDatabase, normalizeImportedDatabase, parseBackup,
-    exportFullBackup, resetToDefault, clearAllData, prepareImport, applyImport,
+    exportFullBackup, resetToDefault, clearAllData, loadDatasetPreset, prepareImport, applyImport,
     integrityReport, renderSettings,
   }
   A.render()

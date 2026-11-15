@@ -10,9 +10,11 @@ Tanggal pembaruan: 15 November 2026
 | `node --check js/revision-v5.js` | Lulus |
 | `node --check js/authentication.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `node --test tests/*.test.cjs` | Lulus — 15 suite, 15/15 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 16 suite, 16/16 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
-| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 314 langkah, 61 ilustrasi UI |
+| `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
+| `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 62 tutorial menu, 319 langkah, 62 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
@@ -27,19 +29,20 @@ Tanggal pembaruan: 15 November 2026
 
 ## Cakupan yang diperiksa oleh test otomatis
 
-- Schema demo V5 dan matriks akses tujuh role.
+- Schema demo V5 dan matriks akses tujuh role, diverifikasi pada dataset An-Nur dan Multi-Lembaga.
 - Pilihan awal Login sebagai Muzakki atau Login sebagai Panitia; form email/password, pembatasan akun antar-role, dan halaman Akses Demo Langsung terpisah.
 - Hash kredensial PBKDF2 browser-side, registrasi Muzakki tanpa lembaga, pengajuan lembaga tanpa membuat akun Panitia, pembuatan Admin awal setelah disetujui root, serta penggantian password sementara pada login pertama.
 - Registrasi mandiri Muzakki hanya menyimpan nama lengkap, nomor HP, email, dan alamat; akun awal tidak diberi lembaga, person, kartu Muzakki, atau membership sampai pemilihan lembaga dari dalam akun.
-- Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
+- Halaman operasional yang dapat dirender per role dan halaman yang ditolak; Admin tidak melihat menu khusus Amil, Bendahara, Relawan, atau Pengurus.
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
 - Token tema UI global untuk badge status, label serta input form, aksi berbahaya, progres, panel pemindaian QR, preview panduan, panel hasil panduan, dan aksen teks pada dark mode.
+- Hapus seluruh data yang hanya menyisakan Root, tidak membangkitkan ulang akun Relawan yatim setelah reload, alert pada halaman Muzakki ketika belum ada lembaga, dan pembuatan induk Master Wilayah untuk lembaga baru.
 - Paginasi bersama pada seluruh tabel data, termasuk lembaga yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
 - Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
 - Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
-- Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
+- Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf; preset An-Nur hanya satu lembaga dan preset multi-tenant menambahkan Al-Hikmah serta pengajuan Al-Falah.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
 - Angka penerimaan workbook serta total alokasi Tahap 1 dan Tahap 2 sebesar Rp148.287.500 dan 1.882,6 kg.
 - Batas persetujuan dan reservasi Mustahik pada alokasi.

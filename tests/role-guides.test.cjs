@@ -33,7 +33,7 @@ const createPage = new Function(
 
 const expectedMenus = {
   Admin: [
-    'Profil Lembaga & UPZ', 'Akun & Peran', 'Periode Zakat', 'Tarif & Rumus',
+    'Profil Lembaga & UPZ', 'Akun & Peran', 'Periode Zakat', 'Jadwal & Kehadiran', 'Tarif & Rumus',
     'Mustahik & Kelayakan', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
   ],
   Muzakki: [
@@ -45,7 +45,7 @@ const expectedMenus = {
     'Struk Digital dan Cetak', 'Koreksi Terkendali', 'Evaluasi Prototype'
   ],
   Amil: [
-    'Shift & Kehadiran', 'Penerimaan & Verifikasi · Scan QR',
+    'Jadwal & Kehadiran', 'Penerimaan & Verifikasi · Scan QR',
     'Ketentuan, Dalil, Doa dan Akad', 'Notifikasi', 'Evaluasi Prototype'
   ],
   Bendahara: [

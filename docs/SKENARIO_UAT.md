@@ -6,7 +6,7 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 
 1. Jalankan `index.html` melalui server lokal untuk menguji PWA dan kamera. Kamera hanya tersedia pada browser/perangkat yang mendukung izin kamera dan BarcodeDetector.
 2. Pilih **Masuk / Coba Demo**, lalu masuk sesuai role.
-3. Pastikan data demo belum diubah. Untuk mengulang dari kondisi awal, login sebagai **Admin SiZisNur** lalu buka **Pengaturan Prototype → Reset ke data bawaan**. Ekspor cadangan terlebih dahulu bila perubahan sebelumnya masih diperlukan.
+3. Dataset awal adalah **Dataset Masjid An-Nur** (satu lembaga dengan acuan workbook). Untuk mengulang skenario ini, login sebagai **Admin SiZisNur** lalu buka **Pengaturan Prototype → Kembali ke data default An-Nur**. Untuk uji multi-tenant pilih **Dataset Multi-Lembaga**; untuk uji satu lembaga pilih **Dataset Masjid An-Nur**. Ekspor cadangan terlebih dahulu bila perubahan sebelumnya masih diperlukan.
 4. Sebelum skenario transaksi mandiri, login sebagai Admin untuk memeriksa tarif fitrah, fidyah, biaya makan kafarat, nisab maal, harga emas, nisab profesi, dan kadar zakat pada menu Tarif & Konfigurasi Perhitungan. Ubah hanya lembaga uji, lalu kembali login sebagai role yang sedang diuji.
 5. Catat hasil, browser, perangkat, tanggal, dan temuan yang memerlukan keputusan stakeholder.
 
@@ -118,3 +118,16 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 ## Catatan
 
 UAT ini perlu dijalankan bersama perwakilan Admin, Operator, Amil, Bendahara, Relawan, Pengurus, dan Muzakki. Hasil akhir memerlukan persetujuan tertulis stakeholder, pemeriksaan syariah dan hukum, serta uji keamanan sistem produksi.
+
+
+## I. Reset data, preset dataset, dan pemulihan fitur
+
+1. Login sebagai Admin SiZisNur (Root) dan buka Pengaturan Prototype. Pastikan tersedia ekspor cadangan, impor cadangan, reset ke dataset default, hapus semua data, Dataset Multi-Lembaga, dan Dataset Masjid An-Nur.
+2. Pilih **Dataset Masjid An-Nur**. Pastikan hanya satu lembaga (Masjid An-Nur) tersedia, dengan 129 record Mustahik sintetis dan menu Acuan Workbook 1447H beserta catatan anomali, angka agregat, tahap alokasi, dan temuan sumber.
+3. Pilih **Dataset Multi-Lembaga**. Pastikan dua lembaga contoh (Masjid An-Nur dan Masjid Al-Hikmah) tersedia, serta satu pengajuan Masjid Al-Falah berstatus menunggu. Pastikan data workbook dan 129 Mustahik tetap berada pada An-Nur.
+4. Pilih **Hapus semua data**, ketik frasa konfirmasi `HAPUS SEMUA`, lalu muat ulang halaman. Pastikan tidak ada akun tenant yang tersisa atau dibuat ulang; hanya Admin SiZisNur (Root) yang dapat login. Khususnya, akun Relawan tidak boleh muncul sebagai pengguna tanpa lembaga.
+5. Buat akun Muzakki baru melalui registrasi mandiri saat tidak ada lembaga. Pastikan akun dapat dibuat tanpa memilih lembaga. Setelah login, Dashboard/Layanan Mandiri/Rencana Bayar menjelaskan **Belum ada Lembaga yang terdaftar**; jangan tampilkan tombol transaksi yang belum dapat digunakan.
+6. Dari Root, buat lembaga baru atau setujui pengajuan lembaga. Pastikan satu Daerah induk terbentuk otomatis. Login sebagai Admin lembaga baru, buka Master Wilayah Administratif, tambahkan RW dan RT, lalu uji pemilihannya pada form Muzakki/Mustahik.
+7. Periksa menu masing-masing role pada lembaga baru dan pada kedua preset. Admin harus dapat melihat dan mengatur Jadwal & Kehadiran, tetapi tidak boleh melihat Alokasi & Persetujuan, Penyaluran, atau Laporan & Statistik. Pastikan Amil, Operator, Bendahara, Relawan, dan Pengurus hanya melihat menu sesuai tanggung jawab serta panduan role.
+8. Jalankan `node tests/dataset-role-reset.test.cjs` dan `node tests/prototype-settings.test.cjs`; keduanya harus lulus.
+

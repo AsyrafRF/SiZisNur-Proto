@@ -300,6 +300,15 @@
     const id = A.id('TN')
     const tenant = { id, publicCode: window.__SIZISNUR_GENERATE_TENANT_CODE ? window.__SIZISNUR_GENERATE_TENANT_CODE(cleanName) : id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), kelurahan: String(kelurahan || '').trim(), kecamatan: String(kecamatan || '').trim(), city: String(city || '').trim(), province: String(province || '').trim(), postalCode: '', latitude: '', longitude: '', gallery: [], upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
+    // Every newly approved/created institution receives its own administrative
+    // territory root immediately. RW/RT can then be configured by its Admin.
+    if (typeof window.__SIZISNUR_INIT_TENANT_TERRITORIES === 'function') {
+      window.__SIZISNUR_INIT_TENANT_TERRITORIES(tenant)
+    } else {
+      db.areas ||= []
+      db.areas.push({ id: `AREA-${id}`, tenantId: id, name: tenant.daerah || tenant.name, active: true })
+      tenant.areaId = `AREA-${id}`
+    }
     db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
     db.rules.push(template

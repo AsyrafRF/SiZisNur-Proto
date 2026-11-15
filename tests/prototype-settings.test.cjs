@@ -49,6 +49,9 @@ const settings = window.__SIZISNUR_PROTOTYPE_SETTINGS
 const rootAccountId = 'PA-SIZISNUR-ROOT'
 assert.ok(settings, 'prototype settings module should be loaded')
 assert.ok(A.db.platformAdmins.some((item) => item.id === rootAccountId))
+assert.equal(A.db.tenants.length, 1, 'Masjid An-Nur is the default one-institution dataset')
+assert.equal(A.db.tenants[0].id, 'TN-ANNUR')
+assert.equal(A.db.datasetProfile, 'annur-default')
 assert.equal(A.db.mustahiks.length, 129)
 const prototypeSettingsSource = fs.readFileSync(path.join(root, 'js/prototype-settings.js'), 'utf8')
 assert.ok(!prototypeSettingsSource.includes('new MutationObserver('), 'settings page must not install a subtree observer that can recursively replace the root DOM')
@@ -90,7 +93,7 @@ assert.equal(A.state.platformTab, 'overview')
 assert.ok(window.__SiZisNurTest.html().includes('Ringkasan'), 'leaving settings should return to overview without a DOM observer')
 clickRootTab('prototype-settings')
 page = window.__SiZisNurTest.html()
-for (const text of ['Pengaturan Prototype', 'Ekspor cadangan lengkap', 'Impor cadangan', 'Reset ke data bawaan', 'Hapus semua data simulasi', 'Pemeriksaan integritas sederhana']) {
+for (const text of ['Pengaturan Prototype', 'Ekspor cadangan lengkap', 'Impor cadangan', 'Reset ke dataset default', 'Hapus semua data simulasi', 'Dataset Multi-Lembaga', 'Dataset Masjid An-Nur', 'Pemeriksaan integritas sederhana']) {
   assert.ok(page.includes(text), `settings page should show ${text}`)
 }
 assert.ok(page.includes('Reset ke dataset default'))
@@ -108,6 +111,8 @@ assert.ok(window.__SiZisNurTest.html().includes('Ketik <b>HAPUS SEMUA</b>'))
 clickProtoAction('cancel-confirm')
 
 const liveDb = A.db
+A.db.platformAdmins.find((item) => item.id === rootAccountId).passwordAuth = { algorithm: 'PBKDF2-SHA256', salt: 'root-salt', hash: 'root-hash', iterations: 1 }
+const rootPasswordAuth = JSON.stringify(A.db.platformAdmins.find((item) => item.id === rootAccountId).passwordAuth)
 const oldTransactionCount = liveDb.transactions.length
 const baselineMustahikJson = JSON.stringify(liveDb.mustahiks)
 assert.equal(settings.integrityReport().issues, 0, 'default seed should have no orphaned transaction/tenant relationships')
@@ -115,10 +120,12 @@ assert.equal(settings.integrityReport().issues, 0, 'default seed should have no 
 // Reset restores current seed, including Mustahik rows, without replacing the DB object.
 const resetSummary = settings.resetToDefault({ reload: false })
 assert.equal(A.db, liveDb, 'database object reference must remain stable for other modules')
-assert.equal(resetSummary.tenants, 2)
+assert.equal(resetSummary.tenants, 1)
 assert.equal(resetSummary.mustahiks, 129)
 assert.equal(JSON.stringify(A.db.mustahiks), baselineMustahikJson, 'reset must restore the unchanged Mustahik seed')
-assert.equal(A.db.users.some((item) => item.id === 'US-REL'), true, 'Relawan is part of the default dataset')
+assert.equal(A.db.users.some((item) => item.id === 'US-REL'), true, 'Relawan is part of the An-Nur dataset, not a globally recreated account')
+assert.equal(JSON.stringify(A.db.platformAdmins.find((item) => item.id === rootAccountId).passwordAuth), rootPasswordAuth, 'reset preserves the existing Root credential')
+assert.equal(A.db.datasetProfile, 'annur-default')
 assert.equal(A.user().id, rootAccountId, 'root session remains active after reset')
 
 // Export and import round-trip restores the complete V5 database.
@@ -145,12 +152,44 @@ assert.equal(A.db.mustahiks.length, 0)
 for (const key of ['accounts','households','muzakkiMemberships','supportTickets','journalEntries','syncQueue','periodReports','areas','rws','rts']) assert.deepEqual(Array.from(A.db[key] || []), [], `${key} should be an empty initialized collection after clear-all`)
 assert.equal(A.db.platformAdmins.length, 1)
 assert.equal(A.db.platformAdmins[0].id, rootAccountId)
+assert.equal(JSON.stringify(A.db.platformAdmins[0].passwordAuth), rootPasswordAuth, 'clear-all preserves Root login credentials')
 assert.equal(A.user().id, rootAccountId)
 settings.prepareImport(exported)
 settings.applyImport({ reload: false })
 assert.equal(JSON.stringify(A.db), JSON.stringify(settings.normalizeImportedDatabase(exported.data)), 'import should restore exact database contents after schema normalization')
 assert.equal(A.db.transactions.length, oldTransactionCount + 1)
 assert.equal(A.db.mustahiks.length, 129)
+
+// Dataset presets are explicit and mutually exclusive. The multi-tenant one
+// restores the two mosque records plus the Al-Falah application; the default
+// dataset contains only Masjid An-Nur and keeps its 129 synthetic workbook rows.
+const multiSummary = settings.loadDatasetPreset('multi-tenant', { reload: false })
+assert.equal(multiSummary.tenants, 2)
+assert.equal(multiSummary.applications, 1)
+assert.deepEqual(A.db.tenants.map((item) => item.id).sort(), ['TN-ALHIKMAH', 'TN-ANNUR'])
+assert.equal(A.db.applications[0].name, 'Masjid Al-Falah')
+assert.equal(A.db.datasetProfile, 'multi-tenant')
+assert.equal(A.db.mustahiks.length, 129)
+assert.equal(A.db.platformAdmins.length, 1)
+assert.equal(JSON.stringify(A.db.platformAdmins[0].passwordAuth), rootPasswordAuth)
+assert.equal(A.db.accounts.some((item) => item.id === 'ACC-MZK-01'), true, 'multi-tenant demo Muzakki account is rebuilt')
+assert.deepEqual(A.db.muzakkiMemberships.map((item) => item.tenantId).sort(), ['TN-ALHIKMAH', 'TN-ANNUR'])
+assert.equal(A.db.areas.length, 2, 'both tenants have an administrative master area')
+assert.equal(A.db.rws.filter((item) => item.tenantId === 'TN-ALHIKMAH').length, 2)
+assert.equal(A.db.rts.filter((item) => item.tenantId === 'TN-ALHIKMAH').length, 15)
+const annurSummary = settings.loadDatasetPreset('annur-default', { reload: false })
+assert.equal(annurSummary.tenants, 1)
+assert.equal(A.db.tenants[0].id, 'TN-ANNUR')
+assert.equal(A.db.applications.length, 0)
+assert.equal(A.db.datasetProfile, 'annur-default')
+assert.equal(A.db.platformAdmins.length, 1)
+assert.equal(JSON.stringify(A.db.platformAdmins[0].passwordAuth), rootPasswordAuth)
+assert.equal(A.db.accounts.some((item) => item.id === 'ACC-MZK-01'), true, 'Annur dataset restores the personal demo account')
+assert.deepEqual(A.db.muzakkiMemberships.map((item) => item.tenantId), ['TN-ANNUR'], 'Annur dataset restores only the An-Nur membership')
+assert.equal(A.db.areas.length, 1)
+assert.equal(A.db.rws.filter((item) => item.tenantId === 'TN-ANNUR').length, 1)
+assert.equal(A.db.rts.filter((item) => item.tenantId === 'TN-ANNUR').length, 6)
+assert.throws(() => settings.loadDatasetPreset('unknown', { reload: false }), /Dataset tidak dikenal/)
 
 // Invalid imports must fail before any live data is changed.
 const beforeInvalidImport = JSON.stringify(A.db)
@@ -167,6 +206,10 @@ assert.equal(A.db.transactions.length, 0)
 assert.equal(A.db.mustahiks.length, 0)
 for (const key of ['accounts','households','muzakkiMemberships','supportTickets','journalEntries','syncQueue','periodReports','areas','rws','rts']) assert.deepEqual(Array.from(A.db[key] || []), [], `${key} should be an empty initialized collection after clear-all`)
 assert.equal(A.db.platformAdmins.length, 1)
+assert.equal(A.db.users.length, 0, 'clear-all removes every tenant user, including the orphaned US-REL account')
+assert.equal(A.db.datasetProfile, 'empty')
+assert.equal(JSON.stringify(A.db.platformAdmins[0].passwordAuth), rootPasswordAuth, 'clear-all retains the current root password hash')
+assert.equal(settings.integrityReport().issues, 0, 'empty database must have no orphan references')
 assert.equal(A.user().id, rootAccountId)
 assert.ok(window.__SiZisNurTest.html().includes('Pengaturan Prototype'), 'root remains in prototype settings after clearing all demo data')
 

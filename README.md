@@ -59,7 +59,7 @@ Seluruh tabel data yang menggunakan komponen tabel bersama menampilkan maksimal 
    Buka `http://localhost:8000/`.
 4. Pilih **Masuk / Coba Demo**. Layar awal memisahkan **Login sebagai Muzakki** dan **Login sebagai Panitia**. Pendaftaran Muzakki tersedia dari link di halaman login Muzakki; pendaftaran pada jalur Panitia adalah pengajuan lembaga, bukan pembuatan akun petugas.
 5. Untuk melewati simulasi login, buka **Akses Demo Langsung** yang berada pada halaman terpisah. Pilih akun/role yang ingin diuji.
-6. Untuk menyiapkan ulang simulasi, masuk sebagai **Admin SiZisNur** (`root@sizisnur.demo`) lalu buka tab **Pengaturan Prototype**. Di sana tersedia ekspor/impor cadangan JSON, reset ke data bawaan, hapus semua data, dan pemeriksaan integritas. Reset/hapus memerlukan frasa konfirmasi.
+6. Untuk menyiapkan ulang simulasi, masuk sebagai **Admin SiZisNur** (`root@sizisnur.demo`) lalu buka tab **Pengaturan Prototype**. Di sana tersedia ekspor/impor cadangan JSON, reset default ke Dataset Masjid An-Nur, hapus semua data, pilihan Dataset Multi-Lembaga, dan pemeriksaan integritas. Hapus data menyisakan hanya akun Root; reset serta pergantian dataset memerlukan frasa konfirmasi.
 
 Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan harus menunggu verifikasi nomor HP/email agar data tidak dapat diambil hanya dengan memasukkan kontak milik orang lain.
 
@@ -152,7 +152,8 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 
 ## 10. Modul tambahan
 
-- **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Contoh data demo: Masjid An-Nur / Perumahan Villa Pesona Asri memiliki RW 11 dengan RT 01–06; Masjid Al-Hikmah / Kompleks Buana Citra memiliki RW 1 (RT 01–10) dan RW 2 (RT 01–05). Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
+- **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Dataset default hanya memuat Masjid An-Nur / Perumahan Villa Pesona Asri, RW 11 dengan RT 01–06. Preset Multi-Lembaga juga memuat Masjid Al-Hikmah / Kompleks Buana Citra, RW 1 (RT 01–10) dan RW 2 (RT 01–05). Tenant baru mendapat Daerah induk otomatis; Admin-nya mengatur RW/RT sendiri. Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
+- **Preset dataset prototype:** Dataset Masjid An-Nur adalah default dan memuat satu lembaga beserta operasional dan acuan workbook 1447H. Dataset Multi-Lembaga dapat dipilih terpisah di Pengaturan Prototype dan memuat An-Nur, Al-Hikmah, serta pengajuan Al-Falah menunggu. Hapus semua data menyisakan hanya akun Admin SiZisNur (Root), tanpa membuat ulang akun tenant yatim pada reload. Jika belum ada lembaga, halaman Muzakki menjelaskan kondisi tersebut; aplikasi dan Master Wilayah tetap tersedia untuk lembaga baru. Hak akses menu mengikuti matriks role V5.
 - **Kalkulator zakat:** tersedia pada halaman Muzakki dan menjadi pratinjau wajib saat transaksi pada halaman Muzakki, Operator, serta Amil. Mendukung fitrah, maal, profesi, fidyah, kafarat, dan sedekah; tarif dan nisab mengikuti parameter lembaga.
 - **Panduan role:** halaman Panduan & Bantuan menampilkan langkah dan diagram alur sesuai peran. Amil juga memiliki halaman ketentuan, dalil, niat, doa, dan pengingat akad.
 - **Support & feedback:** laporan bantuan, saran, bug, dan dugaan masalah keamanan tersimpan di database browser lokal. Pengiriman ke sistem monitoring eksternal memerlukan endpoint.
@@ -184,6 +185,9 @@ node --check js/app.js
 node --check js/revision-v5.js
 node --check js/platform-admin.js
 node tests/workbook-rules.test.cjs
+node tests/dataset-role-reset.test.cjs
+node tests/prototype-settings.test.cjs
+node tests/authentication.test.cjs
 node tests/role-guides.test.cjs
 node tests/dark-alerts.test.cjs
 node tests/dark-ui-theme.test.cjs
@@ -199,7 +203,7 @@ node tests/public-portal.test.cjs
 python tools/build-standalone.py
 ```
 
-Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, role dan halaman, hash audit, alokasi, master Daerah/RW/RT per lembaga, validasi relasi lintas lembaga, pemisahan domisili administratif dari kolom H penilaian, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
+Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, preset Dataset Masjid An-Nur dan Multi-Lembaga, hapus semua data yang hanya menyisakan Root, larangan pembuatan ulang akun tenant yatim, alert Muzakki saat belum ada lembaga, master Daerah/RW/RT untuk tenant baru, matriks menu seluruh role, autentikasi simulasi, hash audit, alokasi, validasi relasi lintas lembaga, pemisahan domisili administratif dari kolom H penilaian, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
 
 ## 14. Struktur folder
 
@@ -224,6 +228,9 @@ manifest.webmanifest
 service-worker.js
 standalone/SiZisNur_Prototype_V5_Standalone.html
 tests/workbook-rules.test.cjs
+tests/dataset-role-reset.test.cjs
+tests/prototype-settings.test.cjs
+tests/authentication.test.cjs
 tests/transaction-calculator.test.cjs
 tests/tenant-territories.test.cjs
 tools/build-standalone.py

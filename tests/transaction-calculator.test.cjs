@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 let source = fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8');
 source = source.replace(
   'render();\n})();',
-  'window.__SiZisNurTest={html:()=>elements.app.innerHTML};\nrender();\n})();'
+  'window.__SiZisNurTest={html:()=>elements.app.innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'
 );
 source += '\n' + fs.readFileSync(path.join(root, 'js', 'revision-v5.js'), 'utf8');
 

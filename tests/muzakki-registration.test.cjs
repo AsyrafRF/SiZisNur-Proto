@@ -9,7 +9,7 @@ const revisionPath = path.join(__dirname, '..', 'js', 'revision-v5.js');
 let source = fs.readFileSync(appPath, 'utf8');
 source = source.replace(
   'render();\n})();',
-  'window.__SiZisNurTest={navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML};\nrender();\n})();'
+  'window.__SiZisNurTest={navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'
 );
 source += '\n' + fs.readFileSync(revisionPath, 'utf8');
 

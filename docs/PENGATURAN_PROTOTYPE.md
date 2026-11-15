@@ -16,12 +16,29 @@ Halaman login simulasi terpisah dari akses demo langsung. Akun seed menggunakan 
 |---|---|
 | **Ekspor cadangan lengkap** | Mengunduh seluruh database browser dalam satu file JSON, termasuk Lembaga, pengguna, tarif, transaksi, setoran, Mustahik, relasi keluarga, distribusi, pengaturan platform, dan audit. |
 | **Impor cadangan** | Memvalidasi format JSON, schema V5, koleksi wajib, dan ID Lembaga sebelum menampilkan konfirmasi. Setelah disetujui, database lokal diganti dengan isi file. |
-| **Reset ke data bawaan** | Mengembalikan data ke seed SiZisNur saat ini. Akun contoh, Lembaga contoh, tarif, transaksi, dan konfigurasi dikembalikan. Mustahik kembali ke salinan seed yang disertakan pada project. |
-| **Hapus semua data simulasi** | Mengosongkan seluruh koleksi operasional, termasuk Lembaga, pengguna lembaga, transaksi, Mustahik, tarif, setoran, alokasi, penyaluran, notifikasi, dan audit. Satu akun Admin SiZisNur dan pengaturan platform default tetap ada agar konsol masih dapat diakses. |
+| **Reset ke dataset default / Kembali ke data default** | Mengembalikan **Dataset Masjid An-Nur**: satu lembaga Masjid An-Nur, data operasional contoh, tarif, periode, jadwal, struktur wilayah RW/RT, dan acuan workbook 1447H. Akun root dan kredensial root yang sedang dipakai tetap dipertahankan; akun demo lainnya dibuat kembali dari dataset. |
+| **Hapus semua data simulasi** | Mengosongkan seluruh data simulasi: Lembaga, akun Panitia dan Muzakki, person, membership, transaksi, Mustahik, tarif, setoran, alokasi, penyaluran, notifikasi, master wilayah, serta audit. **Hanya satu akun Admin SiZisNur (Root) yang tersisa**, termasuk password/hash root yang sedang dipakai. Pengaturan teknis platform dan struktur aplikasi tetap ada agar fitur tidak ikut terhapus. |
+| **Dataset Multi-Lembaga** | Mengganti data lokal dengan dua masjid contoh, **Masjid An-Nur** dan **Masjid Al-Hikmah**, beserta satu pengajuan **Masjid Al-Falah** dengan status menunggu. Data acuan workbook dan 129 Mustahik tetap terikat ke An-Nur; dataset ini dipakai untuk uji isolasi multi-tenant. |
+| **Dataset Masjid An-Nur** | Mengganti data lokal dengan satu lembaga, **Masjid An-Nur**, berisi data operasional demo, 129 record Mustahik sintetis, dan modul/keterangan acuan workbook 1447H/2026M. Ini adalah dataset default saat instalasi maupun ketika reset default dipilih. |
 | **Pemeriksaan integritas** | Menghitung sejumlah relasi orphan dasar untuk pengguna, periode, transaksi, Mustahik, orang, dan penyaluran. Ini bukan audit akuntansi atau pemeriksaan keamanan. |
 | **Kembalikan tema terang / Keluar** | Menghapus preferensi tema lokal atau mengakhiri sesi root yang sedang aktif. |
 
-Reset dan hapus data memerlukan frasa konfirmasi `RESET DEFAULT` atau `HAPUS SEMUA`. Selalu ekspor cadangan sebelum tindakan yang mengganti atau menghapus data yang masih diperlukan.
+Reset dan hapus data memerlukan frasa konfirmasi `RESET DEFAULT` atau `HAPUS SEMUA`. Pergantian ke preset Multi-Lembaga atau Masjid An-Nur memerlukan frasa `GANTI DATASET`. Selalu ekspor cadangan sebelum tindakan yang mengganti atau menghapus data yang masih diperlukan.
+
+
+## Perilaku setelah hapus data dan pembuatan lembaga baru
+
+- Setelah **Hapus semua data simulasi**, koleksi pengguna lembaga kosong. Tidak ada akun Relawan, Muzakki, Admin lembaga, atau akun demo lain yang dibuat ulang otomatis saat browser dimuat ulang. Satu-satunya akun yang dipertahankan adalah Admin SiZisNur (Root).
+- Penghapusan tidak menghapus kode aplikasi, matriks hak akses, komponen Master Wilayah, konfigurasi form, ataupun fungsi halaman. Jika belum ada lembaga, halaman Muzakki menampilkan pesan **“Belum ada Lembaga yang terdaftar”** dan menjelaskan bahwa akun tetap aktif tetapi perlu menunggu lembaga dibuat/disetujui. Fitur memilih lembaga, profil keanggotaan, keluarga, kalkulator, dan rencana bayar baru aktif sesuai prasyarat setelah lembaga tersedia.
+- Ketika Root membuat lembaga baru atau menyetujui pengajuan lembaga, sistem otomatis membuat satu record induk **Daerah** untuk tenant baru. RW dan RT sengaja belum diisi; Admin lembaga mengaturnya melalui **Profil Lembaga → Master wilayah administratif**. Dengan demikian reset tidak menghilangkan fitur, tetapi hanya menghapus record data wilayah lama.
+- Master wilayah seed An-Nur berisi Perumahan Villa Pesona Asri, RW 11, RT 01–06. Pada preset Multi-Lembaga, Al-Hikmah juga memiliki Kompleks Buana Citra, RW 1 (RT 01–10) dan RW 2 (RT 01–05). Tenant lain memulai dari Daerah induk dan mengatur RW/RT sendiri.
+
+## Dataset dan hak akses role
+
+- **Dataset Masjid An-Nur** adalah default. Dataset ini hanya memiliki satu tenant dan satu set operasional An-Nur. Angka, rumus, saldo, catatan anomali, dan penjelasan workbook 1447H/2026M tetap dijelaskan pada `docs/IMPLEMENTASI_WORKBOOK_1447H.md` dan modul Acuan Workbook.
+- **Dataset Multi-Lembaga** menambahkan Al-Hikmah dan pengajuan Al-Falah untuk uji multi-tenant. Data workbook dan 129 record Mustahik sintetis tetap berada di tenant An-Nur, bukan disalin ke Al-Hikmah.
+- Menu Admin lembaga mencakup profil lembaga, akun & peran, periode, penjadwalan Amil, tarif, data Mustahik/kelayakan, notifikasi dan audit. Admin dapat membuat/mengubah jadwal, sedangkan Amil melihat jadwal dan menjalankan shift/verifikasi. Menu Operator (input konter), Bendahara (setoran/jurnal/alokasi/rekonsiliasi), Relawan (batch penyaluran), serta Pengurus (persetujuan/laporan baca) mengikuti kewenangan masing-masing dan tidak digabung ke akun Admin. Matriks izin V5 adalah sumber acuan tunggal.
+- Pengujian `tests/dataset-role-reset.test.cjs` memeriksa reset, reload tanpa akun yatim, alert Muzakki saat tanpa lembaga, master wilayah tenant baru, preset, dan menu role pada kedua dataset.
 
 ## Format cadangan
 

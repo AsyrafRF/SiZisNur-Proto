@@ -77,31 +77,34 @@
   })
   window.__SIZISNUR_GENERATE_TENANT_CODE = generateTenantPublicCode
 
-  const demoMuzakki = db.users.find((u) => u.id === 'US-MZK')
-  if (demoMuzakki) {
+  // Do not synthesize users during boot. Demo tenant users come from the selected
+  // dataset seed; after Hapus Semua Data, there must be no tenant user to resurrect.
+  function initializeDemoMuzakkiRelationships() {
+    const demoMuzakki = db.users.find((u) => u.id === 'US-MZK')
+    if (!demoMuzakki) return false
     demoMuzakki.name = 'Muzakki Demo 01'
     demoMuzakki.role = 'Muzakki'
     demoMuzakki.accountId = 'ACC-MZK-01'
     demoMuzakki.personId = 'PS-01'
+    if (!db.accounts.some((x) => x.id === 'ACC-MZK-01')) db.accounts.push({
+      id: 'ACC-MZK-01', userId: 'US-MZK', displayName: 'Muzakki Demo 01', phone: '081200000101', email: 'muzakki01@demo.invalid', consentAt: null,
+    })
+    if (!db.households.some((x) => x.accountId === 'ACC-MZK-01')) db.households.push(
+      { id: 'HH-001', accountId: 'ACC-MZK-01', name: 'Ahmad Santoso', relation: 'Kepala keluarga' },
+      { id: 'HH-002', accountId: 'ACC-MZK-01', name: 'Aisyah Santoso', relation: 'Pasangan' },
+      { id: 'HH-003', accountId: 'ACC-MZK-01', name: 'Hasan Santoso', relation: 'Anak' },
+      { id: 'HH-004', accountId: 'ACC-MZK-01', name: 'Maryam Santoso', relation: 'Anak' },
+    )
+    if (db.tenants.some((tenant) => tenant.id === 'TN-ANNUR') && db.persons.some((person) => person.id === 'PS-01' && person.tenantId === 'TN-ANNUR') && !db.muzakkiMemberships.some((x) => x.userId === 'US-MZK' && x.tenantId === 'TN-ANNUR')) db.muzakkiMemberships.push({
+      id: 'MBR-ANNUR', userId: 'US-MZK', tenantId: 'TN-ANNUR', personId: 'PS-01', regionType: 'VPA', regionName: 'Perumahan Villa Pesona Asri', rt: 'RT 01', joinedAt: timestamp(),
+    })
+    if (db.tenants.some((tenant) => tenant.id === 'TN-ALHIKMAH') && db.persons.some((person) => person.id === 'PS-T2' && person.tenantId === 'TN-ALHIKMAH') && !db.muzakkiMemberships.some((x) => x.userId === 'US-MZK' && x.tenantId === 'TN-ALHIKMAH')) db.muzakkiMemberships.push({
+      id: 'MBR-ALHIKMAH', userId: 'US-MZK', tenantId: 'TN-ALHIKMAH', personId: 'PS-T2', regionType: 'Non VPA', regionName: 'Non VPA', rt: '', joinedAt: timestamp(),
+    })
+    return true
   }
-  if (!db.users.some((u) => u.id === 'US-REL')) db.users.push({ id: 'US-REL', tenantId: 'TN-ANNUR', name: 'Relawan Demo', role: 'Relawan', email: 'relawan@demo.invalid', active: true })
-  const oldAdmin = db.users.find((u) => u.id === 'US-PTG')
-  if (oldAdmin) { oldAdmin.name = 'Admin Pendataan'; oldAdmin.email = 'admin.data@demo.invalid'; oldAdmin.role = 'Admin' }
-  if (!db.accounts.some((x) => x.id === 'ACC-MZK-01')) db.accounts.push({
-    id: 'ACC-MZK-01', userId: 'US-MZK', displayName: 'Muzakki Demo 01', phone: '081200000101', email: 'muzakki01@demo.invalid', consentAt: null,
-  })
-  if (!db.households.some((x) => x.accountId === 'ACC-MZK-01')) db.households.push(
-    { id: 'HH-001', accountId: 'ACC-MZK-01', name: 'Ahmad Santoso', relation: 'Kepala keluarga' },
-    { id: 'HH-002', accountId: 'ACC-MZK-01', name: 'Aisyah Santoso', relation: 'Pasangan' },
-    { id: 'HH-003', accountId: 'ACC-MZK-01', name: 'Hasan Santoso', relation: 'Anak' },
-    { id: 'HH-004', accountId: 'ACC-MZK-01', name: 'Maryam Santoso', relation: 'Anak' },
-  )
-  if (demoMuzakki && !db.muzakkiMemberships.some((x) => x.userId === 'US-MZK' && x.tenantId === 'TN-ANNUR')) db.muzakkiMemberships.push({
-    id: 'MBR-ANNUR', userId: 'US-MZK', tenantId: 'TN-ANNUR', personId: 'PS-01', regionType: 'VPA', regionName: 'Perumahan Villa Pesona Asri', rt: 'RT 01', joinedAt: timestamp(),
-  })
-  if (demoMuzakki && !db.muzakkiMemberships.some((x) => x.userId === 'US-MZK' && x.tenantId === 'TN-ALHIKMAH')) db.muzakkiMemberships.push({
-    id: 'MBR-ALHIKMAH', userId: 'US-MZK', tenantId: 'TN-ALHIKMAH', personId: 'PS-T2', regionType: 'Non VPA', regionName: 'Non VPA', rt: '', joinedAt: timestamp(),
-  })
+  window.__SIZISNUR_REBUILD_DEMO_MUZAKKI = initializeDemoMuzakkiRelationships
+  initializeDemoMuzakkiRelationships()
   const annur = db.tenants.find((x) => x.id === 'TN-ANNUR')
   if (annur) { annur.daerah ||= 'Perumahan Villa Pesona Asri'; annur.upzType ||= 'UPZ Masjid / Perumahan'; annur.baznasArea ||= 'BAZNAS Kota / Kabupaten (perlu ditetapkan)' }
 
@@ -117,6 +120,10 @@
     tenant.daerah = area.name
     return area
   }
+  window.__SIZISNUR_INIT_TENANT_TERRITORIES = (tenant) => {
+    if (!tenant || !db.tenants.some((item) => item.id === tenant.id)) throw new Error('Lembaga belum tersimpan; master wilayah belum dapat dibuat.')
+    return ensureArea(tenant, tenant.daerah || tenant.name)
+  }
   function ensureRw(tenantId, areaId, name) {
     let rw = db.rws.find((x) => x.tenantId === tenantId && x.areaId === areaId && normalize(x.name) === normalize(name))
     if (!rw) { rw = { id: `RW-${tenantId}-${String(name).replace(/[^a-z0-9]+/gi, '-')}`, tenantId, areaId, name: String(name), active: true }; db.rws.push(rw) }
@@ -127,19 +134,28 @@
     if (!rt) { rt = { id: `RT-${rwId}-${String(name).replace(/[^a-z0-9]+/gi, '-')}`, tenantId, rwId, name: String(name), active: true }; db.rts.push(rt) }
     return rt
   }
-  db.tenants.forEach((tenant) => { ensureArea(tenant, tenant.id === 'TN-ANNUR' ? 'Perumahan Villa Pesona Asri' : tenant.id === 'TN-ALHIKMAH' ? 'Kompleks Buana Citra' : (tenant.daerah || tenant.name)); delete tenant.rt })
-  if (!db.rws.some((x) => x.tenantId === 'TN-ANNUR')) {
-    const area = db.areas.find((x) => x.tenantId === 'TN-ANNUR')
-    const rw = ensureRw('TN-ANNUR', area.id, 'RW 11')
-    for (let i = 1; i <= 6; i++) ensureRt('TN-ANNUR', rw.id, `RT ${String(i).padStart(2, '0')}`)
-  }
-  if (!db.rws.some((x) => x.tenantId === 'TN-ALHIKMAH')) {
-    const area = db.areas.find((x) => x.tenantId === 'TN-ALHIKMAH')
-    for (const [rwName, count] of [['RW 1', 10], ['RW 2', 5]]) {
-      const rw = ensureRw('TN-ALHIKMAH', area.id, rwName)
-      for (let i = 1; i <= count; i++) ensureRt('TN-ALHIKMAH', rw.id, `RT ${String(i).padStart(2, '0')}`)
+  function rebuildSeedTenantTerritories() {
+    db.tenants.forEach((tenant) => { ensureArea(tenant, tenant.id === 'TN-ANNUR' ? 'Perumahan Villa Pesona Asri' : tenant.id === 'TN-ALHIKMAH' ? 'Kompleks Buana Citra' : (tenant.daerah || tenant.name)); delete tenant.rt })
+    if (db.tenants.some((tenant) => tenant.id === 'TN-ANNUR') && !db.rws.some((x) => x.tenantId === 'TN-ANNUR')) {
+      const area = db.areas.find((x) => x.tenantId === 'TN-ANNUR')
+      if (area) {
+        const rw = ensureRw('TN-ANNUR', area.id, 'RW 11')
+        for (let i = 1; i <= 6; i++) ensureRt('TN-ANNUR', rw.id, `RT ${String(i).padStart(2, '0')}`)
+      }
     }
+    if (db.tenants.some((tenant) => tenant.id === 'TN-ALHIKMAH') && !db.rws.some((x) => x.tenantId === 'TN-ALHIKMAH')) {
+      const area = db.areas.find((x) => x.tenantId === 'TN-ALHIKMAH')
+      if (area) {
+        for (const [rwName, count] of [['RW 1', 10], ['RW 2', 5]]) {
+          const rw = ensureRw('TN-ALHIKMAH', area.id, rwName)
+          for (let i = 1; i <= count; i++) ensureRt('TN-ALHIKMAH', rw.id, `RT ${String(i).padStart(2, '0')}`)
+        }
+      }
+    }
+    return { areas: db.areas.length, rws: db.rws.length, rts: db.rts.length }
   }
+  window.__SIZISNUR_REBUILD_TENANT_TERRITORIES = rebuildSeedTenantTerritories
+  rebuildSeedTenantTerritories()
   function areaFor(tenantId = currentTenantId()) {
     let area = db.areas.find((x) => x.tenantId === tenantId && x.active !== false) || null
     if (!area) { const tenant = db.tenants.find((x) => x.id === tenantId); if (tenant) { area = ensureArea(tenant, tenant.daerah || tenant.name); A.persist() } }
@@ -251,13 +267,17 @@
     r.kafaratMealRate ??= Number(r.kafaratRate || 0)
     r.zakatRate ??= 2.5
   })
-  db.audit.slice().reverse().forEach((entry) => {
-    if (!entry.hash) {
-      const prev = db.audit.slice().reverse().find((x) => x.at < entry.at && x.hash)?.hash || 'GENESIS'
-      entry.prevHash = prev
-      entry.hash = hashAudit(`${prev}|${entry.id}|${entry.at}|${entry.by}|${entry.type}|${entry.detail}`)
-    }
-  })
+  function rebuildAuditHashes() {
+    db.audit.slice().reverse().forEach((entry) => {
+      if (!entry.hash) {
+        const prev = db.audit.slice().reverse().find((x) => x.at < entry.at && x.hash)?.hash || 'GENESIS'
+        entry.prevHash = prev
+        entry.hash = hashAudit(`${prev}|${entry.id}|${entry.at}|${entry.by}|${entry.type}|${entry.detail}`)
+      }
+    })
+  }
+  window.__SIZISNUR_REBUILD_AUDIT_HASHES = rebuildAuditHashes
+  rebuildAuditHashes()
 
   const roles = ['Admin', 'Muzakki', 'Operator', 'Amil', 'Bendahara', 'Relawan', 'Pengurus']
   A.ROLES.splice(0, A.ROLES.length, ...roles)
@@ -267,7 +287,7 @@
     users: ['Akun & Peran', '♙', ['Admin']],
     periods: ['Periode Zakat', '▦', ['Admin']],
     settings: ['Tarif & Rumus', '⚙', ['Admin']],
-    schedule: ['Shift & Kehadiran', '◷', ['Amil']],
+    schedule: ['Jadwal & Kehadiran', '◷', ['Amil']],
     muzakki: ['Data Muzakki', '♧', ['Operator', 'Amil']],
     transactions: ['Penerimaan & Verifikasi', '▤', ['Operator', 'Amil', 'Pengurus']],
     deposits: ['Serah Terima & Rekonsiliasi', '▣', ['Bendahara', 'Pengurus']],
@@ -291,7 +311,7 @@
   const pageAccess = {
     dashboard: roles.filter((role) => role !== 'Muzakki'),
     tenant: ['Admin', 'Pengurus'], users: ['Admin'], periods: ['Admin'], settings: ['Admin'],
-    schedule: ['Amil'], muzakki: ['Admin', 'Operator', 'Amil'], transactions: ['Operator', 'Amil', 'Pengurus'],
+    schedule: ['Admin', 'Amil'], muzakki: ['Admin', 'Operator', 'Amil'], transactions: ['Operator', 'Amil', 'Pengurus'],
     deposits: ['Bendahara', 'Pengurus'], ledger: ['Bendahara', 'Pengurus'], corrections: ['Bendahara', 'Amil', 'Operator', 'Pengurus'],
     mustahik: ['Admin'], allocation: ['Bendahara', 'Pengurus'], distribution: ['Bendahara', 'Relawan'],
     incentives: ['Bendahara', 'Pengurus'], reports: ['Bendahara', 'Pengurus'], workbook: ['Admin', 'Bendahara', 'Pengurus'],
@@ -305,6 +325,7 @@
     if (page === 'workbook' && currentTenantId() !== 'TN-ANNUR') return false
     return pageAccess[page].includes(u.role)
   }
+  window.__SIZISNUR_ROLE_PAGE_ACCESS = Object.freeze(Object.fromEntries(Object.entries(pageAccess).map(([key, value]) => [key, Object.freeze([...value])])))
   A.set('can', canV5)
   A.set('assertRole', (allowed) => {
     const u = activeUser()
@@ -826,9 +847,10 @@
     const account = accountForUser()
     const membership = memberForUser()
     const person = currentAccountPerson()
-    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id)
+    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id && db.tenants.some((tenant) => tenant.id === x.tenantId && tenant.status === 'aktif'))
+    const anyActiveTenant = db.tenants.some((tenant) => tenant.status === 'aktif')
     if (!tenants.length) {
-      return `${A.boxhead('Akun Muzakki', 'Pendaftaran akun berhasil. Hubungkan akun Anda ke lembaga zakat melalui menu ini untuk mulai menggunakan layanan mandiri.')}
+      return `${A.boxhead('Dashboard Zakat Saya', 'Ringkasan pribadi akan aktif setelah akun terhubung dengan lembaga zakat.')}
         <section class="card my-zis-dashboard">
           <div class="my-zis-dashboard-head"><div><span class="eyebrow">AREA PRIBADI MUZAKKI</span><h2>Assalamu’alaikum, ${esc((account?.displayName || u.name).split(' ')[0])}</h2><p>Akun Anda belum terhubung dengan lembaga mana pun.</p></div><span class="tag warn">Belum terhubung</span></div>
           <div class="two-col">
@@ -838,9 +860,9 @@
               <div><span>Email</span><b>${esc(account?.email || '—')}</b></div>
               <div><span>Alamat lengkap</span><b>${esc(account?.address || '—')}</b></div>
             </div></section>
-            <section class="card"><h3>Daftar ke lembaga</h3><p>Pilih lembaga yang akan Anda ikuti setelah akun dibuat. Status domisili, RW/RT, dan alamat untuk lembaga tersebut diisi pada tahap ini.</p>${action('Pilih lembaga', 'tenant-join', 'primary')}</section>
+            <section class="card"><h3>Daftar ke lembaga</h3><p>Pilih lembaga yang akan Anda ikuti setelah akun dibuat. Status domisili, RW/RT, dan alamat untuk lembaga tersebut diisi pada tahap ini.</p>${anyActiveTenant ? action('Pilih lembaga', 'tenant-join', 'primary') : '<span class="tag warn">Belum ada lembaga terdaftar</span>'}</section>
           </div>
-          <div class="alert light">Anda dapat menghubungkan akun ke satu atau beberapa lembaga. Setiap lembaga memiliki data keanggotaan, periode, transaksi, dan QR masing-masing.</div>
+          ${anyActiveTenant ? '<div class="alert light">Anda dapat menghubungkan akun ke satu atau beberapa lembaga. Setiap lembaga memiliki data keanggotaan, periode, transaksi, dan QR masing-masing.</div>' : '<div class="alert warn"><b>Belum ada Lembaga yang terdaftar.</b> Silakan tunggu Admin SiZisNur menambahkan lembaga atau menyetujui pengajuan lembaga. Setelah ada lembaga aktif, tombol Pilih lembaga akan tersedia.</div>'}
         </section>`
     }
     const period = currentPeriod()
@@ -905,7 +927,8 @@
   function muzakkiServicesPage() {
     const u = activeUser()
     const account = accountForUser()
-    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id)
+    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id && db.tenants.some((tenant) => tenant.id === x.tenantId && tenant.status === 'aktif'))
+    const anyActiveTenant = db.tenants.some((tenant) => tenant.status === 'aktif')
     if (!tenants.length) {
       return `${A.boxhead('Layanan Mandiri', 'Kelola data pribadi dan siapkan layanan setelah akun terhubung dengan lembaga.', '')}
         <section class="card">
@@ -916,8 +939,8 @@
             <div><span>Email</span><b>${esc(account?.email || '—')}</b></div>
             <div><span>Alamat lengkap</span><b>${esc(account?.address || '—')}</b></div>
           </div>
-          <div class="form-actions">${action('Pilih lembaga', 'tenant-join', 'primary')}</div>
-          <div class="alert light">Setelah bergabung, halaman ini menyediakan pengaturan profil pada lembaga, data keluarga tanggungan, dan kalkulator zakat.</div>
+          <div class="form-actions">${anyActiveTenant ? action('Pilih lembaga', 'tenant-join', 'primary') : '<span class="tag warn">Belum ada lembaga terdaftar</span>'}</div>
+          <div class="alert ${anyActiveTenant ? 'light' : 'warn'}">${anyActiveTenant ? 'Setelah bergabung, halaman ini menyediakan pengaturan profil pada lembaga, data keluarga tanggungan, dan kalkulator zakat.' : '<b>Belum ada Lembaga yang terdaftar.</b> Akun Anda tetap aktif. Admin SiZisNur perlu menambahkan lembaga atau menyetujui pengajuan terlebih dahulu.'}</div>
         </section>`
     }
     const person = currentAccountPerson()
@@ -936,11 +959,13 @@
     expirePending()
     const u = activeUser()
     const account = accountForUser()
-    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id)
+    const tenants = db.muzakkiMemberships.filter((x) => x.userId === u.id && db.tenants.some((tenant) => tenant.id === x.tenantId && tenant.status === 'aktif'))
+    const anyActiveTenant = db.tenants.some((tenant) => tenant.status === 'aktif')
     if (!tenants.length) {
       return `${A.boxhead('Rencana Bayar Zakat', 'Siapkan rencana pembayaran zakat dari akun pribadi Anda.', '')}
         <section class="card"><div class="my-zis-dashboard-head"><div><span class="eyebrow">RENCANA PEMBAYARAN</span><h2>Hubungkan akun ke lembaga terlebih dahulu</h2><p>Untuk membuat rencana bayar, akun harus terdaftar pada lembaga yang menyediakan periode zakat aktif.</p></div><span class="tag warn">Belum terhubung</span></div>
-          <div class="form-actions">${action('Pilih lembaga', 'tenant-join', 'primary')}${actionFor('Buka Layanan Mandiri', 'quick-page', 'muzakki-services', 'sm')}</div></section>`
+          ${anyActiveTenant ? '<div class="alert light">Pilih lembaga aktif pada menu Layanan Mandiri terlebih dahulu.</div>' : '<div class="alert warn"><b>Belum ada Lembaga yang terdaftar.</b> Pembuatan rencana pembayaran akan tersedia setelah lembaga ditambahkan dan diaktifkan oleh Admin SiZisNur.</div>'}
+          <div class="form-actions">${anyActiveTenant ? action('Pilih lembaga', 'tenant-join', 'primary') : ''}${actionFor('Buka Layanan Mandiri', 'quick-page', 'muzakki-services', 'sm')}</div></section>`
     }
     const member = memberForUser()
     const person = currentAccountPerson()
@@ -1298,7 +1323,11 @@
     const account = accountForUser(user.id)
     if (!account) throw new Error('Data akun Muzakki tidak ditemukan')
     const available = db.tenants.filter((tenant) => tenant.status === 'aktif' && !memberForUser(user.id, tenant.id))
-    if (!available.length) return A.toast('Belum ada lembaga aktif lain yang dapat dipilih', 'info')
+    if (!available.length) {
+      const activeTenants = db.tenants.filter((tenant) => tenant.status === 'aktif')
+      if (!activeTenants.length) return A.modal('Belum ada lembaga terdaftar', `${alert('Saat ini belum ada lembaga yang terdaftar dan aktif di SiZisNur. Akun Muzakki Anda tetap tersimpan, tetapi pendaftaran ke lembaga belum dapat dilakukan.', 'warn')}<p>Admin SiZisNur perlu menambahkan lembaga atau menyetujui pengajuan lembaga terlebih dahulu. Setelah lembaga aktif, buka kembali menu Layanan Mandiri untuk mendaftar.</p><div class="form-actions"><button type="button" class="btn primary" data-modal-close>Tutup</button></div>`)
+      return A.modal('Tidak ada lembaga baru untuk dipilih', `${alert('Semua lembaga aktif yang tersedia sudah terhubung dengan akun Anda.', 'light')}<div class="form-actions"><button type="button" class="btn primary" data-modal-close>Tutup</button></div>`)
+    }
     const selected = available[0]
     A.modal('Daftar ke lembaga', `<form data-v5-form="join-tenant">${A.sel('Pilih lembaga yang ingin diikuti', 'tenantId', available.map((x) => [x.id, `${x.name} · ${x.publicCode || x.id}`]), selected.id)}<div id="tenant-join-preview">${tenantJoinProfileMarkup(selected)}</div><div class="grid-form"><div data-domicile-fields>${domicileFieldMarkup(null, selected.id)}</div>${A.textarea('Alamat lengkap untuk lembaga ini', 'address', account.address || '')}</div><div class="alert light">Periksa nama, ID unik, daerah, alamat, peta, dan foto sebelum mendaftar agar tidak tertukar dengan lembaga bernama mirip. Pendaftaran akun pribadi sudah selesai; pemilihan lembaga dilakukan dari dalam akun.</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data akun dan domisili untuk layanan lembaga yang dipilih</label>${formButton('Daftar dan hubungkan lembaga')}</form>`)
   }
@@ -1557,12 +1586,13 @@
       Admin: {
         intro: 'Anda bertugas menyiapkan lembaga, akun petugas, periode, parameter perhitungan, dan kelayakan Mustahik. Transaksi yang sudah disahkan Amil tidak boleh diedit atau dihapus langsung.',
         ready: ['Pastikan lembaga yang tampil di bagian atas sudah benar', 'Siapkan keputusan pengurus tentang tarif dan periode yang akan dipakai', 'Gunakan data sintetis pada prototype dan jangan memasukkan NIK asli warga'],
-        flow: ['Periksa profil lembaga', 'Buat akun dan tetapkan role', 'Siapkan periode dan parameter', 'Input serta verifikasi Mustahik', 'Pantau laporan dan audit'],
+        flow: ['Periksa profil lembaga', 'Buat akun dan tetapkan role', 'Siapkan periode, jadwal dan parameter', 'Input serta verifikasi Mustahik', 'Pantau ringkasan dan audit'],
         modules: [
           { menu: 'Ringkasan', goal: 'Melihat kondisi umum lembaga sebelum memulai pekerjaan.', steps: ['Setelah masuk, halaman Ringkasan tampil sebagai halaman awal. Perhatikan nama lembaga dan periode yang tertulis di bagian atas agar tidak bekerja pada lembaga yang keliru.', 'Baca empat kartu angka. Uang dan beras ditampilkan terpisah. Angka penerimaan belum tentu sama dengan kas yang sudah selesai direkonsiliasi.', 'Pada bagian grafik, gunakan pilihan kategori untuk menyaring penerimaan. Pilih Semua kategori bila ingin melihat seluruh kategori zakat.', 'Gunakan bagian alur operasional untuk memahami posisi proses. Untuk pekerjaan Admin, lanjutkan ke menu yang sesuai di sidebar.'], preview: [['Lembaga', 'Masjid An-Nur'], ['Periode', 'Periode aktif atau belum dibuka'], ['Kartu ringkasan', 'Uang · Beras · Verifikasi · Distribusi'], ['Filter grafik', 'Semua kategori'], ['Tombol berikutnya', 'Buka menu Mustahik']], result: 'Anda mengetahui periode yang aktif, jumlah penerimaan yang tercatat, dan bagian pekerjaan yang masih menunggu role lain.', caution: 'Jangan menyamakan angka transaksi tercatat dengan uang yang sudah diterima Bendahara. Status setiap proses perlu diperiksa pada menu masing-masing.' },
           { menu: 'Profil Lembaga & UPZ', goal: 'Memastikan identitas masjid atau lembaga dan wilayah UPZ benar sebelum data warga dimasukkan.', steps: ['Buka Profil Lembaga & UPZ pada kelompok menu Manajemen & Sistem.', 'Pada bagian Identitas lembaga, isi Nama lembaga dan Daerah. Contoh Daerah adalah Perumahan Villa Pesona Asri.', 'Lengkapi nomor telepon, email, jenis UPZ, wilayah BAZNAS tujuan, dan alamat sesuai data lembaga yang sudah disepakati.', 'Periksa ulang ejaan nama dan Daerah karena informasi ini menjadi identitas yang tampil saat Muzakki mendaftar.', 'Tekan Simpan profil lembaga. Setelah pesan berhasil muncul, periksa kembali nilai yang tersimpan pada bagian profil.'], preview: [['Nama lembaga', 'Masjid An-Nur'], ['Daerah', 'Perumahan Villa Pesona Asri'], ['Jenis UPZ', 'UPZ Masjid / Perumahan'], ['Wilayah BAZNAS tujuan', 'Isi sesuai keputusan kerja sama'], ['Tombol', 'Simpan profil lembaga']], result: 'Nama dan Daerah lembaga tampil konsisten pada aplikasi dan menjadi acuan pendataan wilayah Muzakki.', caution: 'Jangan mengisi wilayah BAZNAS tujuan berdasarkan perkiraan. Pastikan hubungan UPZ dan wilayah pelaporan sudah dikonfirmasi oleh pengurus atau BAZNAS.' },
           { menu: 'Akun & Peran', goal: 'Membuat akun panitia dan memberikan akses sesuai pekerjaan masing-masing.', steps: ['Buka Akun & Peran, lalu tekan Tambah pengguna.', 'Isi Nama lengkap dan Alamat email. Gunakan alamat yang benar agar akun mudah dikenali.', 'Pilih satu role yang sesuai. Admin mengelola sistem, Operator menginput transaksi, Amil memverifikasi pembayaran, Bendahara mengelola kas, Relawan menjalankan distribusi, dan Pengurus melakukan pengawasan serta persetujuan.', 'Tekan Simpan. Periksa nama, email, role, dan status akun pada daftar pengguna.', 'Untuk menonaktifkan akses akun yang tidak lagi bertugas, gunakan tombol Nonaktifkan pada baris pengguna tersebut. Jangan menonaktifkan akun sendiri.'], preview: [['Nama lengkap', 'Nama petugas'], ['Alamat email', 'petugas@contoh.id'], ['Password awal', 'Minimal 8 karakter; dibagikan Admin secara aman'], ['Peran', 'Pilih role Panitia (bukan Muzakki)'], ['Status', 'Aktif / Nonaktif'], ['Tombol', 'Tambah pengguna · Edit · Nonaktifkan']], result: 'Setiap panitia memiliki role yang sesuai dan menu yang tampil akan mengikuti role tersebut.', caution: 'Password pada prototype di-hash dengan PBKDF2 pada browser, tetapi akun tetap tersimpan di localStorage dan tidak dilindungi server. Jangan gunakan password penting atau data pribadi asli.' },
           { menu: 'Periode Zakat', goal: 'Membuka periode kerja baru dan mengarsipkan periode yang sudah selesai.', steps: ['Buka Periode Zakat pada sidebar.', 'Tekan Buat periode baru dan tulis nama periode secara jelas, misalnya Ramadan 1448 H / 2027 M.', 'Simpan periode. Periode baru akan berstatus Draf dan belum dipakai untuk transaksi.', 'Pada baris periode yang benar, tekan Aktifkan. Pastikan hanya periode yang dimaksud yang berstatus Aktif.', 'Setelah seluruh penerimaan, rekonsiliasi, dan penyaluran selesai, gunakan Tutup & arsipkan untuk menutup periode. Baca pesan sistem sebelum melanjutkan.'], preview: [['Nama periode', 'Ramadan 1448 H / 2027 M'], ['Status awal', 'Draf'], ['Aksi pada draf', 'Aktifkan'], ['Aksi periode aktif', 'Tutup & arsipkan'], ['Aturan', 'Satu periode aktif per lembaga']], result: 'Periode yang benar tampil sebagai Aktif dan transaksi baru mengikuti periode tersebut.', caution: 'Jangan menutup periode ketika masih ada serah terima kas yang belum diverifikasi atau rencana alokasi yang menunggu keputusan. Sistem akan menolak penutupan tersebut.' },
+          { menu: 'Jadwal & Kehadiran', goal: 'Menyusun jadwal tugas Amil dan memantau catatan kehadiran sebelum operasional berlangsung.', steps: ['Buka Jadwal & Kehadiran dari kelompok Manajemen & Sistem.', 'Periksa tanggal, rentang jam shift, Amil yang ditugaskan, petugas pengganti, serta status kehadiran yang tercatat.', 'Tekan Tambah jadwal untuk membuat penugasan baru. Pilih Amil aktif, tanggal, shift, dan pengganti bila diperlukan.', 'Simpan jadwal, lalu pastikan nama petugas dan tanggal tampil pada tabel.', 'Minta Amil memeriksa jadwalnya sebelum hari tugas. Pembukaan dan penutupan shift operasional tetap dilakukan oleh Amil melalui Penerimaan & Verifikasi.'], preview: [['Penanggung jawab jadwal', 'Admin lembaga'], ['Petugas', 'Amil yang ditugaskan'], ['Data', 'Tanggal · Jam · Pengganti · Kehadiran'], ['Aksi Admin', 'Tambah / ubah jadwal'], ['Aksi Amil', 'Melihat jadwal dan menjalankan shift']], result: 'Jadwal Amil tersusun dan dapat diperiksa petugas sebelum melakukan verifikasi transaksi.', caution: 'Admin mengelola penugasan jadwal. Amil menjalankan shift dan verifikasi; Bendahara tetap mengelola serah terima dan rekonsiliasi kas.' },
           { menu: 'Tarif & Rumus', goal: 'Mengatur parameter nominal yang dipakai sebagai acuan kalkulator dan perencanaan.', steps: ['Buka Tarif & Rumus dan baca catatan aturan bisnis terlebih dahulu.', 'Isi Tarif zakat fitrah per jiwa dalam rupiah dan Beras zakat fitrah per jiwa dalam kilogram.', 'Pilih kelipatan pembulatan alokasi yang telah disepakati. Isi bobot Fakir, Miskin, dan Mualaf sesuai keputusan yang berlaku.', 'Periksa total bobot dan catatan sumber atau keputusan aturan. Jangan mengubah parameter hanya untuk membuat hasil terlihat sesuai harapan.', 'Tekan Simpan parameter demo. Catat bahwa perubahan aturan tidak otomatis menghitung ulang alokasi yang sudah disetujui.'], preview: [['Tarif fitrah', 'Rp 45.000 / jiwa · contoh'], ['Beras fitrah', '2,5 kg / jiwa · contoh'], ['Pembulatan', 'Rp 1.000 / Rp 10.000 / pilihan lain'], ['Bobot asnaf', 'Fakir · Miskin · Mualaf'], ['Tombol', 'Simpan parameter demo']], result: 'Parameter baru digunakan pada perhitungan berikutnya dan tetap dapat diperiksa kembali pada halaman yang sama.', caution: 'Tarif, nisab, harga emas, bobot, serta formula yang belum tersedia di form ini harus ditetapkan melalui keputusan terpisah. Halaman prototype belum menjadi penetapan hukum atau ketentuan syariah.' },
           { menu: 'Mustahik & Kelayakan', goal: 'Mencatat calon penerima, mengisi hasil survei, meninjau skor, lalu memverifikasi data yang layak.', steps: ['Buka Mustahik & Kelayakan dan tekan Tambah survei mustahik.', 'Isi identitas calon penerima seperti nama, alamat, wilayah, RT, dan informasi kontak yang diperlukan. Gunakan data sintetis saat demonstrasi.', 'Lengkapi faktor survei yang tersedia, antara lain pekerjaan, kisaran penghasilan, jumlah tanggungan, tempat tinggal, status pernikahan, dan jalur Mualaf bila sesuai.', 'Baca kotak Skor sementara. Periksa Jalur F/M, Jalur Mualaf, dan status akhir yang dihitung sistem.', 'Simpan hasil survei. Kembali ke daftar, cocokkan identitas dan hasilnya, lalu tekan Verifikasi hanya setelah data dan kelayakan diperiksa.', 'Bila ada kekeliruan sebelum verifikasi, gunakan Edit survei untuk memperbaiki data. Setelah status terverifikasi, lakukan perubahan sesuai prosedur koreksi data yang disetujui lembaga.'], preview: [['Identitas', 'Nama · Alamat · RT'], ['Faktor survei', 'Wilayah · Penghasilan · Tanggungan'], ['Klasifikasi', 'Fakir · Miskin · Mualaf'], ['Skor sementara', 'Ditampilkan sebelum simpan'], ['Tombol', 'Simpan hasil survei · Verifikasi']], result: 'Data calon penerima tampil dalam daftar dan statusnya berubah menjadi terverifikasi setelah pemeriksaan.', caution: 'Hasil skor prototype mengikuti formula acuan workbook yang masih memiliki catatan pengecualian. Periksa menu Acuan Workbook 1447H dan minta validasi stakeholder sebelum memakai klasifikasi untuk penyaluran nyata.' },
           { menu: 'Notifikasi', goal: 'Melihat dan mengelola contoh antrean pesan yang berkaitan dengan layanan.', steps: ['Buka Notifikasi untuk melihat daftar notifikasi demo.', 'Periksa siapa penerima, saluran, subjek, dan status notifikasi.', 'Saat membuat antrean, pastikan persetujuan komunikasi penerima sudah ada dan pilih saluran yang sesuai.', 'Simpan antrean dan periksa statusnya. Status Simulasi berarti pesan belum benar-benar dikirim ke email atau WhatsApp.'], preview: [['Penerima', 'Muzakki terdaftar'], ['Saluran', 'Email / WhatsApp simulasi'], ['Persetujuan', 'Harus disetujui'], ['Status', 'Simulasi'], ['Catatan', 'Belum ada pengiriman eksternal']], result: 'Riwayat antrean pesan terlihat untuk kebutuhan evaluasi.', caution: 'Jangan menjanjikan pesan sudah diterima oleh Muzakki. Pengiriman email dan WhatsApp memerlukan API dan konfigurasi produksi yang belum tersedia.' },
@@ -1605,7 +1635,7 @@
         flow: ['Buka shift', 'Scan QR transaksi', 'Cocokkan identitas dan nominal', 'Pandu akad dan terima pembayaran', 'Sahkan, terbitkan BSZ, lalu tutup shift'],
         modules: [
           { menu: 'Ringkasan', goal: 'Melihat kondisi antrean dan akses cepat ke proses verifikasi.', steps: ['Periksa lembaga dan periode aktif.', 'Lihat kartu Menunggu Amil untuk mengetahui antrean transaksi Pending.', 'Gunakan pintasan Scan QR atau buka Penerimaan & Verifikasi.', 'Selesaikan verifikasi secara berurutan dan jangan mengesahkan transaksi yang belum diterima pembayarannya.'], preview: [['Transaksi periode', 'Semua transaksi lembaga'], ['Menunggu Amil', 'QR yang belum disahkan'], ['Paid · disahkan Amil', 'Pembayaran yang sudah disahkan Amil; belum tentu lulus rekonsiliasi Bendahara'], ['Pintasan', 'Penerimaan & Verifikasi']], result: 'Anda mengetahui antrean dan dapat mulai melayani transaksi.' },
-          { menu: 'Shift & Kehadiran', goal: 'Memeriksa jadwal tugas dan memahami bahwa verifikasi hanya aktif dalam shift yang dibuka.', steps: ['Buka Shift & Kehadiran untuk melihat jadwal tanggal, jam tugas, nama Amil, dan status kehadiran.', 'Pastikan jadwal yang tampil sesuai penugasan Anda. Bila nama atau jadwal tidak sesuai, hubungi koordinator.', 'Untuk membuka shift operasional, buka Penerimaan & Verifikasi lalu tekan Absensi buka shift.', 'Saat pekerjaan selesai, kembali ke halaman yang sama dan tekan Tutup shift.', 'Pastikan total transaksi shift tercatat sebelum menyerahkan kas fisik kepada Bendahara.'], preview: [['Menu jadwal', 'Tanggal · Jam shift · Petugas'], ['Status jadwal', 'Hadir / Belum / Digantikan'], ['Aksi operasional', 'Absensi buka shift'], ['Aksi selesai', 'Tutup shift']], result: 'Shift aktif tercatat dan verifikasi transaksi dapat dilakukan sesuai sesi petugas.', caution: 'Menu jadwal menunjukkan jadwal dan kehadiran. Tombol buka atau tutup sesi operasional berada pada halaman Penerimaan & Verifikasi.' },
+          { menu: 'Jadwal & Kehadiran', goal: 'Memeriksa jadwal tugas dan memahami bahwa verifikasi hanya aktif dalam shift yang dibuka.', steps: ['Buka Jadwal & Kehadiran untuk melihat jadwal tanggal, jam tugas, nama Amil, dan status kehadiran.', 'Pastikan jadwal yang tampil sesuai penugasan Anda. Bila nama atau jadwal tidak sesuai, hubungi koordinator.', 'Untuk membuka shift operasional, buka Penerimaan & Verifikasi lalu tekan Absensi buka shift.', 'Saat pekerjaan selesai, kembali ke halaman yang sama dan tekan Tutup shift.', 'Pastikan total transaksi shift tercatat sebelum menyerahkan kas fisik kepada Bendahara.'], preview: [['Menu jadwal', 'Tanggal · Jam shift · Petugas'], ['Status jadwal', 'Hadir / Belum / Digantikan'], ['Aksi operasional', 'Absensi buka shift'], ['Aksi selesai', 'Tutup shift']], result: 'Shift aktif tercatat dan verifikasi transaksi dapat dilakukan sesuai sesi petugas.', caution: 'Menu jadwal menunjukkan jadwal dan kehadiran. Tombol buka atau tutup sesi operasional berada pada halaman Penerimaan & Verifikasi.' },
           { menu: 'Data Muzakki · Bantuan Input Konter', goal: 'Membantu warga yang belum memiliki transaksi mandiri saat Operator tidak tersedia.', steps: ['Buka Data Muzakki dan cari warga berdasarkan nama atau kontak.', 'Bila warga belum ada, tekan Tambah Muzakki dan lengkapi identitas, status domisili, RW/RT dari master bila warga daerah, serta alamat.', 'Simpan data warga dan pastikan namanya tampil pada daftar.', 'Bila perlu langsung mencatat transaksi, buka Penerimaan & Verifikasi lalu gunakan Input transaksi konter. Amil memiliki kewenangan input yang sama seperti Operator.', 'Setelah menyimpan transaksi, lanjutkan pemeriksaan melalui scan QR seperti alur biasa.'], preview: [['Pencarian', 'Nama · HP · Kode kartu'], ['Data baru', 'Nama · Kontak · Wilayah · Alamat'], ['Aksi', 'Tambah Muzakki'], ['Input transaksi', 'Input transaksi konter']], result: 'Warga yang belum siap menggunakan layanan mandiri tetap dapat dilayani tanpa mengubah tahapan verifikasi.', caution: 'Hak input konter diberikan kepada Amil agar layanan tetap berjalan ketika Operator tidak tersedia. Operator tidak memperoleh hak verifikasi Amil.' },
           { menu: 'Penerimaan & Verifikasi · Scan QR', goal: 'Memeriksa sumber transaksi, identitas, rincian zakat, dan mengesahkan pembayaran.', steps: ['Pastikan shift sudah dibuka. Jika belum, tekan Absensi buka shift terlebih dahulu.', 'Pada kartu Scan QR transaksi, pilih Buka kamera dan izinkan akses kamera bila diminta. Arahkan kamera ke QR pada struk Muzakki atau Operator.', 'Jika kamera tidak dapat digunakan, tempel token QR atau ketik nomor seri pada kolom input, lalu tekan Periksa QR.', 'Baca detail transaksi yang muncul. Cocokkan nama Muzakki, lembaga asal, jumlah jiwa, jenis zakat, nominal uang, dan berat beras.', 'Pastikan lembaga pada transaksi sama dengan lembaga tempat Anda bertugas. Jangan memverifikasi QR lembaga lain.', 'Pandu Muzakki melakukan niat dan akad sesuai ketentuan lembaga. Pastikan uang atau beras benar-benar diterima dan jumlah fisiknya cocok.', 'Setelah seluruh pemeriksaan benar, gunakan tindakan verifikasi pada rincian transaksi. Periksa konfirmasi sebelum menyelesaikan.', 'Pastikan status berubah menjadi Paid setelah Amil mengesahkan pembayaran. Status ini belum berarti lulus rekonsiliasi Bendahara.'], preview: [['Pemindai', 'Kamera atau token manual'], ['Identitas', 'Nama · Lembaga · Jumlah jiwa'], ['Rincian', 'Kategori · Uang · Beras'], ['Petugas', 'Identitas Amil yang sedang login'], ['Aksi akhir', 'Verifikasi setelah akad dan pembayaran']], result: 'Transaksi berubah menjadi terverifikasi dan masuk perhitungan setoran shift.', caution: 'QR yang valid tidak membuktikan bahwa uang sudah diterima. Jangan menekan verifikasi sebelum akad dan penerimaan fisik selesai. Kamera memerlukan HTTPS dan izin perangkat.' },
           { menu: 'Struk dan Bukti Setor Zakat', goal: 'Memberikan bukti kepada Muzakki setelah status pembayaran berhasil disahkan.', steps: ['Setelah verifikasi, buka transaksi yang baru selesai dari daftar transaksi.', 'Tekan Struk / QR untuk melihat identitas, nilai, status, dan kode QR transaksi.', 'Pastikan judul bukti menunjukkan Bukti Setor Zakat · Simulasi dan status sudah terverifikasi.', 'Gunakan Unduh gambar PNG, Cetak / Simpan PDF, atau Cetak thermal 80 mm sesuai perangkat yang tersedia.', 'Berikan salinan kepada Muzakki dan simpan arsip sesuai prosedur lembaga.'], preview: [['Judul bukti', 'Bukti Setor Zakat · Simulasi'], ['Nomor transaksi', 'Kode unik'], ['Status', 'Paid · disahkan Amil'], ['Aksi', 'PNG · PDF · Thermal 80 mm']], result: 'Muzakki menerima bukti transaksi yang telah diverifikasi dalam bentuk digital atau cetak.', caution: 'Semua bukti pada prototype masih berlabel simulasi. Jangan menyebutnya dokumen resmi untuk keperluan hukum atau perpajakan.' },
@@ -1721,7 +1751,7 @@
     return `<section class="card"><div class="card-top"><div><h3>Master wilayah administratif</h3><p class="caption">${esc(area.name)} · Daerah → RW → RT</p></div>${editable ? action('Tambah RW', 'territory-rw-add', 'primary sm') : ''}</div>${rws.length ? rws.map((rw) => {
       const rts = rtsFor(tenantId, rw.id)
       return `<article class="territory-rw"><div class="card-top"><div><b>${esc(rw.name)}</b><span class="caption">${rts.length} RT terdaftar</span></div>${editable ? `${actionFor('Ubah RW', 'territory-rw-edit', rw.id, 'sm')}${actionFor('Hapus RW', 'territory-rw-delete', rw.id, 'sm danger')}${actionFor('Tambah RT', 'territory-rt-add', rw.id, 'sm primary')}` : ''}</div>${rts.length ? `<div class="territory-rt-list">${rts.map((rt) => `<span class="territory-rt-chip">${esc(rt.name)}${editable ? ` <button type="button" aria-label="Ubah ${esc(rt.name)}" data-v5-action="territory-rt-edit" data-id="${esc(rt.id)}">✎</button><button type="button" aria-label="Hapus ${esc(rt.name)}" data-v5-action="territory-rt-delete" data-id="${esc(rt.id)}">×</button>` : ''}</span>`).join('')}</div>` : alert('RW ini belum memiliki RT.', 'warn')}</article>`
-    }).join('') : alert('Belum ada RW. Admin lembaga dapat menambahkan RW pertama.', 'warn')}</section>`
+    }).join('') : alert(editable ? 'Master wilayah lembaga sudah tersedia. Tambahkan RW pertama melalui tombol Tambah RW, lalu isi RT di dalam RW tersebut.' : 'Belum ada RW yang ditetapkan oleh Admin lembaga.', 'warn')}</section>`
   }
   function territoryRecapHtml(title = 'Rekap identitas Daerah / RW / RT') {
     const rows = territoryReportRows()
