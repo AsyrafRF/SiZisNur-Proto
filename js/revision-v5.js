@@ -781,7 +781,7 @@
       .thermal-header b { display: block; font-size: 13pt; line-height: 1.2; font-weight: 900; text-transform: uppercase; overflow-wrap: anywhere; }
       .thermal-header span { display: block; margin-top: 1mm; font-size: 8.5pt; font-weight: 800; }
       .thermal-header small { display: block; margin-top: .7mm; font-size: 7.2pt; letter-spacing: .25mm; }
-      .thermal-rule { white-space: nowrap; overflow: hidden; font-size: 7.5pt; line-height: 1.2; letter-spacing: -.12mm; }
+      .thermal-rule { white-space: nowrap; overflow: hidden; font-size: 7.5pt; line-height: 1.2; letter-spacing: -.12mm; text-align: center; }
       .thermal-meta { padding: 1.2mm 0; }
       .thermal-kv { display: grid; grid-template-columns: 26mm minmax(0,1fr); gap: 1mm; align-items: start; padding: .8mm 0; break-inside: avoid; }
       .thermal-kv span { font-size: 7.7pt; font-weight: 600; }
