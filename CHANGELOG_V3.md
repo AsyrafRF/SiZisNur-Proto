@@ -1,3 +1,11 @@
+## 15 November 2026 — Pemisahan Registrasi Akun dan Keanggotaan Lembaga Muzakki
+
+- Form pendaftaran mandiri Muzakki kini hanya meminta nama lengkap, nomor HP, email, dan alamat lengkap; tidak ada pilihan lembaga atau isian domisili RW/RT pada tahap ini.
+- Registrasi membuat akun pribadi tanpa `tenantId`, data person, kartu Muzakki, atau membership lembaga.
+- Setelah login, Muzakki memilih lembaga aktif melalui menu Layanan Mandiri. Status domisili, RW/RT, alamat untuk lembaga, dan persetujuan penggunaan data diminta pada tahap penghubungan.
+- Data person, kartu Muzakki, dan `muzakkiMemberships` baru dibuat setelah lembaga dipilih. Pencocokan nomor HP/email tidak otomatis mengklaim data walk-in yang belum diverifikasi.
+- Menambahkan `tests/muzakki-registration.test.cjs` untuk menguji pemisahan tahap registrasi dan penghubungan lembaga.
+
 ## 14 November 2026 — Penyelarasan Istilah Antarmuka
 
 - Mengganti istilah antarmuka dan dokumentasi dari “tenant” menjadi “Lembaga” agar lebih akrab bagi pengurus masjid, UPZ, dan komunitas.

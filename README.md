@@ -96,7 +96,7 @@ Rujukan resmi yang digunakan untuk nilai awal: [BAZNAS RI — zakat fitrah dan f
 | Actor | Fokus | Kewenangan prototype |
 |---|---|---|
 | **Admin** | Sistem dan master data | Mengelola akun dan role, profil lembaga, tarif, periode, pengaturan, serta input dan verifikasi kelayakan Mustahik. Tidak mempunyai akses untuk mengedit atau menghapus transaksi yang sudah diverifikasi. |
-| **Muzakki** | Self-service | Registrasi akun demo, bergabung ke beberapa lembaga, kelola alamat dan anggota keluarga, kalkulator zakat, buat satu transaksi aktif per lembaga dan periode, QR, riwayat, dan unduh bukti. |
+| **Muzakki** | Self-service | Registrasi akun demo secara mandiri dengan nama lengkap, nomor HP, email, dan alamat. Setelah login, pilih dan hubungkan satu atau beberapa lembaga melalui menu akun, lalu kelola domisili/RT, anggota keluarga, kalkulator zakat, transaksi, QR, riwayat, dan bukti. |
 | **Operator** | Walk-in front-office | Input identitas dan transaksi konter berstatus `Pending`, menerbitkan struk QR, dan mengarahkan Muzakki ke Amil. Tidak dapat menerima atau mengesahkan pembayaran. |
 | **Amil** | Kasir, akad, verifikasi shift | Buka/tutup shift, scan QR, periksa rincian transaksi, pandu akad, konfirmasi penerimaan uang/beras, sahkan pembayaran, dan terbitkan BSZ. Amil dapat memakai fungsi input Operator bila tidak tersedia petugas Operator terpisah. |
 | **Bendahara** | Kas, rekonsiliasi dan distribusi | Menerima berita acara dari shift yang ditutup, memeriksa uang dan beras fisik, rekonsiliasi rekening, meninjau koreksi, membentuk jurnal, menyiapkan alokasi dan batch Relawan. |
@@ -125,7 +125,7 @@ Admin menyiapkan periode, tarif, parameter, identitas lembaga, dan data Mustahik
 
 ### B. Penghimpunan
 
-Muzakki mandiri atau Operator konter membuat transaksi dengan status `Pending`. Keduanya mendapat QR dan struk rencana. Akun Muzakki dapat terhubung ke banyak lembaga, tetapi hanya satu transaksi aktif per lembaga pada satu periode. Setiap token mengandung lembaga asal dan hanya dapat diperiksa pada lembaga tersebut.
+Pada jalur mandiri, Muzakki membuat akun lebih dahulu dengan nama lengkap, nomor HP, email, dan alamat tanpa memilih lembaga. Setelah login, ia memilih lembaga dari menu Layanan Mandiri; sistem baru membuat data Muzakki dan membership lembaga setelah tahap tersebut selesai. Selanjutnya Muzakki mandiri atau Operator konter dapat membuat transaksi dengan status `Pending`. Keduanya mendapat QR dan struk rencana. Akun Muzakki dapat terhubung ke banyak lembaga, tetapi hanya satu transaksi aktif per lembaga pada satu periode. Setiap token mengandung lembaga asal dan hanya dapat diperiksa pada lembaga tersebut.
 
 Amil wajib membuka shift. Setelah scan QR, layar verifikasi menampilkan identitas Muzakki, rincian uang/beras, identitas Amil, dan pengingat akad. Amil baru dapat mengesahkan setelah mengonfirmasi penerimaan fisik dan akad. Struk dapat diunduh sebagai PNG, dicetak atau disimpan sebagai PDF melalui browser, dan dicetak dengan layout thermal 80 mm.
 

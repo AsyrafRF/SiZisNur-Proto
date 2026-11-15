@@ -1,6 +1,6 @@
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 14 November 2026
+Tanggal pembaruan: 15 November 2026
 
 ## Pemeriksaan statis
 
@@ -9,12 +9,13 @@ Tanggal pembaruan: 14 November 2026
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
 | `node tests/workbook-rules.test.cjs` | Lulus |
-| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 313 langkah, 61 ilustrasi UI |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 314 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
 | `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per lembaga |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas lembaga/periode |
+| `node tests/muzakki-registration.test.cjs` | Lulus — registrasi empat data tanpa lembaga, akun tanpa person/kartu/membership, dan penghubungan dari dalam akun dengan persetujuan |
 | `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
 | `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per lembaga, alokasi kelebihan, dan aturan konfirmasi kafarat |
@@ -23,6 +24,7 @@ Tanggal pembaruan: 14 November 2026
 ## Cakupan yang diperiksa oleh test otomatis
 
 - Schema demo V5 dan matriks akses tujuh role.
+- Registrasi mandiri Muzakki hanya menyimpan nama lengkap, nomor HP, email, dan alamat; akun awal tidak diberi lembaga, person, kartu Muzakki, atau membership sampai pemilihan lembaga dari dalam akun.
 - Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
@@ -94,6 +96,16 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Tes baru mencakup skenario bahwa transaksi `paid` tanpa berita acara terverifikasi tidak masuk grafik Terverifikasi, dan distribusi lama tidak dipaksakan ke kategori tertentu.
 - Batasan tetap: data lokal prototype bukan sumber real-time lintas perangkat; status produksi harus divalidasi ulang di backend.
 
+
+
+## Pemisahan registrasi mandiri Muzakki dan pendaftaran lembaga — 15 November 2026
+
+- Form registrasi mandiri berisi empat input wajib: nama lengkap, nomor HP, email, dan alamat lengkap. Tidak ada pilihan lembaga, Daerah, RW/RT, atau persetujuan lembaga pada tahap registrasi.
+- Akun baru disimpan tanpa `tenantId`, person, kartu Muzakki, dan `muzakkiMemberships`. Dashboard pribadi menampilkan status Belum terhubung.
+- Menu Layanan Mandiri menampilkan aksi Pilih lembaga. Saat pengguna memilih lembaga aktif, sistem meminta domisili, alamat untuk lembaga, serta persetujuan penggunaan data.
+- Person, kartu digital, dan membership dibuat pada tahap penghubungan. Kontak yang cocok tidak dipakai untuk mengklaim data walk-in yang belum diverifikasi.
+- `node tests/muzakki-registration.test.cjs` dan seluruh suite `node --test tests/*.test.cjs` lulus.
+- Build standalone diperbarui melalui `python tools/build-standalone.py`.
 
 
 ## Dashboard pribadi Muzakki — 13 November 2026

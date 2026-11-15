@@ -12,19 +12,22 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 
 ## A. Registrasi dan transaksi mandiri Muzakki
 
-1. Dari landing page, buka pendaftaran akun Muzakki.
-2. Isi nama, salah satu kontak, lembaga awal, Daerah, RT jika VPA, alamat dan persetujuan.
-3. Setelah akun masuk, tambahkan anggota keluarga dan simpan.
-4. Buka kalkulator zakat dan uji Fitrah, Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah. Cocokkan satuan uang `Rp` dan beras `kg`, nisab/haul maal, mode bulanan/tahunan profesi, serta tarif lembaga yang telah ditetapkan Admin.
-5. Untuk kafarat sumpah, pastikan biaya makan 10 orang dihitung dengan tarif lembaga. Untuk kafarat bertahap, pastikan 60 orang tidak dihitung sebelum opsi ketidakmampuan tahapan sebelumnya dikonfirmasi.
-6. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif lembaga.
-7. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Simpan dan terbitkan QR**; dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
-8. Uji pembayaran sama dengan dan di bawah kewajiban; tidak boleh muncul dialog kelebihan. Uji kelebihan Fidyah/Kafarat; tampilkan selisih, tetapi jangan otomatis mengalihkan kategori.
-9. Pastikan status transaksi `Pending`, QR tampil, dan masa berlakunya 24 jam.
-10. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
-11. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
-12. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
-13. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
+1. Dari halaman masuk, buka pendaftaran akun Muzakki.
+2. Isi hanya empat data akun: nama lengkap, nomor HP, email, dan alamat lengkap. Pastikan form tidak meminta pilihan lembaga, Daerah, RW/RT, atau persetujuan tambahan.
+3. Setelah akun berhasil dibuat, pastikan akun masuk ke area pribadi dengan status **Belum terhubung** dan belum memiliki person, kartu Muzakki, atau membership lembaga.
+4. Dari dalam akun, buka **Pilih lembaga** / **Gabung lembaga lain**, pilih lembaga aktif, lalu lengkapi status domisili, RW/RT bila warga daerah, alamat untuk lembaga tersebut, serta persetujuan penggunaan data pada lembaga yang dipilih.
+5. Pastikan membership dan kartu Muzakki baru dibuat setelah lembaga dipilih. Pastikan pencocokan nomor HP/email tidak otomatis mengklaim transaksi walk-in yang belum diverifikasi.
+6. Setelah lembaga terhubung, tambahkan anggota keluarga dan simpan.
+7. Buka kalkulator zakat dan uji Fitrah, Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah. Cocokkan satuan uang `Rp` dan beras `kg`, nisab/haul maal, mode bulanan/tahunan profesi, serta tarif lembaga yang telah ditetapkan Admin.
+8. Untuk kafarat sumpah, pastikan biaya makan 10 orang dihitung dengan tarif lembaga. Untuk kafarat bertahap, pastikan 60 orang tidak dihitung sebelum opsi ketidakmampuan tahapan sebelumnya dikonfirmasi.
+9. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif lembaga.
+10. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Simpan dan terbitkan QR**; dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
+11. Uji pembayaran sama dengan dan di bawah kewajiban; tidak boleh muncul dialog kelebihan. Uji kelebihan Fidyah/Kafarat; tampilkan selisih, tetapi jangan otomatis mengalihkan kategori.
+12. Pastikan status transaksi `Pending`, QR tampil, dan masa berlakunya 24 jam.
+13. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
+14. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
+15. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
+16. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
 
 ## B. Jalur Operator dan verifikasi Amil
 
