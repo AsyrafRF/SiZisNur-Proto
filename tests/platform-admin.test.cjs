@@ -76,6 +76,16 @@ const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
 assert.equal(db.tenants.length, initialTenantCount + 1)
 assert.equal(db.users.filter((item) => item.tenantId === created.id && item.role === 'Admin').length, 1)
 assert.equal(created.publicPortalEnabled, true, 'active lembaga are publicly listed by default')
+assert.match(created.publicCode, /^LUR-\d{5}$/, 'new institutions receive an automatically generated public ID from their name initials')
+const masjidCode = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
+  name: 'Masjid An-Nur', adminName: 'Admin An-Nur', adminEmail: 'admin.annur.test@example.invalid', status: 'aktif',
+}).publicCode
+const alHikmahCode = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
+  name: 'Al-Hikmah', adminName: 'Admin Al-Hikmah', adminEmail: 'admin.alhikmah.test@example.invalid', status: 'aktif',
+}).publicCode
+assert.match(masjidCode, /^MAN-\d{5}$/)
+assert.match(alHikmahCode, /^AH-\d{5}$/)
+assert.notEqual(masjidCode, alHikmahCode, 'similar names must not collide because the numeric suffix is unique')
 assert.ok(db.platformAudit.some((item) => item.type === 'TENANT_CREATED' && item.detail.includes('Lembaga Uji Root')))
 assert.equal(JSON.stringify(window.__SIZISNUR_PLATFORM_ADMIN.tenantMetrics(created.id)), JSON.stringify({ users: 1, admins: 1, transactions: 0, pending: 0, verified: 0 }))
 

@@ -1,6 +1,6 @@
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 14 November 2026
+Tanggal pembaruan: 15 November 2026
 
 ## Pemeriksaan statis
 
@@ -8,40 +8,59 @@ Tanggal pembaruan: 14 November 2026
 |---|---|
 | `node --check js/app.js` | Lulus |
 | `node --check js/revision-v5.js` | Lulus |
+| `node --check js/authentication.js` | Lulus |
+| `node --check js/public-intake.js` | Lulus |
+| `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 18 suite, 18/18 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
-| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 313 langkah, 61 ilustrasi UI |
+| `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
+| `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 62 tutorial menu, 319 langkah, 62 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
-| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah dan relasi Daerah/RW/RT terisolasi per lembaga |
+| `node tests/tenant-territories.test.cjs` | Lulus — master wilayah per Lembaga, filter RT mengikuti RW, Non-daerah tanpa RW/RT, dan validasi relasi |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — dashboard personal Muzakki, status verifikasi dan histori lintas lembaga/periode |
+| `node tests/muzakki-registration.test.cjs` | Lulus — registrasi empat data tanpa lembaga, akun tanpa person/kartu/membership, dan penghubungan dari dalam akun dengan persetujuan |
 | `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
-| `node tests/transaction-calculator.test.cjs` | Lulus — lima jenis kewajiban dan Infak/Sedekah, parameter per lembaga, alokasi kelebihan, dan aturan konfirmasi kafarat |
+| `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
+| `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
 
-- Schema demo V5 dan matriks akses tujuh role.
-- Halaman operasional yang dapat dirender per role dan halaman yang ditolak.
+- Schema demo V5 dan matriks akses tujuh role, diverifikasi pada dataset An-Nur dan Multi-Lembaga.
+- Pilihan awal Login sebagai Muzakki atau Login sebagai Panitia; form email/password, pembatasan akun antar-role, dan halaman Akses Demo Langsung terpisah.
+- Hash kredensial PBKDF2 browser-side, registrasi Muzakki tanpa lembaga, pengajuan lembaga tanpa membuat akun Panitia, pembuatan Admin awal setelah disetujui root, serta penggantian password sementara pada login pertama.
+- Registrasi mandiri Muzakki hanya menyimpan nama lengkap, nomor HP, email, dan alamat; akun awal tidak diberi lembaga, person, kartu Muzakki, atau membership sampai pemilihan lembaga dari dalam akun.
+- Halaman operasional yang dapat dirender per role dan halaman yang ditolak; Admin tidak melihat menu khusus Amil, Bendahara, Relawan, atau Pengurus.
 - Panduan penggunaan untuk tujuh role, termasuk diagram alur, checklist awal, tutorial per menu, langkah bernomor, ilustrasi UI, FAQ, navigasi cepat, dan formulir feedback.
 - Palet global alert dan toast pada light/dark mode, termasuk default, warning, danger, success, info, dan neutral, dengan rasio kontras minimum WCAG AA 4,5:1.
 - Token tema UI global untuk badge status, label serta input form, aksi berbahaya, progres, panel pemindaian QR, preview panduan, panel hasil panduan, dan aksen teks pada dark mode.
+- Hapus seluruh data yang hanya menyisakan Root, tidak membangkitkan ulang akun Relawan yatim setelah reload, alert pada halaman Muzakki ketika belum ada lembaga, dan pembuatan induk Master Wilayah untuk lembaga baru.
 - Paginasi bersama pada seluruh tabel data, termasuk lembaga yang terhubung pada akun Muzakki: sepuluh baris per halaman, kontrol navigasi, batas halaman, tabel kosong, dan kompatibilitas daftar audit serta laporan.
 - Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
+- Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
-- Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf.
+- Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
+- Cetak Thermal 80 mm memakai jendela khusus selebar 460 px untuk pratinjau roll, aturan `@page size: auto` di `<head>` yang mengikuti media pada driver, konten 74 mm, font monospace yang diperbesar, QR 28 mm, dan toolbar layar yang disembunyikan saat cetak; Cetak/Simpan PDF tetap memakai layout halaman normal.
+- Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
+- Konfirmasi kelebihan pembayaran seragam pada tiga kanal; domisili warga daerah memakai RW/RT Master Wilayah Lembaga dengan filter RT per RW, sedangkan Non-daerah tidak memerlukan RW/RT.
+- Input Rupiah menggunakan pemisah titik ribuan sejak nilai awal dan saat diketik; input kilogram memakai koma desimal.
+- Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending/tercatat tetap menghalangi transaksi ganda.
+- Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf; preset An-Nur hanya satu lembaga dan preset multi-tenant menambahkan Al-Hikmah serta pengajuan Al-Falah.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
 - Angka penerimaan workbook serta total alokasi Tahap 1 dan Tahap 2 sebesar Rp148.287.500 dan 1.882,6 kg.
 - Batas persetujuan dan reservasi Mustahik pada alokasi.
 
 ## Batas hasil QA
 
-Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
+Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Tampilan pratinjau thermal sudah dibatasi ke lebar roll dan deklarasi ukuran halaman diverifikasi secara struktural; hasil akhir tetap bergantung pada driver printer dan opsi paper size di Microsoft Edge. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
 
-Tidak ada backend atau endpoint sinkronisasi yang disertakan. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
+Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publik menyimpan tautan/identitas/transaksi pada localStorage browser yang sama; OTP hanya ditampilkan di layar dan bukan dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
 
-Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
+Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersama, `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
 
 
 ## Pemeriksaan alert dan toast pada light/dark mode — 13 November 2026
@@ -96,6 +115,16 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 
 
 
+## Pemisahan registrasi mandiri Muzakki dan pendaftaran lembaga — 15 November 2026
+
+- Form registrasi mandiri berisi empat input wajib: nama lengkap, nomor HP, email, dan alamat lengkap. Tidak ada pilihan lembaga, Daerah, RW/RT, atau persetujuan lembaga pada tahap registrasi.
+- Akun baru disimpan tanpa `tenantId`, person, kartu Muzakki, dan `muzakkiMemberships`. Dashboard pribadi menampilkan status Belum terhubung.
+- Menu Layanan Mandiri menampilkan aksi Pilih lembaga. Saat pengguna memilih lembaga aktif, sistem meminta domisili, alamat untuk lembaga, serta persetujuan penggunaan data.
+- Person, kartu digital, dan membership dibuat pada tahap penghubungan. Kontak yang cocok tidak dipakai untuk mengklaim data walk-in yang belum diverifikasi.
+- `node tests/muzakki-registration.test.cjs` dan seluruh suite `node --test tests/*.test.cjs` lulus.
+- Build standalone diperbarui melalui `python tools/build-standalone.py`.
+
+
 ## Dashboard pribadi Muzakki — 13 November 2026
 
 - `node tests/muzakki-dashboard.test.cjs` lulus untuk sesi default Muzakki, larangan akses dashboard agregat, transaksi milik sendiri, status berita acara Bendahara, dan riwayat lintas periode.
@@ -121,3 +150,24 @@ Lihat `SKENARIO_UAT.md` untuk prosedur uji manual dan `CAKUPAN_FITUR.md` untuk p
 - Menambahkan `docs/GLOSARIUM_TERMINOLOGI.md` untuk menyamakan istilah Admin Lembaga, Admin SiZisNur, dan Portal Publik.
 - Nama teknis internal seperti `tenantId`, `db.tenants`, rute/event internal, dan format identitas QR tetap dipertahankan untuk kompatibilitas.
 - Seluruh 12 suite pengujian yang tersedia lulus setelah ekspektasi teks antarmuka diperbarui. Build HTML standalone berhasil dibuat ulang.
+
+
+## Portal Zakat Publik & Pendataan Mandiri — 15 November 2026
+
+- Menambahkan halaman manajemen **Formulir Publik & QR Warga** khusus role Admin, Amil, dan Operator. Tautan terikat pada satu Lembaga dan periode aktif, dapat dibagikan melalui WhatsApp, dipratinjau, dicetak menjadi banner, serta dicabut.
+- Menambahkan rute formulir publik tanpa login, identitas (nama, HP, email opsional, alamat, domisili), checkbox persetujuan evaluasi, dan OTP demo 6 digit yang hanya ditampilkan di browser. Kode berlaku 5 menit, maksimal 5 percobaan, dan sesi verifikasi berlangsung 10 menit. Tidak ada OTP nyata yang dikirim.
+- Pencocokan identitas dibatasi pada tenant/periode dari link, menormalisasi nomor/email, mencocokkan nama, dan menghentikan kasus ambigu tanpa auto-merge. Sebelum verifikasi kontak, halaman tidak menampilkan catatan transaksi pribadi.
+- Formulir menggunakan kalkulator zakat tenant yang sama dan membuat transaksi `source=public-intake`, `status=pending`, lengkap dengan person/kartu Muzakki, nomor PU, notifikasi lokal, audit, dan QR/struk rencana.
+- Pending/tercatat menjadi kondisi unpaid yang memblokir transaksi ganda. Bukti transaksi dapat dibuka kembali. Pembatalan hanya tersedia untuk Pending mandiri yang belum diproses petugas/setoran, dengan alasan, konfirmasi, pencatatan audit, dan tanpa menghapus record. Paid/riwayat yang selesai tidak memblokir rencana baru.
+- Service worker tidak menyimpan URL yang berisi parameter token `portal` di cache shell. Cache dinaikkan ke `sizisnur-shell-v5-20261115-public-intake-v2`.
+- `node tests/public-intake.test.cjs` dan seluruh 18 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
+- Batasan: `localStorage` hanya pada browser saat ini. QR yang dibuka pada perangkat berbeda tidak dapat mengakses database demo petugas. OTP hanya tampilan simulasi, tidak dikirim ke provider. Jangan masukkan PII atau transaksi nyata. Dokumen lengkap tahap implementasi, batasan, dan checklist keamanan produksi tersedia pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`.
+
+
+## Cetak struk thermal 80 mm — 15 November 2026
+
+- Memperbaiki tombol **Cetak thermal 80 mm** yang sebelumnya memanggil helper `makeReceiptPrint` yang tidak tersedia setelah renderer struk disatukan. Kini helper didefinisikan kembali pada lapisan V5 dan menggunakan `A.receiptHtml(tx)` / `receiptPrintHtmlV5(tx)` sebagai sumber konten yang sama dengan PDF.
+- Layout thermal menetapkan ukuran halaman 80 mm, margin 3 mm, lebar konten 74 mm, QR 35 mm, dan seluruh rincian multi-jenis/multi-media.
+- `node tests/receipt-printing.test.cjs` lulus: aksi thermal membuka jendela cetak, mencakup transaksi Fitrah uang + Fitrah beras + Fidyah dan token QR; aksi PDF tetap memakai layout normal serta renderer yang sama.
+- Jumlah suite otomatis menjadi 18/18. Pengujian fisik dengan printer thermal dan driver tertentu tetap perlu dilakukan saat UAT perangkat.
+- Service worker dinaikkan ke `sizisnur-shell-v5-20261115-shared-transaction-multi-line-v4-thermal-print-fix` agar browser mengambil JS terbaru.

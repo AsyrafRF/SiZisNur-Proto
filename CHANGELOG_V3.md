@@ -1,3 +1,65 @@
+## 15 November 2026 — Perbaikan ukuran halaman dan pratinjau thermal 80 mm di Edge
+
+- Memindahkan stylesheet thermal dan aturan `@page` ke dalam `<head>` jendela cetak khusus; sebelumnya aturan ukuran halaman disisipkan dari fragmen body dan berpotensi diabaikan browser.
+- Mengganti deklarasi ukuran halaman yang sebelumnya tidak valid (`80mm auto`) menjadi `size: auto` di `@page`; media roll 80 mm dipilih dari driver printer. Nilai tunggal `80mm` tidak digunakan karena CSS mendefinisikannya sebagai halaman persegi.
+- Membuat jendela pratinjau thermal selebar 460 px, memusatkan konten roll 74 mm, dan menambahkan tombol Cetak struk yang tidak ikut tercetak.
+- Menyesuaikan ukuran huruf metadata/rincian/total agar lebih terbaca serta mengatur QR menjadi 28 mm.
+- Cetak thermal tidak lagi melewati stylesheet umum `printWindow` yang menetapkan halaman otomatis/A4; jalur PDF biasa tetap menggunakan renderer dan layout dokumen normal.
+- Memperbarui tes struk untuk memeriksa aturan halaman di `<head>`, pratinjau roll, toolbar layar yang tersembunyi saat cetak, QR, rincian multi-jenis, dan kompatibilitas PDF.
+- Catatan penggunaan: di Microsoft Edge pilih printer thermal dan paper size 80 mm/80 mm roll, skala 100% atau Actual size, serta matikan header/footer. Dukungan ukuran media tetap bergantung pada driver printer.
+
+## 15 November 2026 — Perapian Struk Thermal 80 mm Bergaya POS
+
+- Mengganti tampilan cetak thermal yang sebelumnya memakai kartu struk digital dengan layout satu kolom bergaya POS: tipografi monospace, header rata tengah, metadata label/nilai sejajar, rincian kategori/media ringkas, dan total uang/beras rata kanan.
+- Menambahkan pemisah ASCII, jarak vertikal yang lebih rapat, QR Code 30 mm, token QR yang dapat dibaca manual, serta footer simulasi yang lebih ringkas.
+- Mempertahankan seluruh data transaksi dan aturan status yang sama dengan struk digital: nomor/ID, tanggal, Muzakki, sumber, status, batas QR, rincian multi-jenis/multi-media, dasar harta, total uang/beras, dan penonaktifan QR untuk transaksi batal/kedaluwarsa/ditolak.
+- Format Cetak / Simpan PDF dan pratinjau digital tidak diubah. Thermal tetap menggunakan dialog cetak browser dengan CSS 80 mm; ini bergaya POS/ESC-POS, bukan pengiriman perintah ESC/POS mentah ke printer.
+- Memperbarui `tests/receipt-printing.test.cjs` untuk menguji layout monospace, alignment metadata, separator ASCII, ukuran QR, rincian transaksi campuran, total, token dan disclaimer.
+
+## 15 November 2026 — Penyatuan Modul Input Transaksi (Operator/Amil, Muzakki, dan Formulir Publik)
+
+- Menyatukan pembangun form, parser rincian, kalkulasi, validasi, dialog konfirmasi kelebihan, model `lines`, dan renderer struk untuk ketiga kanal input: konter Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik.
+- Mendukung maksimal 12 rincian dalam satu transaksi/nomor/QR. Setiap baris memilih kategori dan media sendiri; Fitrah mendukung uang atau beras, sedangkan Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah menggunakan uang pada aturan prototype saat ini. Kombinasi Fitrah uang + Fitrah beras + kategori lain dapat dibuat dalam satu transaksi.
+- Menyamakan pemilihan domisili pada input Operator/Amil dan Formulir Publik: Warga daerah harus memilih RW lalu RT dari Master Wilayah Lembaga; Non-daerah tidak menyimpan RW/RT Lembaga.
+- Menyamakan konfirmasi kelebihan pembayaran pada semua kanal. Jika pemisahan kelebihan belum dicentang dan baris Fitrah/Maal/Profesi melebihi estimasi, dialog yang sama meminta keputusan sebelum transaksi disimpan.
+- Memformat input Rupiah dengan titik ribuan (contoh `1.250.000`) dan beras memakai koma desimal (contoh `2,5 kg`). Nilai harta Maal/Profesi juga menggunakan formatter Rupiah.
+- Menyamakan pratinjau dan struk cetak/PDF, PNG, serta thermal agar mencantumkan semua rincian jenis/media, kuantitas/satuan, dasar harta bila relevan, dan total uang/beras.
+- Memperbarui panduan `docs/INPUT_TRANSAKSI_TERPADU.md`, README, dokumentasi Portal Publik, dan versi cache service worker.
+- Memperluas pengujian untuk transaksi campuran Fitrah uang/beras, Maal dan Fidyah dalam satu nomor, pemisah ribuan Rupiah, domisili Master Wilayah, konfirmasi kelebihan, serta penggunaan renderer struk bersama.
+- Batas: fitur tetap simulasi browser/localStorage; backend, validasi server, idempotensi atomik, OTP provider, serta sinkronisasi lintas perangkat diperlukan sebelum produksi.
+
+## 15 November 2026 — Modul Input Transaksi Terpadu Multi-Jenis dan Multi-Media
+
+- Menyatukan form input konter Operator/Amil, rencana transaksi akun Muzakki, dan formulir publik melalui satu kalkulator transaksi bersama.
+- Satu transaksi kini dapat memuat beberapa baris jenis zakat/donasi dan media pembayaran secara bersamaan, termasuk Fitrah uang + Fitrah beras + Fidyah/Maal/Profesi/Infak dalam satu nomor transaksi, satu QR, dan satu struk; dibatasi maksimal 12 baris.
+- Menghitung kewajiban dan pembayaran uang/beras secara terpisah, menjumlahkan jiwa Fitrah lintas media, menampilkan kuantitas/satuan pada rincian, serta menyegarkan nominal otomatis saat kategori atau media berubah.
+- Menyamakan konfirmasi kelebihan pembayaran pada tiga kanal. Pengguna dapat mempertahankan kategori, memisahkan kelebihan menjadi Infak/Sedekah bila memenuhi aturan split, atau kembali mengedit.
+- Menyamakan struk digital/cetak/PNG untuk semua kanal; satu QR mengacu pada seluruh rincian transaksi.
+- Menegakkan domisili Warga daerah dengan pilihan RW dan RT dari Master Wilayah Lembaga; pilihan RT difilter oleh RW aktif. Non-daerah tidak diwajibkan mengisi RW/RT.
+- Menampilkan nominal uang dengan titik pemisah ribuan sejak nilai awal maupun saat diketik; input kilogram tetap menggunakan koma desimal. Istilah teknis internal `tenant` tetap dipertahankan pada struktur data, tetapi label antarmuka menggunakan **Lembaga**.
+- Menambahkan pengujian multi-baris, media campuran, modal Operator bersama, format Rupiah, filter RW/RT, Non-daerah, konfirmasi kelebihan, dan struk publik bersama.
+- Batas: data tetap lokal pada prototype; backend, sinkronisasi lintas perangkat, dan otorisasi produksi belum tersedia.
+- Dokumentasi: `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md`.
+
+## 15 November 2026 — Bukti transaksi periode aktif dan pembatalan rencana oleh Muzakki
+
+- Mengaktifkan tombol **Lihat bukti / QR** pada kolom Bukti di tabel transaksi periode berjalan pada Dashboard Zakat Saya. Tombol membuka kembali struk transaksi yang sama dengan layar setelah pembuatan rencana, termasuk QR serta opsi unduh PNG, cetak/simpan PDF, dan cetak thermal.
+- Akses bukti tetap dibatasi pada transaksi pribadi yang terkait akun atau membership Muzakki.
+- Menambahkan opsi **Batalkan** untuk transaksi mandiri berstatus `pending` selama belum diverifikasi/dikonfirmasi Amil, belum berstatus `paid`, belum ditugaskan ke petugas, belum memiliki shift, dan belum tertaut berita acara setoran.
+- Pembatalan meminta alasan dan konfirmasi eksplisit. Sistem mengubah status menjadi `batal` tanpa menghapus record, menyimpan waktu/pelaku/alasan, mencatat audit, serta menambahkan event sinkronisasi lokal.
+- Transaksi batal/kedaluwarsa tetap terlihat pada bagian **Transaksi tidak aktif periode ini**, tidak dihitung sebagai penerimaan, dan QR ditandai tidak aktif. Struk transaksi batal/kedaluwarsa menampilkan catatan status tanpa memperlihatkan token QR yang sudah tidak berlaku.
+- Transaksi `paid`, `disetor`, `kas_diterima`, `terverifikasi`, transaksi konter, dan transaksi yang sudah masuk shift/berita acara tidak dapat dibatalkan oleh Muzakki.
+- Memperluas `tests/muzakki-dashboard.test.cjs` untuk memeriksa akses bukti saat ini, pemulihan QR, pembatalan dengan alasan dan jejak audit, penyimpanan record batal, serta penolakan pembatalan bagi transaksi yang sudah diproses.
+- Seluruh suite tes otomatis dan pemeriksaan sintaks JavaScript lulus; HTML standalone dibangun ulang.
+
+## 15 November 2026 — Pemisahan Registrasi Akun dan Keanggotaan Lembaga Muzakki
+
+- Form pendaftaran mandiri Muzakki kini hanya meminta nama lengkap, nomor HP, email, dan alamat lengkap; tidak ada pilihan lembaga atau isian domisili RW/RT pada tahap ini.
+- Registrasi membuat akun pribadi tanpa `tenantId`, data person, kartu Muzakki, atau membership lembaga.
+- Setelah login, Muzakki memilih lembaga aktif melalui menu Layanan Mandiri. Status domisili, RW/RT, alamat untuk lembaga, dan persetujuan penggunaan data diminta pada tahap penghubungan.
+- Data person, kartu Muzakki, dan `muzakkiMemberships` baru dibuat setelah lembaga dipilih. Pencocokan nomor HP/email tidak otomatis mengklaim data walk-in yang belum diverifikasi.
+- Menambahkan `tests/muzakki-registration.test.cjs` untuk menguji pemisahan tahap registrasi dan penghubungan lembaga.
+
 ## 14 November 2026 — Penyelarasan Istilah Antarmuka
 
 - Mengganti istilah antarmuka dan dokumentasi dari “tenant” menjadi “Lembaga” agar lebih akrab bagi pengurus masjid, UPZ, dan komunitas.
@@ -182,3 +244,22 @@ Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook y
 - Memperbarui nama cache service worker agar deployment menggunakan berkas aplikasi terbaru.
 - Menambahkan pengujian navigasi tab root langsung serta pemeriksaan statis agar observer rekursif tidak kembali.
 - Seluruh 13 suite pengujian otomatis lulus. Chromium headless dicoba, tetapi proses browser pada lingkungan build tidak menyelesaikan `--dump-dom`; karena itu pengujian visual browser tidak diklaim berhasil.
+
+
+## Navigasi akun Muzakki: pemisahan halaman mandiri dan rencana bayar (15 November 2026)
+
+- Menu **Dashboard Zakat Saya** dipertahankan sebagai halaman ringkasan pribadi, termasuk status zakat periode aktif, rincian zakat, transaksi periode berjalan, dan riwayat sebelumnya. Panel dropdown layanan mandiri dihapus dari halaman dashboard.
+- Konten **Profil, Keluarga, dan Kalkulator Zakat** dipindahkan ke halaman/menu **Layanan Mandiri** tersendiri. Pada halaman ini Muzakki mengelola daftar lembaga yang terhubung, profil dan wilayah alamat pada lembaga aktif, data keluarga tanggungan, serta kalkulator zakat.
+- Ditambahkan halaman/menu **Rencana Bayar Zakat**. Halaman ini menunjukkan lembaga dan periode aktif, status rencana/transaksi, langkah pembayaran, serta tombol untuk membuka formulir perencanaan transaksi yang sudah ada. Pembuatan QR, status Pending, validasi akun/keanggotaan/periode, dan pemeriksaan Amil tetap memakai alur transaksi lama.
+- Untuk akun yang belum terhubung ke lembaga, halaman Layanan Mandiri mengarahkan Muzakki memilih lembaga; halaman Rencana Bayar menjelaskan bahwa keanggotaan dan periode aktif diperlukan sebelum membuat rencana.
+- Navigasi sidebar untuk role Muzakki menggunakan kelompok **Menu Akun Muzakki** dan hanya menampilkan halaman yang sesuai; kedua halaman baru dibatasi pada role Muzakki.
+- Uji regresi khusus memastikan menu baru muncul untuk Muzakki, dropdown tidak lagi ada di Dashboard, formulir layanan tersedia di halaman terpisah, rencana bayar membuka alur QR yang sama, dan role selain Muzakki tidak memperoleh akses.
+
+
+## Perbaikan cetak thermal 80 mm (15 November 2026)
+
+- Memulihkan helper `makeReceiptPrint` yang tertinggal setelah penyatuan renderer bukti transaksi. Tombol Cetak thermal 80 mm sebelumnya masih memanggil nama fungsi lama yang sudah tidak didefinisikan sehingga memunculkan `makeReceiptPrint is not defined`.
+- Cetak thermal sekarang menggunakan HTML struk bersama yang juga dipakai oleh Cetak / Simpan PDF, dengan layout kertas 80 mm, area konten 74 mm, QR, seluruh rincian multi-jenis/multi-media, total uang dan beras, serta label simulasi.
+- Layout PDF biasa tidak berubah dan tetap menggunakan ukuran halaman normal browser.
+- Menambahkan pengujian regresi untuk aksi thermal dan PDF menggunakan transaksi gabungan Fitrah uang, Fitrah beras, dan Fidyah.
+- Menaikkan versi cache service worker agar browser mengambil modul revisi terbaru setelah pembaruan.

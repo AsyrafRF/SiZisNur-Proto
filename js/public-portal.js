@@ -85,7 +85,7 @@
     const metric = aggregate(tenant.id)
     const region = tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan'
     return `<article class="card public-tenant-card">
-      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
+      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)} · ID ${esc(tenant.publicCode || tenant.id)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
       <div class="public-tenant-stats">
         <div><small>Transaksi disahkan</small><b>${metric.transactions.toLocaleString('id-ID')}</b></div>
         <div><small>Penerimaan uang</small><b>${money(metric.received.money)}</b></div>
@@ -127,7 +127,7 @@
         <div class="public-camera-actions"><button type="button" class="btn primary" data-public-action="camera-start"> <span aria-hidden="true">▣</span> Scan QR dengan kamera</button><button type="button" class="btn" data-public-action="camera-stop" hidden>Hentikan kamera</button></div>
         <video id="public-camera" class="camera-preview public-camera-preview" playsinline muted hidden aria-label="Pratinjau kamera pemindai QR"></video>
         <p id="public-camera-status" class="caption" aria-live="polite">Kamera memerlukan izin perangkat dan koneksi HTTPS atau localhost. Jika browser tidak mendukung pemindai QR, masukkan token secara manual.</p>
-      </div><div class="public-manual-panel"><form data-form="verify-public" class="public-verify-form"><div class="field"><label for="public-scan-token">Nomor seri / ID transaksi / token QR</label><input id="public-scan-token" name="token" type="text" placeholder="Contoh: SIZISNUR|tenant|id|seri" autocomplete="off" required value="${esc(state.filters.verify || '')}"></div><button class="btn primary" type="submit">Verifikasi struk</button></form></div></div>
+      </div><div class="public-manual-panel"><form data-form="verify-public" class="public-verify-form"><div class="field"><label for="public-scan-token">Nomor seri / ID transaksi / token QR</label><input id="public-scan-token" name="token" type="text" placeholder="Contoh: SIZISNUR|ID_LEMBAGA|ID_TRANSAKSI|NOMOR_SERI" autocomplete="off" required value="${esc(state.filters.verify || '')}"></div><button class="btn primary" type="submit">Verifikasi struk</button></form></div></div>
       <div id="verify-result" class="public-verify-result" aria-live="polite"></div>`
   }
 
@@ -136,7 +136,7 @@
     const categories = categorySummary(tenant.id)
     const dist = metric.distributed
     return `<div class="public-detail-toolbar">${button('← Semua lembaga', 'tenant-list', 'sm')}<span class="tag ok">Lembaga aktif</span></div>
-      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')}</p></div>
+      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')} · ID unik ${esc(tenant.publicCode || tenant.id)}</p><p>${esc([tenant.address, tenant.kelurahan, tenant.kecamatan, tenant.city, tenant.province, tenant.postalCode].filter(Boolean).join(', '))}</p></div>
       <div class="cards public-global-stats">
         ${stat('Transaksi disahkan', metric.transactions.toLocaleString('id-ID'), 'Pembayaran disahkan Amil', '✓')}
         ${stat('Penghimpunan uang', money(metric.received.money), 'Transaksi berstatus Paid / disetor / terverifikasi', 'Rp')}

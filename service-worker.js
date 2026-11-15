@@ -1,8 +1,8 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261114-prototype-settings-fix1'
+const CACHE_NAME = 'sizisnur-shell-v5-20261115-thermal-80mm-page-head-preview-fix'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
-  './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/public-portal.js', './js/prototype-settings.js', './js/qrcode.js',
+  './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/public-portal.js', './js/prototype-settings.js', './js/authentication.js', './js/public-intake.js', './js/qrcode.js',
   './assets/favicon.png', './assets/sizisnur-logo-mark.png'
 ]
 self.addEventListener('install', (event) => {
@@ -14,6 +14,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return
+  const requestUrl = new URL(request.url)
+  // Public portal tokens are kept out of the application-shell cache. The form requires online data/service.
+  if (requestUrl.searchParams.has('portal')) {
+    event.respondWith(fetch(request).catch(() => Response.error()))
+    return
+  }
   event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
     if (response.ok && response.type === 'basic') {
       const copy = response.clone()
