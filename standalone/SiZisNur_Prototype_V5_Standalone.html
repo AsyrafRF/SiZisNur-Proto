@@ -707,6 +707,60 @@ body.dark .proto-confirm-card.danger{background:linear-gradient(145deg,var(--pan
 @media(max-width:850px){.proto-settings-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.proto-settings-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.proto-settings-stats{grid-template-columns:1fr 1fr}.proto-confirm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.proto-session-card{align-items:flex-start;flex-direction:column}.proto-session-card .actions{width:100%}}
 
+/* Public institution profile, location simulation and photo carousel */
+.tenant-join-profile{display:grid;gap:13px;margin:14px 0 18px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);min-width:0}
+.tenant-join-profile-head,.tenant-profile-card-head,.tenant-public-profile-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.tenant-code-label,.tenant-profile-code small{display:block;color:var(--muted);font-size:9px;letter-spacing:1.25px;font-weight:850}
+.tenant-public-code{display:block;margin-top:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;letter-spacing:.7px;color:var(--main);font-weight:900}
+.tenant-join-profile h3,.tenant-public-profile-heading h3{font-size:17px;margin:0}
+.tenant-join-area{margin:-8px 0 0;color:var(--muted);font-size:12px;line-height:1.65}
+.tenant-join-address{padding:12px 14px;border-radius:10px;background:var(--soft);font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.tenant-join-address p{margin:4px 0;color:var(--text)}
+.tenant-join-address small{display:block;color:var(--muted);font-size:10px}
+.tenant-map-card{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.tenant-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px}
+.tenant-map-head>div{display:grid;gap:2px}
+.tenant-map-head b{font-size:12px}
+.tenant-map-head small{font-size:10px;color:var(--muted)}
+.tenant-map-tag{padding:4px 7px;border-radius:20px;background:var(--soft);color:var(--main);font-size:8px;letter-spacing:.9px;font-weight:900}
+.tenant-map-canvas{height:180px;position:relative;overflow:hidden;background:#e7f0e8}
+.tenant-map-canvas svg{width:100%;height:100%;display:block}
+.tenant-map-label{position:absolute;left:12px;bottom:10px;padding:5px 8px;border:1px solid rgba(255,255,255,.8);border-radius:7px;background:rgba(255,255,255,.88);color:#31563a;font-size:10px;font-weight:800;box-shadow:0 2px 7px #183a251a}
+.tenant-map-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;font-size:10px;color:var(--muted)}
+.tenant-map-foot a{color:var(--main);font-weight:800;text-decoration:none;white-space:nowrap}
+.tenant-map-disclaimer{margin:0;padding:0 12px 10px;color:var(--muted);font-size:9px;line-height:1.55}
+.tenant-gallery-section{display:grid;gap:9px;min-width:0}
+.tenant-gallery-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tenant-gallery-heading>div:first-child{display:grid;gap:2px}
+.tenant-gallery-heading b{font-size:12px}
+.tenant-gallery-heading small{font-size:10px;color:var(--muted)}
+.tenant-gallery-actions{display:flex;gap:6px}
+.tenant-gallery-actions .btn{min-width:32px;padding:4px 9px;font-size:16px;line-height:1}
+.tenant-gallery-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:1px 1px 8px;overscroll-behavior-inline:contain;scrollbar-width:thin}
+.tenant-gallery-slide{flex:0 0 min(82%,360px);margin:0;position:relative;scroll-snap-align:start;overflow:hidden;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.tenant-gallery-slide img{display:block;width:100%;height:180px;object-fit:cover;background:var(--soft)}
+.tenant-gallery-slide figcaption{padding:7px 10px;color:var(--muted);font-size:10px}
+.tenant-gallery-empty{display:grid;place-items:center;text-align:center;gap:5px;min-height:115px;padding:18px;border:1px dashed var(--line);border-radius:11px;background:var(--soft)}
+.tenant-gallery-empty>span{font-size:24px;color:var(--muted)}
+.tenant-gallery-empty b{font-size:11px}
+.tenant-gallery-empty p{max-width:320px;margin:0;color:var(--muted);font-size:10px;line-height:1.6}
+.tenant-profile-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:14px;align-items:start}
+.tenant-profile-card-head{align-items:flex-start;margin-bottom:14px}
+.tenant-profile-card-head h3{margin:0 0 3px}
+.tenant-profile-code{display:grid;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--soft)}
+.tenant-profile-code b{font-size:14px;color:var(--main)}
+.tenant-profile-layout .card>.tenant-map-card,.tenant-profile-layout .card>.tenant-gallery-section{margin-top:14px}
+.tenant-location-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tenant-location-facts>div{display:grid;gap:3px;padding:9px 10px;border-radius:9px;background:var(--soft);min-width:0}
+.tenant-location-facts small{font-size:9px;color:var(--muted)}
+.tenant-location-facts b{font-size:11px;overflow-wrap:anywhere}
+.tenant-public-profile{display:grid;gap:14px}
+.tenant-public-profile-heading{justify-content:flex-start}
+body.dark .tenant-map-canvas{filter:saturate(.8) brightness(.82)}
+body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;color:#d8ebdc}
+@media(max-width:900px){.tenant-profile-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.tenant-map-canvas{height:155px}.tenant-gallery-slide{flex-basis:88%}.tenant-gallery-slide img{height:155px}.tenant-map-foot{align-items:flex-start;flex-direction:column;gap:5px}.tenant-join-profile{padding:12px}.tenant-location-facts{grid-template-columns:1fr 1fr}}
+
   </style>
 </head>
 <body>
@@ -2035,7 +2089,7 @@ const safeJSON=(x,def)=>{try{return JSON.parse(x)||def}catch{return def}};
 const DEMO_CAVEAT='SIMULASI PROTOTYPE V5 — tidak terhubung server, rekening, email, perangkat e-KTP, maupun database produksi. Jangan masukkan data pribadi asli.';
 function seed(){const data={
  version:5, seedRevision:2,
- tenants:[{id:'TN-ANNUR',name:'Masjid An-Nur Villa Pesona Asri',address:'Villa Pesona Asri, Batam, Kepulauan Riau',phone:'0778-000000 (contoh)',email:'demo@annur.invalid',rt:'RT 01–06',status:'aktif',publicPortalEnabled:true},{id:'TN-ALHIKMAH',name:'Masjid Al-Hikmah',address:'Kompleks Buana Citra, Batam (data simulasi)',phone:'0000-000000 (contoh)',email:'demo@alhikmah.invalid',rt:'RT 01–02',status:'aktif',publicPortalEnabled:true}],
+ tenants:[{id:'TN-ANNUR',publicCode:'MAN-06426',name:'Masjid An-Nur Villa Pesona Asri',address:'Villa Pesona Asri (alamat contoh; lengkapi nomor jalan dan patokan di menu Kelola Lembaga)',daerah:'Perumahan Villa Pesona Asri',kelurahan:'',kecamatan:'',city:'Batam',province:'Kepulauan Riau',postalCode:'',latitude:'',longitude:'',gallery:[],phone:'0778-000000 (contoh)',email:'demo@annur.invalid',rt:'RT 01–06',status:'aktif',publicPortalEnabled:true},{id:'TN-ALHIKMAH',publicCode:'AH-6482',name:'Masjid Al-Hikmah',address:'Kompleks Buana Citra (alamat contoh; lengkapi nomor jalan dan patokan di menu Kelola Lembaga)',daerah:'Kompleks Buana Citra',kelurahan:'',kecamatan:'',city:'Batam',province:'Kepulauan Riau',postalCode:'',latitude:'',longitude:'',gallery:[],phone:'0000-000000 (contoh)',email:'demo@alhikmah.invalid',rt:'RT 01–02',status:'aktif',publicPortalEnabled:true}],
  applications:[{id:'APP-01',name:'Masjid Al-Falah',contact:'Koordinator Pengajuan Demo',email:'pengajuan@alfalah.demo.invalid',address:'Batam, Kepulauan Riau (alamat simulasi)',status:'menunggu',createdAt:'2026-11-14',note:'Pengajuan contoh yang menunggu tinjauan Admin SiZisNur.'}],
  users:[{id:'US-ADM',tenantId:'TN-ANNUR',name:'Admin Lembaga An-Nur',role:'Admin',email:'admin.annur@demo.invalid',active:true},{id:'US-PGR',tenantId:'TN-ANNUR',name:'Pengurus An-Nur',role:'Pengurus',email:'pengurus.annur@demo.invalid',active:true},{id:'US-PTG',tenantId:'TN-ANNUR',name:'Admin Pendataan',role:'Admin',email:'admin.data@demo.invalid',active:true},{id:'US-AML',tenantId:'TN-ANNUR',name:'Amil Konter 01',role:'Amil',email:'amil01@demo.invalid',active:true},{id:'US-AML2',tenantId:'TN-ANNUR',name:'Amil Konter 02',role:'Amil',email:'amil02@demo.invalid',active:true},{id:'US-OPR',tenantId:'TN-ANNUR',name:'Operator Penerimaan',role:'Operator',email:'operator@demo.invalid',active:true},{id:'US-BEN',tenantId:'TN-ANNUR',name:'Bendahara Lembaga',role:'Bendahara',email:'bendahara@demo.invalid',active:true},{id:'US-REL',tenantId:'TN-ANNUR',name:'Relawan Distribusi',role:'Relawan',email:'relawan@demo.invalid',active:true},{id:'US-T2',tenantId:'TN-ALHIKMAH',name:'Admin Lembaga Al-Hikmah',role:'Admin',email:'admin.alhikmah@demo.invalid',active:true},{id:'US-MZK',tenantId:'TN-ANNUR',name:'Muzakki Demo 01',role:'Muzakki',email:'muzakki01@demo.invalid',active:true,personId:'PS-01',accountId:'ACC-MZK-01'}],
  platformAdmins:[{id:'PA-SIZISNUR-ROOT',name:'Admin SiZisNur',role:'Admin SiZisNur',email:'root@sizisnur.demo',scope:'platform',active:true,createdAt:'2026-11-14T00:00:00.000Z',note:'Akun demonstrasi terpisah dari seluruh pengguna lembaga.'}],
@@ -2485,6 +2539,37 @@ render();
   db.audit ||= []
   db.tenants ||= []
   db.rules ||= []
+
+  // Public institution codes are human-readable identifiers, separate from internal tenant IDs.
+  function tenantCodePrefix(name) {
+    const words = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean)
+    return (words.map((word) => word[0]).join('').toUpperCase().slice(0, 5) || 'LEMBG')
+  }
+  function generateTenantPublicCode(name) {
+    const prefix = tenantCodePrefix(name)
+    for (let attempt = 0; attempt < 1000; attempt += 1) {
+      const suffix = String(Math.floor(Math.random() * 100000)).padStart(5, '0')
+      const candidate = `${prefix}-${suffix}`
+      if (!db.tenants.some((tenant) => tenant.publicCode === candidate)) return candidate
+    }
+    let fallback = 1
+    while (db.tenants.some((tenant) => tenant.publicCode === `${prefix}-${String(fallback).padStart(5, '0')}`)) fallback += 1
+    return `${prefix}-${String(fallback).padStart(5, '0')}`
+  }
+  db.tenants.forEach((tenant) => {
+    tenant.publicCode ||= generateTenantPublicCode(tenant.name)
+    tenant.gallery = Array.isArray(tenant.gallery) ? tenant.gallery.map((item) => typeof item === 'string' ? { url: item, caption: '' } : item).filter((item) => item && typeof item.url === 'string') : []
+    tenant.daerah ||= ''
+    tenant.kelurahan ||= ''
+    tenant.kecamatan ||= ''
+    tenant.city ||= ''
+    tenant.province ||= ''
+    tenant.postalCode ||= ''
+    tenant.latitude ??= ''
+    tenant.longitude ??= ''
+  })
+  window.__SIZISNUR_GENERATE_TENANT_CODE = generateTenantPublicCode
+
   const demoMuzakki = db.users.find((u) => u.id === 'US-MZK')
   if (demoMuzakki) {
     demoMuzakki.name = 'Muzakki Demo 01'
@@ -2671,7 +2756,7 @@ render();
   A.ROLES.splice(0, A.ROLES.length, ...roles)
   Object.assign(A.PAGES, {
     dashboard: ['Ringkasan', '◫', 'Semua'],
-    tenant: ['Profil Lembaga & UPZ', '⌂', ['Admin', 'Pengurus']],
+    tenant: ['Kelola Lembaga & UPZ', '⌂', ['Admin', 'Pengurus']],
     users: ['Akun & Peran', '♙', ['Admin']],
     periods: ['Periode Zakat', '▦', ['Admin']],
     settings: ['Tarif & Rumus', '⚙', ['Admin']],
@@ -2982,7 +3067,7 @@ render();
       (accountId && tx.accountId === accountId) || (personId && tx.personId === personId)
     ))
   }
-  function tenantLabel(tenantId) { return db.tenants.find((x) => x.id === tenantId)?.name || tenantId }
+  function tenantLabel(tenantId) { const tenant = db.tenants.find((x) => x.id === tenantId); return tenant ? `${tenant.name} · ${tenant.publicCode || tenant.id}` : tenantId }
   function amilShift(amilId = activeUser()?.id) {
     return db.shiftSessions.find((x) => x.tenantId === currentTenantId() && x.amilId === amilId && x.status === 'open') || null
   }
@@ -3518,6 +3603,69 @@ render();
     const form = document.querySelector('[data-v5-form="self-transaction"]')
     if (form) { form.dataset.defaultFitrahCount = String(householdCount); setTransactionAmount(form) }
   }
+  function tenantFullAddress(tenant) {
+    if (!tenant) return 'Alamat lembaga belum tersedia'
+    const area = areaFor(tenant.id)
+    const parts = [
+      tenant.address,
+      area?.name || tenant.daerah ? `Daerah ${area?.name || tenant.daerah}` : '',
+      tenant.kelurahan ? `Kel. ${tenant.kelurahan}` : '',
+      tenant.kecamatan ? `Kec. ${tenant.kecamatan}` : '',
+      tenant.city || '', tenant.province || '', tenant.postalCode || '',
+    ].map((part) => String(part || '').trim()).filter(Boolean)
+    return [...new Set(parts)].join(', ') || 'Alamat lembaga belum dilengkapi'
+  }
+  function tenantCoordinates(tenant) {
+    const latitude = Number(tenant?.latitude)
+    const longitude = Number(tenant?.longitude)
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 || tenant.latitude === '' || tenant.longitude === '') return null
+    return { latitude, longitude }
+  }
+  function tenantMapMarkup(tenant) {
+    const coords = tenantCoordinates(tenant)
+    const seedText = String(tenant?.publicCode || tenant?.id || 'MAP')
+    const hash = Array.from(seedText).reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 7)
+    const pinX = 265 + (hash % 150)
+    const pinY = 92 + (Math.floor(hash / 13) % 65)
+    const areaLabel = areaFor(tenant.id)?.name || tenant.daerah || 'Daerah lembaga'
+    const query = encodeURIComponent(tenantFullAddress(tenant))
+    const mapUrl = coords
+      ? `https://www.openstreetmap.org/?mlat=${coords.latitude}&mlon=${coords.longitude}#map=17/${coords.latitude}/${coords.longitude}`
+      : `https://www.openstreetmap.org/search?query=${query}`
+    return `<section class="tenant-map-card"><div class="tenant-map-head"><div><b>Lokasi lembaga</b><small>Peta ilustrasi untuk prototype</small></div><span class="tenant-map-tag">PETA SIMULASI</span></div>
+      <div class="tenant-map-canvas"><svg viewBox="0 0 720 270" role="img" aria-label="Ilustrasi peta kawasan ${esc(areaLabel)}" preserveAspectRatio="xMidYMid slice">
+        <rect width="720" height="270" fill="#e7f0e8"/>
+        <path d="M-20 38 L180 85 L340 42 L740 92 M-30 224 L175 178 L390 227 L740 180 M120 -20 L165 290 M485 -20 L440 290 M625 -20 L595 290" stroke="#d2e2d3" stroke-width="34" fill="none"/>
+        <path d="M-20 38 L180 85 L340 42 L740 92 M-30 224 L175 178 L390 227 L740 180 M120 -20 L165 290 M485 -20 L440 290 M625 -20 L595 290" stroke="#fff" stroke-width="24" fill="none" stroke-linecap="round"/>
+        <path d="M-10 132 C110 112 190 135 280 123 S475 112 730 143" stroke="#c9d9ef" stroke-width="13" fill="none"/>
+        <g fill="#d3e2d1" stroke="#bfd2bd" stroke-width="2"><rect x="35" y="18" width="64" height="38" rx="7"/><rect x="212" y="20" width="74" height="38" rx="7"/><rect x="545" y="25" width="96" height="44" rx="7"/><rect x="40" y="181" width="78" height="42" rx="7"/><rect x="225" y="194" width="88" height="40" rx="7"/><rect x="530" y="194" width="92" height="40" rx="7"/></g>
+        <g fill="#809a83" font-size="13" font-family="Arial,sans-serif"><text x="27" y="105">JALAN LINGKUNGAN</text><text x="490" y="164">KAWASAN SEKITAR</text></g>
+        <circle cx="${pinX}" cy="${pinY}" r="28" fill="#0b7a4b" opacity=".14"/><path d="M${pinX} ${pinY + 24} C${pinX - 34} ${pinY - 17}, ${pinX - 19} ${pinY - 44}, ${pinX} ${pinY - 44} C${pinX + 21} ${pinY - 44}, ${pinX + 35} ${pinY - 17}, ${pinX} ${pinY + 24}Z" fill="#087b52" stroke="#fff" stroke-width="5"/><circle cx="${pinX}" cy="${pinY - 20}" r="8" fill="#fff"/>
+      </svg><span class="tenant-map-label">${esc(areaLabel)}</span></div>
+      <div class="tenant-map-foot"><span>${coords ? `Koordinat: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}` : 'Titik penanda bersifat ilustratif; koordinat belum diatur'}</span><a href="${mapUrl}" target="_blank" rel="noopener noreferrer">Buka peta luar ↗</a></div>
+      <p class="tenant-map-disclaimer">Peta dalam aplikasi ini hanya simulasi visual, bukan penunjuk posisi presisi. Admin dapat mengisi koordinat di menu Kelola Lembaga.</p></section>`
+  }
+  function parseTenantGallery(raw) {
+    const lines = String(raw || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    const photos = []
+    for (const line of lines) {
+      const separator = line.indexOf('|')
+      const url = (separator >= 0 ? line.slice(0, separator) : line).trim()
+      const caption = separator >= 0 ? line.slice(separator + 1).trim() : ''
+      if (!/^https?:\/\/[^\s]+$/i.test(url)) throw new Error(`URL foto tidak valid: ${url}. Gunakan alamat gambar yang diawali https:// atau http://.`)
+      if (!photos.some((photo) => photo.url === url)) photos.push({ url, caption })
+    }
+    return photos
+  }
+  function tenantGalleryMarkup(tenant) {
+    const photos = Array.isArray(tenant?.gallery) ? tenant.gallery.filter((item) => item && /^https?:\/\//i.test(item.url || '')) : []
+    if (!photos.length) return `<section class="tenant-gallery-section"><div class="tenant-gallery-heading"><b>Foto lembaga</b><small>Carousel foto belum diatur</small></div><div class="tenant-gallery-empty"><span aria-hidden="true">▧</span><b>Belum ada foto lembaga</b><p>Admin lembaga dapat menambahkan URL foto melalui menu Kelola Lembaga.</p></div></section>`
+    return `<section class="tenant-gallery-section"><div class="tenant-gallery-heading"><div><b>Galeri lembaga</b><small>${photos.length} foto · geser untuk melihat foto lainnya</small></div><div class="tenant-gallery-actions"><button type="button" class="btn sm" data-v5-action="tenant-gallery-prev" data-id="${esc(tenant.id)}" aria-label="Foto sebelumnya">‹</button><button type="button" class="btn sm" data-v5-action="tenant-gallery-next" data-id="${esc(tenant.id)}" aria-label="Foto berikutnya">›</button></div></div><div class="tenant-gallery-track" data-gallery-track="${esc(tenant.id)}">${photos.map((photo, index) => `<figure class="tenant-gallery-slide"><img src="${esc(photo.url)}" alt="${esc(photo.caption || `Foto ${index + 1} ${tenant.name}`)}" loading="lazy"><figcaption>${esc(photo.caption || `Foto ${index + 1}`)}</figcaption></figure>`).join('')}</div></section>`
+  }
+  function tenantJoinProfileMarkup(tenant) {
+    const area = areaFor(tenant.id)
+    return `<section class="tenant-join-profile"><div class="tenant-join-profile-head"><div><span class="tenant-code-label">ID UNIK LEMBAGA</span><b class="tenant-public-code">${esc(tenant.publicCode || tenant.id)}</b></div><span class="tag ok">${esc(tenant.status || 'aktif')}</span></div><h3>${esc(tenant.name)}</h3><p class="tenant-join-area"><b>Daerah:</b> ${esc(area?.name || tenant.daerah || 'Belum ditentukan')}${tenant.city || tenant.province ? ` · ${esc([tenant.city, tenant.province].filter(Boolean).join(', '))}` : ''}</p><div class="tenant-join-address"><b>Alamat lengkap lembaga</b><p>${esc(tenantFullAddress(tenant))}</p>${tenant.phone ? `<small>Telepon: ${esc(tenant.phone)}</small>` : ''}${tenant.email ? `<small>Email: ${esc(tenant.email)}</small>` : ''}</div>${tenantMapMarkup(tenant)}${tenantGalleryMarkup(tenant)}</section>`
+  }
   function joinTenantModal() {
     const user = activeUser()
     if (user?.role !== 'Muzakki') throw new Error('Hanya akun Muzakki yang dapat mendaftar ke lembaga')
@@ -3525,7 +3673,8 @@ render();
     if (!account) throw new Error('Data akun Muzakki tidak ditemukan')
     const available = db.tenants.filter((tenant) => tenant.status === 'aktif' && !memberForUser(user.id, tenant.id))
     if (!available.length) return A.toast('Belum ada lembaga aktif lain yang dapat dipilih', 'info')
-    A.modal('Daftar ke lembaga', `<form data-v5-form="join-tenant"><div class="grid-form">${A.sel('Pilih lembaga yang ingin diikuti', 'tenantId', available.map((x) => [x.id, x.name]))}<div data-domicile-fields>${domicileFieldMarkup(null, available[0].id)}</div>${A.textarea('Alamat lengkap untuk lembaga ini', 'address', account.address || '')}</div><div class="alert light">Pendaftaran akun pribadi sudah selesai. Pada tahap ini, pilih lembaga dan lengkapi domisili agar data Anda tercatat sebagai Muzakki di lembaga tersebut. Satu akun dapat terhubung ke beberapa lembaga.</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data akun dan domisili untuk layanan lembaga yang dipilih</label>${formButton('Daftar dan hubungkan lembaga')}</form>`)
+    const selected = available[0]
+    A.modal('Daftar ke lembaga', `<form data-v5-form="join-tenant">${A.sel('Pilih lembaga yang ingin diikuti', 'tenantId', available.map((x) => [x.id, `${x.name} · ${x.publicCode || x.id}`]), selected.id)}<div id="tenant-join-preview">${tenantJoinProfileMarkup(selected)}</div><div class="grid-form"><div data-domicile-fields>${domicileFieldMarkup(null, selected.id)}</div>${A.textarea('Alamat lengkap untuk lembaga ini', 'address', account.address || '')}</div><div class="alert light">Periksa nama, ID unik, daerah, alamat, peta, dan foto sebelum mendaftar agar tidak tertukar dengan lembaga bernama mirip. Pendaftaran akun pribadi sudah selesai; pemilihan lembaga dilakukan dari dalam akun.</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data akun dan domisili untuk layanan lembaga yang dipilih</label>${formButton('Daftar dan hubungkan lembaga')}</form>`)
   }
   function selfProfileSave(d) {
     const member = memberForUser()
@@ -3968,8 +4117,27 @@ render();
     const t = A.tenant()
     const area = areaFor(t.id)
     const canEdit = activeUser()?.role === 'Admin'
-    if (!canEdit) return `${A.boxhead('Profil Lembaga dan Identitas UPZ', 'Tampilan baca saja untuk Pengurus. Master wilayah dikelola oleh Admin lembaga.')}<section class="card"><div class="mini-list"><div class="mini-item"><span>Nama lembaga</span><b>${esc(t.name)}</b></div><div class="mini-item"><span>Daerah</span><b>${esc(area?.name || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Jenis UPZ</span><b>${esc(t.upzType || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Wilayah BAZNAS</span><b>${esc(t.baznasArea || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Alamat</span><b>${esc(t.address || '—')}</b></div></div></section>${territoryTreeHtml(t.id, false)}${territoryRecapHtml()}`
-    return `${A.boxhead('Profil Lembaga dan Master Wilayah', 'Kelola nama Daerah, lalu susun RW dan RT lembaga. Formulir identitas Muzakki/Mustahik akan memakai pilihan dari master ini.')}<div class="two-col"><section class="card"><h3>Identitas lembaga</h3><form data-v5-form="tenant-profile"><div class="grid-form">${A.fld('Nama lembaga', 'name', t.name, 'text', 'required')}${A.fld('Daerah', 'daerah', area?.name || t.daerah || '', 'text', 'required')}${A.fld('Telepon', 'phone', t.phone || '', 'tel')}${A.fld('Email', 'email', t.email || '', 'email')}${A.fld('Jenis UPZ', 'upzType', t.upzType || 'UPZ Masjid / Perumahan', 'text')}${A.fld('Wilayah BAZNAS tujuan', 'baznasArea', t.baznasArea || '', 'text')}${A.textarea('Alamat', 'address', t.address || '')}</div>${formButton('Simpan profil lembaga')}</form></section><section class="card"><h3>Ringkasan master wilayah</h3><div class="mini-list"><div class="mini-item"><span>ID lembaga</span><b class="mono">${esc(t.id)}</b></div><div class="mini-item"><span>Daerah</span><b>${esc(area?.name || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Jumlah RW</span><b>${rwsFor(t.id, area?.id).length}</b></div><div class="mini-item"><span>Jumlah RT</span><b>${db.rts.filter((x) => x.tenantId === t.id && x.active !== false).length}</b></div></div><div class="alert light">Setiap RW harus berada di Daerah lembaga dan setiap RT harus memiliki satu RW induk. Nama RW/RT hanya diatur di halaman ini.</div><div class="alert warn">Prototype masih menyimpan data di browser. Isolasi lembaga dan otorisasi pengelolaan master harus ditegakkan kembali pada API/server sebelum produksi.</div></section></div>${territoryTreeHtml(t.id, true)}${territoryRecapHtml()}`
+    const locationSummary = `<div class="tenant-location-facts"><div><small>Daerah</small><b>${esc(area?.name || t.daerah || 'Belum ditetapkan')}</b></div><div><small>Kelurahan / Desa</small><b>${esc(t.kelurahan || 'Belum ditetapkan')}</b></div><div><small>Kecamatan</small><b>${esc(t.kecamatan || 'Belum ditetapkan')}</b></div><div><small>Kota / Kabupaten</small><b>${esc(t.city || 'Belum ditetapkan')}</b></div><div><small>Provinsi</small><b>${esc(t.province || 'Belum ditetapkan')}</b></div><div><small>Kode Pos</small><b>${esc(t.postalCode || '—')}</b></div></div>`
+    if (!canEdit) return `${A.boxhead('Profil Lembaga dan Identitas UPZ', 'Tampilan baca saja untuk Pengurus. Admin lembaga mengelola profil, lokasi, peta dan galeri foto.')}<section class="card tenant-public-profile"><div class="tenant-public-profile-heading"><div><span class="tenant-code-label">ID UNIK LEMBAGA</span><b class="tenant-public-code">${esc(t.publicCode || t.id)}</b><h3>${esc(t.name)}</h3></div></div><div class="tenant-join-address"><b>Alamat lengkap</b><p>${esc(tenantFullAddress(t))}</p></div>${locationSummary}${tenantMapMarkup(t)}${tenantGalleryMarkup(t)}<div class="mini-list"><div class="mini-item"><span>Jenis UPZ</span><b>${esc(t.upzType || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Wilayah BAZNAS tujuan</span><b>${esc(t.baznasArea || 'Belum ditetapkan')}</b></div></div></section>${territoryTreeHtml(t.id, false)}${territoryRecapHtml()}`
+    const galleryUrls = (t.gallery || []).map((photo) => `${photo.url}${photo.caption ? ` | ${photo.caption}` : ''}`).join('\n')
+    const requiredAddress = A.textarea('Alamat jalan, nomor, dan patokan lengkap', 'address', t.address || '').replace('<textarea ', '<textarea required ')
+    return `${A.boxhead('Kelola Lembaga dan Master Wilayah', 'Perbarui identitas, ID publik, alamat lengkap, lokasi peta simulasi, dan foto yang akan dilihat Muzakki sebelum mendaftar.')}<div class="tenant-profile-layout"><section class="card"><div class="tenant-profile-card-head"><div><h3>Identitas dan lokasi lembaga</h3><p class="caption">ID unik dibuat otomatis saat lembaga didaftarkan dan tetap sama ketika nama lembaga diubah.</p></div><div class="tenant-profile-code"><small>ID Lembaga</small><b class="mono">${esc(t.publicCode || t.id)}</b></div></div><form data-v5-form="tenant-profile"><div class="grid-form">
+      ${A.fld('Nama lembaga', 'name', t.name, 'text', 'required')}
+      ${A.fld('Daerah / kawasan', 'daerah', area?.name || t.daerah || '', 'text', 'required')}
+      ${A.fld('Kelurahan / Desa', 'kelurahan', t.kelurahan || '', 'text')}
+      ${A.fld('Kecamatan', 'kecamatan', t.kecamatan || '', 'text')}
+      ${A.fld('Kota / Kabupaten', 'city', t.city || '', 'text', 'required')}
+      ${A.fld('Provinsi', 'province', t.province || '', 'text', 'required')}
+      ${A.fld('Kode Pos', 'postalCode', t.postalCode || '', 'text')}
+      ${A.fld('Telepon lembaga', 'phone', t.phone || '', 'tel')}
+      ${A.fld('Email lembaga', 'email', t.email || '', 'email')}
+      ${A.fld('Jenis UPZ', 'upzType', t.upzType || 'UPZ Masjid / Perumahan', 'text')}
+      ${A.fld('Wilayah BAZNAS tujuan', 'baznasArea', t.baznasArea || '', 'text')}
+      ${requiredAddress}
+      ${A.fld('Latitude (opsional)', 'latitude', t.latitude ?? '', 'number', 'step="any" placeholder="Contoh: -1.123456"')}
+      ${A.fld('Longitude (opsional)', 'longitude', t.longitude ?? '', 'number', 'step="any" placeholder="Contoh: 104.123456"')}
+      ${A.textarea('URL foto lembaga (satu foto per baris)', 'galleryUrls', galleryUrls)}
+    </div><p class="caption">Format galeri: tempel URL gambar HTTPS pada setiap baris. Keterangan opsional dapat ditulis setelah tanda |, misalnya https://contoh.id/foto-masjid.jpg | Tampak depan. Gunakan foto yang memang dimiliki atau diizinkan oleh lembaga.</p><div class="alert light">Koordinat hanya diperlukan untuk membuat tautan peta luar menuju titik tertentu. Peta ilustrasi di bawah tetap tampil sebagai simulasi jika koordinat belum diisi. ID unik tidak berubah saat nama lembaga diedit.</div>${formButton('Simpan profil, lokasi & galeri')}</form></section><section class="card"><h3>Pratinjau informasi publik</h3><div class="mini-list"><div class="mini-item"><span>ID lembaga</span><b class="mono">${esc(t.publicCode || t.id)}</b></div><div class="mini-item"><span>Daerah</span><b>${esc(area?.name || 'Belum ditetapkan')}</b></div><div class="mini-item"><span>Jumlah RW</span><b>${rwsFor(t.id, area?.id).length}</b></div><div class="mini-item"><span>Jumlah RT</span><b>${db.rts.filter((x) => x.tenantId === t.id && x.active !== false).length}</b></div></div>${tenantMapMarkup(t)}${tenantGalleryMarkup(t)}<div class="alert light">Informasi ini akan ditampilkan pada pilihan lembaga di akun Muzakki. Periksa kembali nama, ID unik dan alamat agar Muzakki dapat membedakan lembaga yang namanya mirip.</div><div class="alert warn">Prototype masih menyimpan data di browser. Otorisasi pengelolaan galeri dan profil harus ditegakkan kembali pada API/server sebelum produksi.</div></section></div>${territoryTreeHtml(t.id, true)}${territoryRecapHtml()}`
   }
   function muzakkiPageV5() {
     const list = A.scoped('muzakki').map((m) => ({ ...m, p: A.person(m.personId) })).filter((x) => x.p)
@@ -4635,6 +4803,16 @@ render();
         case 'open-prototype': state.page = 'prototype'; A.render(); break
         case 'quick-page': if (!canV5(id)) throw new Error('Role tidak memiliki akses'); state.page = id; A.render(); break
         case 'tenant-join': joinTenantModal(); break
+        case 'tenant-gallery-prev':
+        case 'tenant-gallery-next': {
+          const track = Array.from(document.querySelectorAll('[data-gallery-track]')).find((item) => item.dataset.galleryTrack === id)
+          if (track) {
+            const direction = key === 'tenant-gallery-next' ? 1 : -1
+            if (typeof track.scrollBy === 'function') track.scrollBy({ left: direction * Math.max(220, track.clientWidth * 0.85), behavior: 'smooth' })
+            else track.scrollLeft = (track.scrollLeft || 0) + direction * 240
+          }
+          break
+        }
         case 'territory-rw-add': openRwEditor(); break
         case 'territory-rw-edit': openRwEditor(id); break
         case 'territory-rw-delete': {
@@ -4739,6 +4917,9 @@ render();
     if (event.target.name === 'tenantId' && domicileForm?.dataset?.v5Form === 'join-tenant') {
       const wrapper = domicileForm.querySelector('[data-domicile-fields]')
       if (wrapper) { wrapper.innerHTML = domicileFieldMarkup(null, event.target.value); refreshDomicileControls(domicileForm) }
+      const tenantPreview = domicileForm.querySelector('#tenant-join-preview')
+      const selectedTenant = db.tenants.find((tenant) => tenant.id === event.target.value && tenant.status === 'aktif')
+      if (tenantPreview && selectedTenant) tenantPreview.innerHTML = tenantJoinProfileMarkup(selectedTenant)
     }
     if (event.target.name === 'personId' && domicileForm?.dataset?.v5Form === 'operator-transaction') {
       const person = db.persons.find((x) => x.id === event.target.value && x.tenantId === currentTenantId())
@@ -4989,9 +5170,29 @@ render();
         case 'tenant-profile': {
           if (activeUser()?.role !== 'Admin') throw new Error('Hanya Admin yang mengubah identitas lembaga')
           const tenant = A.tenant()
-          Object.assign(tenant, { name: d.name.trim(), daerah: d.daerah.trim(), phone: d.phone.trim(), email: d.email.trim(), upzType: d.upzType.trim(), baznasArea: d.baznasArea.trim(), address: d.address.trim() })
-          const masterArea = areaFor(tenant.id) || ensureArea(tenant, d.daerah.trim()); masterArea.name = d.daerah.trim(); tenant.areaId = masterArea.id
-          A.aud('TENANT_PROFILE', 'Profil dan identitas UPZ diperbarui')
+          const name = String(d.name || '').trim()
+          const daerah = String(d.daerah || '').trim()
+          const address = String(d.address || '').trim()
+          const city = String(d.city || '').trim()
+          const province = String(d.province || '').trim()
+          if (!name || !daerah || !address || !city || !province) throw new Error('Nama lembaga, daerah, alamat lengkap, kota/kabupaten, dan provinsi wajib diisi')
+          const latitude = String(d.latitude || '').trim()
+          const longitude = String(d.longitude || '').trim()
+          if (Boolean(latitude) !== Boolean(longitude)) throw new Error('Latitude dan longitude harus diisi berpasangan atau dikosongkan keduanya')
+          if (latitude || longitude) {
+            const lat = Number(latitude), lon = Number(longitude)
+            if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lon) || lon < -180 || lon > 180) throw new Error('Koordinat tidak valid. Latitude -90 sampai 90 dan longitude -180 sampai 180')
+          }
+          const gallery = parseTenantGallery(d.galleryUrls)
+          Object.assign(tenant, {
+            name, daerah, kelurahan: String(d.kelurahan || '').trim(), kecamatan: String(d.kecamatan || '').trim(),
+            city, province, postalCode: String(d.postalCode || '').trim(), phone: String(d.phone || '').trim(), email: String(d.email || '').trim(),
+            upzType: String(d.upzType || '').trim(), baznasArea: String(d.baznasArea || '').trim(), address,
+            latitude, longitude, gallery,
+            publicCode: tenant.publicCode || generateTenantPublicCode(name),
+          })
+          const masterArea = areaFor(tenant.id) || ensureArea(tenant, daerah); masterArea.name = daerah; tenant.areaId = masterArea.id
+          A.aud('TENANT_PROFILE', `Profil, lokasi, ID publik ${tenant.publicCode}, dan galeri lembaga diperbarui`)
           enqueueSync('tenant.profile_updated', { tenantId: tenant.id })
           break
         }
@@ -5156,7 +5357,7 @@ render();
       </div>
       <div class="two-col root-overview-grid">
         <section class="card"><div class="card-top"><h3>Lembaga terbaru</h3><button class="btn sm" type="button" data-root-tab="tenants">Semua lembaga</button></div>
-          ${A.table(['Lembaga','Status','Pengguna','Transaksi'], db.tenants.slice().reverse().slice(0, 6).map((tenant) => { const m = tenantMetrics(tenant.id); return [`<b>${esc(tenant.name)}</b><div class="tiny mono">${esc(tenant.id)}</div>`, badge(tenant.status), fmt(m.users), fmt(m.transactions)] }))}
+          ${A.table(['Lembaga','Status','Pengguna','Transaksi'], db.tenants.slice().reverse().slice(0, 6).map((tenant) => { const m = tenantMetrics(tenant.id); return [`<b>${esc(tenant.name)}</b><div class="tiny mono">ID: ${esc(tenant.publicCode || tenant.id)}</div><div class="tiny">Ref. internal: ${esc(tenant.id)}</div>`, badge(tenant.status), fmt(m.users), fmt(m.transactions)] }))}
         </section>
         <section class="card"><div class="card-top"><h3>Aktivitas root terbaru</h3><button class="btn sm" type="button" data-root-tab="audit">Buka audit</button></div>
           ${recent.length ? `<div class="mini-list">${recent.map((item) => `<div class="mini-item root-audit-item"><span><b>${esc(item.type)}</b><small>${esc(item.detail)}</small></span><small>${date(item.at)}</small></div>`).join('')}</div>` : '<div class="empty">Belum ada aktivitas platform.</div>'}
@@ -5173,7 +5374,7 @@ render();
     const rows = db.tenants.map((tenant) => {
       const metrics = tenantMetrics(tenant.id)
       return [
-        `<b>${esc(tenant.name)}</b><div class="tiny mono">${esc(tenant.id)}</div><small>${esc(tenant.email || 'Email belum diatur')}</small>`,
+        `<b>${esc(tenant.name)}</b><div class="tiny mono">ID: ${esc(tenant.publicCode || tenant.id)}</div><div class="tiny">Ref. internal: ${esc(tenant.id)}</div><small>${esc(tenant.email || 'Email belum diatur')}</small>`,
         badge(tenant.status),
         badge(tenant.publicPortalEnabled !== false ? 'Tampil publik' : 'Privat'),
         `${fmt(metrics.admins)} Admin / ${fmt(metrics.users)} akun`,
@@ -5192,17 +5393,19 @@ render();
     const metrics = tenantMetrics(tenantId)
     const admins = db.users.filter((user) => user.tenantId === tenantId && user.role === 'Admin')
     const members = db.users.filter((user) => user.tenantId === tenantId)
-    return `${A.boxhead('Detail Lembaga', `${esc(tenant.name)} · ${esc(tenant.id)}`, '<button class="btn sm" type="button" data-root-tab="tenants">← Kembali ke daftar</button>')}
+    return `${A.boxhead('Detail Lembaga', `${esc(tenant.name)} · ${esc(tenant.publicCode || tenant.id)}`,  '<button class="btn sm" type="button" data-root-tab="tenants">← Kembali ke daftar</button>')}
       <div class="cards root-metrics">${A.stat('Akun pengguna', fmt(metrics.users), `${fmt(metrics.admins)} Admin lembaga`, '♙')}${A.stat('Transaksi', fmt(metrics.transactions), `${fmt(metrics.pending)} belum final`, '▤')}${A.stat('Terverifikasi', fmt(metrics.verified), 'Agregat transaksi', '✓')}${A.stat('Status lembaga', tenant.status, 'Kontrol akses lembaga', '◉')}</div>
       <div class="two-col">
         <section class="card"><h3>Profil lembaga</h3><form data-root-form="tenant-save" data-id="${esc(tenant.id)}"><div class="grid-form">
           ${A.fld('Nama lembaga','name',tenant.name,'text','required')}${A.fld('Email lembaga','email',tenant.email || '','email')}
           ${A.fld('Nomor telepon','phone',tenant.phone || '','tel')}${A.fld('Wilayah / daerah','daerah',tenant.daerah || '','text')}
+          ${A.fld('Kelurahan / Desa','kelurahan',tenant.kelurahan || '','text')}${A.fld('Kecamatan','kecamatan',tenant.kecamatan || '','text')}
+          ${A.fld('Kota / Kabupaten','city',tenant.city || '','text')}${A.fld('Provinsi','province',tenant.province || '','text')}
           ${A.fld('Jenis UPZ','upzType',tenant.upzType || '','text')}${A.fld('Wilayah BAZNAS tujuan','baznasArea',tenant.baznasArea || '','text')}
           ${A.textarea('Alamat','address',tenant.address || '')}
           <label class="check full"><input type="checkbox" name="publicPortalEnabled" value="yes" ${tenant.publicPortalEnabled !== false ? 'checked' : ''}> Tampilkan lembaga pada Portal Publik dan izinkan ringkasan transparansi agregat</label>
         </div><div class="form-actions"><button class="btn primary" type="submit">Simpan profil lembaga</button></div></form>
-          <div class="mini-list"><div class="mini-item"><span>Status</span>${badge(tenant.status)}</div><div class="mini-item"><span>Jumlah pengguna</span><b>${fmt(metrics.users)}</b></div><div class="mini-item"><span>Admin lembaga</span><b>${fmt(metrics.admins)}</b></div></div>
+          <div class="mini-list"><div class="mini-item"><span>ID unik lembaga</span><b class="mono">${esc(tenant.publicCode || tenant.id)}</b></div><div class="mini-item"><span>Status</span>${badge(tenant.status)}</div><div class="mini-item"><span>Jumlah pengguna</span><b>${fmt(metrics.users)}</b></div><div class="mini-item"><span>Admin lembaga</span><b>${fmt(metrics.admins)}</b></div></div>
         </section>
         <section class="card"><h3>Akun Admin lembaga</h3>${admins.length ? A.table(['Nama','Email','Status'], admins.map((user) => [esc(user.name),esc(user.email),badge(user.active?'aktif':'nonaktif')])) : '<div class="empty">Belum ada Admin lembaga.</div>'}<div class="alert light">Admin lembaga mengelola tarif, periode, akun panitia, dan operasional lembaganya. Admin SiZisNur tidak mengubah keputusan zakat maupun data transaksi.</div></section>
       </div>
@@ -5341,17 +5544,19 @@ render();
       ${A.fld('Nama lembaga','name','','text','required')}${A.fld('Nama Admin lembaga pertama','adminName','','text','required')}
       ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Email lembaga','email','','email')}
       ${A.fld('Nomor telepon','phone','','tel')}${A.fld('Wilayah / daerah','daerah','','text')}
+      ${A.fld('Kelurahan / Desa','kelurahan','','text')}${A.fld('Kecamatan','kecamatan','','text')}
+      ${A.fld('Kota / Kabupaten','city','','text')}${A.fld('Provinsi','province','','text')}
       ${A.textarea('Alamat lembaga','address','')}
     </div><div class="alert light">Sistem akan membuat akun Admin lembaga terpisah, aturan zakat awal yang dapat disesuaikan, dan satu periode berstatus draf.</div><div class="form-actions"><button type="submit" class="btn primary">Buat lembaga</button></div></form>`, true)
   }
 
-  function makeTenant({ name, email, phone, address, daerah, adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
+  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
     const cleanName = String(name || '').trim()
     const cleanAdminEmail = String(adminEmail || '').trim().toLowerCase()
     if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail) throw new Error('Nama lembaga, nama Admin, dan email Admin wajib diisi.')
     if (db.users.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail) || db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun lain.')
     const id = A.id('TN')
-    const tenant = { id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
+    const tenant = { id, publicCode: window.__SIZISNUR_GENERATE_TENANT_CODE ? window.__SIZISNUR_GENERATE_TENANT_CODE(cleanName) : id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), kelurahan: String(kelurahan || '').trim(), kecamatan: String(kecamatan || '').trim(), city: String(city || '').trim(), province: String(province || '').trim(), postalCode: '', latitude: '', longitude: '', gallery: [], upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
     db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
@@ -5431,7 +5636,7 @@ render();
           const tenant = db.tenants.find((item) => item.id === id)
           if (!tenant) throw new Error('Lembaga tidak ditemukan.')
           if (!String(data.name || '').trim()) throw new Error('Nama lembaga wajib diisi.')
-          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim(), publicPortalEnabled: data.publicPortalEnabled === 'yes' })
+          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), kelurahan: (data.kelurahan || '').trim(), kecamatan: (data.kecamatan || '').trim(), city: (data.city || '').trim(), province: (data.province || '').trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim(), publicPortalEnabled: data.publicPortalEnabled === 'yes' })
           writeRootAudit('TENANT_PROFILE', `Metadata lembaga ${tenant.id} diperbarui. Portal publik: ${tenant.publicPortalEnabled ? 'tampil' : 'disembunyikan'}.`)
           state.modal = null; A.toast('Profil lembaga diperbarui.'); break
         }
@@ -5600,7 +5805,7 @@ render();
     const metric = aggregate(tenant.id)
     const region = tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan'
     return `<article class="card public-tenant-card">
-      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
+      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)} · ID ${esc(tenant.publicCode || tenant.id)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
       <div class="public-tenant-stats">
         <div><small>Transaksi disahkan</small><b>${metric.transactions.toLocaleString('id-ID')}</b></div>
         <div><small>Penerimaan uang</small><b>${money(metric.received.money)}</b></div>
@@ -5651,7 +5856,7 @@ render();
     const categories = categorySummary(tenant.id)
     const dist = metric.distributed
     return `<div class="public-detail-toolbar">${button('← Semua lembaga', 'tenant-list', 'sm')}<span class="tag ok">Lembaga aktif</span></div>
-      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')}</p></div>
+      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')} · ID unik ${esc(tenant.publicCode || tenant.id)}</p><p>${esc([tenant.address, tenant.kelurahan, tenant.kecamatan, tenant.city, tenant.province, tenant.postalCode].filter(Boolean).join(', '))}</p></div>
       <div class="cards public-global-stats">
         ${stat('Transaksi disahkan', metric.transactions.toLocaleString('id-ID'), 'Pembayaran disahkan Amil', '✓')}
         ${stat('Penghimpunan uang', money(metric.received.money), 'Transaksi berstatus Paid / disetor / terverifikasi', 'Rp')}

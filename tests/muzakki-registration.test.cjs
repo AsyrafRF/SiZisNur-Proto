@@ -127,6 +127,13 @@ bridge.db.persons.push(walkIn);
 fireClick('tenant-join');
 const joinMarkup = bridge.state.modal.body;
 assert.ok(joinMarkup.includes('Pilih lembaga yang ingin diikuti'));
+assert.ok(joinMarkup.includes('ID UNIK LEMBAGA'));
+assert.ok(joinMarkup.includes('MAN-06426'));
+assert.ok(joinMarkup.includes('AH-6482'), 'the institution selector distinguishes the second similar-name institution by its public code');
+assert.ok(joinMarkup.includes('Alamat lengkap lembaga'));
+assert.ok(joinMarkup.includes('Perumahan Villa Pesona Asri'));
+assert.ok(joinMarkup.includes('PETA SIMULASI'));
+assert.ok(joinMarkup.includes('Belum ada foto lembaga'));
 assert.ok(joinMarkup.includes('Jl. Contoh Nomor 10, Takokak'));
 assert.ok(joinMarkup.includes('Daftar dan hubungkan lembaga'));
 assert.ok(joinMarkup.includes('name="consent"'));
@@ -157,3 +164,42 @@ assert.equal(bridge.session.tenantId, 'TN-ALHIKMAH');
 assert.equal(bridge.state.page, 'my-zis');
 
 console.log('PASS — registrasi Muzakki hanya membuat akun global; lembaga, person, kartu, dan membership baru dibuat setelah dipilih dari dalam akun');
+
+// Institution Admin manages the public profile, full address, map coordinates and photo carousel.
+const annur = bridge.db.tenants.find((item) => item.id === 'TN-ANNUR');
+const originalPublicCode = annur.publicCode;
+bridge.login('US-ADM', false);
+app.navigateRef('tenant');
+const tenantProfileMarkup = app.html();
+assert.ok(tenantProfileMarkup.includes('Kelola Lembaga dan Master Wilayah'));
+assert.ok(tenantProfileMarkup.includes('ID Lembaga'));
+assert.ok(tenantProfileMarkup.includes(originalPublicCode));
+assert.ok(tenantProfileMarkup.includes('galleryUrls'));
+assert.ok(tenantProfileMarkup.includes('Latitude (opsional)'));
+assert.ok(tenantProfileMarkup.includes('Longitude (opsional)'));
+assert.ok(tenantProfileMarkup.includes('Foto lembaga'));
+
+submitForm('tenant-profile', {
+  name: 'Masjid An-Nur Utama', daerah: 'Perumahan Contoh', kelurahan: 'Kelurahan Contoh',
+  kecamatan: 'Kecamatan Contoh', city: 'Kota Contoh', province: 'Provinsi Contoh', postalCode: '12345',
+  phone: '081234567890', email: 'annur@example.invalid', upzType: 'UPZ Masjid', baznasArea: 'BAZNAS Kota Contoh',
+  address: 'Jalan Utama Nomor 10, dekat taman warga', latitude: '-1.12345', longitude: '104.12345',
+  galleryUrls: 'https://images.example.invalid/annur-depan.jpg | Tampak depan\nhttps://images.example.invalid/annur-dalam.jpg | Ruang utama',
+});
+assert.equal(annur.name, 'Masjid An-Nur Utama');
+assert.equal(annur.publicCode, originalPublicCode, 'public institution ID remains stable after a name change');
+assert.equal(annur.city, 'Kota Contoh');
+assert.equal(annur.latitude, '-1.12345');
+assert.deepEqual(JSON.parse(JSON.stringify(annur.gallery)), [
+  { url: 'https://images.example.invalid/annur-depan.jpg', caption: 'Tampak depan' },
+  { url: 'https://images.example.invalid/annur-dalam.jpg', caption: 'Ruang utama' },
+]);
+
+const savedGallery = JSON.stringify(annur.gallery);
+submitForm('tenant-profile', {
+  name: annur.name, daerah: annur.daerah, city: annur.city, province: annur.province, address: annur.address,
+  latitude: '', longitude: '', galleryUrls: 'javascript:alert(1)',
+});
+assert.equal(JSON.stringify(annur.gallery), savedGallery, 'unsafe gallery URLs are rejected without replacing saved photos');
+
+console.log('PASS — pilihan lembaga menampilkan ID unik, alamat, daerah, peta simulasi dan galeri; Admin dapat mengelola lokasi serta carousel secara aman');

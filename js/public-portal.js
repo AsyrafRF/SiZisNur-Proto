@@ -85,7 +85,7 @@
     const metric = aggregate(tenant.id)
     const region = tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan'
     return `<article class="card public-tenant-card">
-      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
+      <div class="public-tenant-card-head"><div><span class="tag ok">Lembaga aktif</span><h3>${esc(tenant.name)}</h3><p class="caption">${esc(region)} · ID ${esc(tenant.publicCode || tenant.id)}</p></div><span class="public-tenant-mark" aria-hidden="true">⌂</span></div>
       <div class="public-tenant-stats">
         <div><small>Transaksi disahkan</small><b>${metric.transactions.toLocaleString('id-ID')}</b></div>
         <div><small>Penerimaan uang</small><b>${money(metric.received.money)}</b></div>
@@ -136,7 +136,7 @@
     const categories = categorySummary(tenant.id)
     const dist = metric.distributed
     return `<div class="public-detail-toolbar">${button('← Semua lembaga', 'tenant-list', 'sm')}<span class="tag ok">Lembaga aktif</span></div>
-      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')}</p></div>
+      <div class="public-detail-heading"><span class="lp-section-kicker">RINGKASAN TRANSPARANSI LEMBAGA</span><h1>${esc(tenant.name)}</h1><p>${esc(tenant.daerah || tenant.baznasArea || 'Wilayah belum dipublikasikan')} · ID unik ${esc(tenant.publicCode || tenant.id)}</p><p>${esc([tenant.address, tenant.kelurahan, tenant.kecamatan, tenant.city, tenant.province, tenant.postalCode].filter(Boolean).join(', '))}</p></div>
       <div class="cards public-global-stats">
         ${stat('Transaksi disahkan', metric.transactions.toLocaleString('id-ID'), 'Pembayaran disahkan Amil', '✓')}
         ${stat('Penghimpunan uang', money(metric.received.money), 'Transaksi berstatus Paid / disetor / terverifikasi', 'Rp')}

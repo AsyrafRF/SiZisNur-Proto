@@ -98,7 +98,7 @@
       </div>
       <div class="two-col root-overview-grid">
         <section class="card"><div class="card-top"><h3>Lembaga terbaru</h3><button class="btn sm" type="button" data-root-tab="tenants">Semua lembaga</button></div>
-          ${A.table(['Lembaga','Status','Pengguna','Transaksi'], db.tenants.slice().reverse().slice(0, 6).map((tenant) => { const m = tenantMetrics(tenant.id); return [`<b>${esc(tenant.name)}</b><div class="tiny mono">${esc(tenant.id)}</div>`, badge(tenant.status), fmt(m.users), fmt(m.transactions)] }))}
+          ${A.table(['Lembaga','Status','Pengguna','Transaksi'], db.tenants.slice().reverse().slice(0, 6).map((tenant) => { const m = tenantMetrics(tenant.id); return [`<b>${esc(tenant.name)}</b><div class="tiny mono">ID: ${esc(tenant.publicCode || tenant.id)}</div><div class="tiny">Ref. internal: ${esc(tenant.id)}</div>`, badge(tenant.status), fmt(m.users), fmt(m.transactions)] }))}
         </section>
         <section class="card"><div class="card-top"><h3>Aktivitas root terbaru</h3><button class="btn sm" type="button" data-root-tab="audit">Buka audit</button></div>
           ${recent.length ? `<div class="mini-list">${recent.map((item) => `<div class="mini-item root-audit-item"><span><b>${esc(item.type)}</b><small>${esc(item.detail)}</small></span><small>${date(item.at)}</small></div>`).join('')}</div>` : '<div class="empty">Belum ada aktivitas platform.</div>'}
@@ -115,7 +115,7 @@
     const rows = db.tenants.map((tenant) => {
       const metrics = tenantMetrics(tenant.id)
       return [
-        `<b>${esc(tenant.name)}</b><div class="tiny mono">${esc(tenant.id)}</div><small>${esc(tenant.email || 'Email belum diatur')}</small>`,
+        `<b>${esc(tenant.name)}</b><div class="tiny mono">ID: ${esc(tenant.publicCode || tenant.id)}</div><div class="tiny">Ref. internal: ${esc(tenant.id)}</div><small>${esc(tenant.email || 'Email belum diatur')}</small>`,
         badge(tenant.status),
         badge(tenant.publicPortalEnabled !== false ? 'Tampil publik' : 'Privat'),
         `${fmt(metrics.admins)} Admin / ${fmt(metrics.users)} akun`,
@@ -134,17 +134,19 @@
     const metrics = tenantMetrics(tenantId)
     const admins = db.users.filter((user) => user.tenantId === tenantId && user.role === 'Admin')
     const members = db.users.filter((user) => user.tenantId === tenantId)
-    return `${A.boxhead('Detail Lembaga', `${esc(tenant.name)} · ${esc(tenant.id)}`, '<button class="btn sm" type="button" data-root-tab="tenants">← Kembali ke daftar</button>')}
+    return `${A.boxhead('Detail Lembaga', `${esc(tenant.name)} · ${esc(tenant.publicCode || tenant.id)}`,  '<button class="btn sm" type="button" data-root-tab="tenants">← Kembali ke daftar</button>')}
       <div class="cards root-metrics">${A.stat('Akun pengguna', fmt(metrics.users), `${fmt(metrics.admins)} Admin lembaga`, '♙')}${A.stat('Transaksi', fmt(metrics.transactions), `${fmt(metrics.pending)} belum final`, '▤')}${A.stat('Terverifikasi', fmt(metrics.verified), 'Agregat transaksi', '✓')}${A.stat('Status lembaga', tenant.status, 'Kontrol akses lembaga', '◉')}</div>
       <div class="two-col">
         <section class="card"><h3>Profil lembaga</h3><form data-root-form="tenant-save" data-id="${esc(tenant.id)}"><div class="grid-form">
           ${A.fld('Nama lembaga','name',tenant.name,'text','required')}${A.fld('Email lembaga','email',tenant.email || '','email')}
           ${A.fld('Nomor telepon','phone',tenant.phone || '','tel')}${A.fld('Wilayah / daerah','daerah',tenant.daerah || '','text')}
+          ${A.fld('Kelurahan / Desa','kelurahan',tenant.kelurahan || '','text')}${A.fld('Kecamatan','kecamatan',tenant.kecamatan || '','text')}
+          ${A.fld('Kota / Kabupaten','city',tenant.city || '','text')}${A.fld('Provinsi','province',tenant.province || '','text')}
           ${A.fld('Jenis UPZ','upzType',tenant.upzType || '','text')}${A.fld('Wilayah BAZNAS tujuan','baznasArea',tenant.baznasArea || '','text')}
           ${A.textarea('Alamat','address',tenant.address || '')}
           <label class="check full"><input type="checkbox" name="publicPortalEnabled" value="yes" ${tenant.publicPortalEnabled !== false ? 'checked' : ''}> Tampilkan lembaga pada Portal Publik dan izinkan ringkasan transparansi agregat</label>
         </div><div class="form-actions"><button class="btn primary" type="submit">Simpan profil lembaga</button></div></form>
-          <div class="mini-list"><div class="mini-item"><span>Status</span>${badge(tenant.status)}</div><div class="mini-item"><span>Jumlah pengguna</span><b>${fmt(metrics.users)}</b></div><div class="mini-item"><span>Admin lembaga</span><b>${fmt(metrics.admins)}</b></div></div>
+          <div class="mini-list"><div class="mini-item"><span>ID unik lembaga</span><b class="mono">${esc(tenant.publicCode || tenant.id)}</b></div><div class="mini-item"><span>Status</span>${badge(tenant.status)}</div><div class="mini-item"><span>Jumlah pengguna</span><b>${fmt(metrics.users)}</b></div><div class="mini-item"><span>Admin lembaga</span><b>${fmt(metrics.admins)}</b></div></div>
         </section>
         <section class="card"><h3>Akun Admin lembaga</h3>${admins.length ? A.table(['Nama','Email','Status'], admins.map((user) => [esc(user.name),esc(user.email),badge(user.active?'aktif':'nonaktif')])) : '<div class="empty">Belum ada Admin lembaga.</div>'}<div class="alert light">Admin lembaga mengelola tarif, periode, akun panitia, dan operasional lembaganya. Admin SiZisNur tidak mengubah keputusan zakat maupun data transaksi.</div></section>
       </div>
@@ -283,17 +285,19 @@
       ${A.fld('Nama lembaga','name','','text','required')}${A.fld('Nama Admin lembaga pertama','adminName','','text','required')}
       ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Email lembaga','email','','email')}
       ${A.fld('Nomor telepon','phone','','tel')}${A.fld('Wilayah / daerah','daerah','','text')}
+      ${A.fld('Kelurahan / Desa','kelurahan','','text')}${A.fld('Kecamatan','kecamatan','','text')}
+      ${A.fld('Kota / Kabupaten','city','','text')}${A.fld('Provinsi','province','','text')}
       ${A.textarea('Alamat lembaga','address','')}
     </div><div class="alert light">Sistem akan membuat akun Admin lembaga terpisah, aturan zakat awal yang dapat disesuaikan, dan satu periode berstatus draf.</div><div class="form-actions"><button type="submit" class="btn primary">Buat lembaga</button></div></form>`, true)
   }
 
-  function makeTenant({ name, email, phone, address, daerah, adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
+  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
     const cleanName = String(name || '').trim()
     const cleanAdminEmail = String(adminEmail || '').trim().toLowerCase()
     if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail) throw new Error('Nama lembaga, nama Admin, dan email Admin wajib diisi.')
     if (db.users.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail) || db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun lain.')
     const id = A.id('TN')
-    const tenant = { id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
+    const tenant = { id, publicCode: window.__SIZISNUR_GENERATE_TENANT_CODE ? window.__SIZISNUR_GENERATE_TENANT_CODE(cleanName) : id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), kelurahan: String(kelurahan || '').trim(), kecamatan: String(kecamatan || '').trim(), city: String(city || '').trim(), province: String(province || '').trim(), postalCode: '', latitude: '', longitude: '', gallery: [], upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
     db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
@@ -373,7 +377,7 @@
           const tenant = db.tenants.find((item) => item.id === id)
           if (!tenant) throw new Error('Lembaga tidak ditemukan.')
           if (!String(data.name || '').trim()) throw new Error('Nama lembaga wajib diisi.')
-          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim(), publicPortalEnabled: data.publicPortalEnabled === 'yes' })
+          Object.assign(tenant, { name: data.name.trim(), email: data.email.trim(), phone: data.phone.trim(), daerah: data.daerah.trim(), kelurahan: (data.kelurahan || '').trim(), kecamatan: (data.kecamatan || '').trim(), city: (data.city || '').trim(), province: (data.province || '').trim(), upzType: data.upzType.trim(), baznasArea: data.baznasArea.trim(), address: data.address.trim(), publicPortalEnabled: data.publicPortalEnabled === 'yes' })
           writeRootAudit('TENANT_PROFILE', `Metadata lembaga ${tenant.id} diperbarui. Portal publik: ${tenant.publicPortalEnabled ? 'tampil' : 'disembunyikan'}.`)
           state.modal = null; A.toast('Profil lembaga diperbarui.'); break
         }

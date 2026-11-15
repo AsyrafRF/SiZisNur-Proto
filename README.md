@@ -62,6 +62,8 @@ Seluruh tabel data yang menggunakan komponen tabel bersama menampilkan maksimal 
 
 Catatan: klaim histori transaksi Walk-in ke akun baru belum diaktifkan. Penautan harus menunggu verifikasi nomor HP/email agar data tidak dapat diambil hanya dengan memasukkan kontak milik orang lain.
 
+Profil lembaga untuk pemilihan Muzakki menampilkan ID publik unik, alamat dan wilayah, peta simulasi, serta carousel foto yang dikelola Admin melalui **Kelola Lembaga & UPZ**. Petunjuk pengaturan, format URL foto, pola ID, dan batasan peta ada di `docs/PROFIL_LEMBAGA_PETA_GALERI_ID.md`.
+
 File mandiri yang memuat HTML, CSS, JavaScript, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md`.
 
 ## 6. Pengaturan Prototype
