@@ -76,7 +76,7 @@
       users: users.length,
       admins: users.filter((user) => user.role === 'Admin').length,
       transactions: transactions.length,
-      pending: transactions.filter((item) => ['pending', 'tercatat', 'paid', 'disetor'].includes(item.status)).length,
+      pending: transactions.filter((item) => ['pending', 'paid', 'disetor'].includes(item.status)).length,
       verified: transactions.filter((item) => item.status === 'terverifikasi').length,
     }
   }

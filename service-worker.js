@@ -1,5 +1,5 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261115-thermal-80mm-page-head-preview-fix'
+const CACHE_NAME = 'sizisnur-shell-v5-20261117-remove-legacy-tercatat-status'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/public-portal.js', './js/prototype-settings.js', './js/authentication.js', './js/public-intake.js', './js/qrcode.js',

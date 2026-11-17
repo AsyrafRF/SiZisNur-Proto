@@ -26,7 +26,7 @@ Status publik:
 - `paid`: valid, pembayaran disahkan Amil.
 - `disetor`: valid, transaksi telah masuk proses serah terima Bendahara.
 - `terverifikasi`: valid, status rekonsiliasi Bendahara selesai.
-- `pending` / `tercatat`: belum tervalidasi, bukan bukti pembayaran final.
+- `pending`: belum tervalidasi, bukan bukti pembayaran final.
 - `batal`, `ditolak`, `expired`, atau `kedaluwarsa`: tidak valid.
 
 Hasil tidak pernah mengungkap identitas pembayar atau nilai transaksi individual. Pembacaan QR hanya memastikan kecocokan kode dan status yang tersimpan pada basis data prototype; hal ini bukan pembuktian pembayaran fisik atau dokumen resmi.

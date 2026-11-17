@@ -126,7 +126,7 @@ Rincian kalkulasi dan aturan yang sama lintas jalur tercatat pada `docs/INPUT_TR
 
 ## 5. Deteksi transaksi yang sudah ada
 
-Setelah verifikasi kontak simulasi, pencarian dibatasi pada tenant dan periode tautan. Status `pending` dan `tercatat` diperlakukan sebagai transaksi belum selesai yang menghalangi pembuatan transaksi baru. Halaman memperlihatkan transaksi yang ditemukan dan membuka bukti/QR.
+Setelah verifikasi kontak simulasi, pencarian dibatasi pada tenant dan periode tautan. Status `pending` diperlakukan sebagai transaksi belum selesai yang menghalangi pembuatan transaksi baru. Halaman memperlihatkan transaksi yang ditemukan dan membuka bukti/QR.
 
 Status yang sudah disahkan Amil/diteruskan ke Bendahara/selesai rekonsiliasi tidak dianggap sebagai transaksi unpaid. Riwayat transaksi tersebut ditampilkan pada bagian riwayat; warga dapat melanjutkan formulir baru sesuai aturan prototype. Di produksi, kebijakan bisnis perlu diputuskan apakah transaksi baru boleh dibuat setelah pembayaran sebelumnya selesai.
 

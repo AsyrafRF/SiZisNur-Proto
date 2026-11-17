@@ -1,3 +1,11 @@
+## 17 November 2026 — Penyelarasan status transaksi
+
+- Menghapus value **Tercatat** dari filter status grafik dashboard. Filter yang tetap tersedia adalah **Terverifikasi** dan **Tersalurkan**.
+- Menyelaraskan alur status transaksi dengan workflow V5: `Pending` → `Paid` (disahkan Amil) → `Disetor` → `Terverifikasi` setelah rekonsiliasi Bendahara. Status terminal seperti `batal`, `expired`, dan `ditolak` tetap dipertahankan.
+- Data lama yang masih menyimpan status transaksi `tercatat` dimigrasikan ke `pending`, lalu mengikuti masa berlaku QR 24 jam yang sudah digunakan workflow V5; record tetap disimpan dan QR lama tidak diaktifkan kembali.
+- Backup lama juga dinormalisasi ketika diimpor agar value status yang sudah tidak digunakan tidak masuk kembali ke sistem.
+- Memperbarui dokumentasi, pengujian migrasi/status grafik, dan build HTML standalone. Cache service worker dinaikkan agar browser mengambil kode terbaru.
+
 ## 15 November 2026 — Perbaikan ukuran halaman dan pratinjau thermal 80 mm di Edge
 
 - Memindahkan stylesheet thermal dan aturan `@page` ke dalam `<head>` jendela cetak khusus; sebelumnya aturan ukuran halaman disisipkan dari fragmen body dan berpotensi diabaikan browser.
@@ -107,7 +115,7 @@
 - Mengembalikan ringkasan dashboard: total uang dan beras tercatat, total Muzakki aktif terdaftar, serta total jiwa dari Muzakki beserta tanggungan dalam transaksi.
 - Mengganti metrik verifikasi Amil pada kartu dashboard dengan zakat tersalurkan yang menampilkan uang dan beras secara terpisah.
 - Memulihkan panel Status Distribusi dan mempertahankan Transaksi Terbaru.
-- Mengubah grafik kategori agar enam kategori ZIS selalu ditampilkan, dengan filter media Uang/Beras dan filter status Tercatat/Terverifikasi/Tersalurkan.
+- Mengubah grafik kategori agar enam kategori ZIS selalu ditampilkan, dengan filter media Uang/Beras dan filter status Terverifikasi/Tersalurkan.
 - Menegaskan perbedaan status: Paid adalah pembayaran yang disahkan Amil; Terverifikasi hanya berasal dari berita acara setoran yang statusnya Terverifikasi setelah pencocokan kas fisik dan rekening/logistik oleh Bendahara.
 - Grafik Tersalurkan hanya memetakan kategori bila rincian kategori lengkap dan cocok dengan total uang/beras distribusi. Distribusi lama atau rincian tidak lengkap masuk ke label Belum dipetakan; tidak ada pembagian berdasarkan asumsi.
 - Mengganti alur dashboard generik menjadi langkah kerja sesuai role aktif: Admin, Muzakki, Operator, Amil, Bendahara, Relawan, atau Pengurus.

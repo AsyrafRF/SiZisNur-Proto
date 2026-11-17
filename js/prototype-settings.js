@@ -104,6 +104,16 @@
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(next[key])) next[key] = [] })
     next.version = 5
     next.seedRevision ||= 2
+    next.transactions.forEach((transaction) => {
+      if (String(transaction.status || '').trim().toLowerCase() !== 'tercatat') return
+      transaction.status = 'pending'
+      if (!transaction.expiresAt) {
+        const createdAtMs = Date.parse(transaction.createdAt || '')
+        transaction.expiresAt = Number.isFinite(createdAtMs)
+          ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
+          : new Date(0).toISOString()
+      }
+    })
     next.platformAdmins ||= []
     next.users = next.users.filter((item) => item.id !== ROOT_ACCOUNT.id)
     let root = next.platformAdmins.find((item) => item.id === ROOT_ACCOUNT.id)

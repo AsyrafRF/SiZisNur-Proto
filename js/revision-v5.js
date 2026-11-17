@@ -43,9 +43,26 @@
   db.syncQueue ||= []
   db.periodReports ||= []
   db.transactions ||= []
+  // The old `tercatat` transaction state has no transition in the V5 workflow.
+  // Preserve the transaction record, map it to Pending, and apply the existing
+  // 24-hour QR lifetime from its original creation time (or expire immediately
+  // when the legacy record has no usable timestamp).
+  let migratedLegacyTransactionStatuses = false
+  db.transactions.forEach((tx) => {
+    if (String(tx.status || '').trim().toLowerCase() !== 'tercatat') return
+    tx.status = 'pending'
+    if (!tx.expiresAt) {
+      const createdAtMs = Date.parse(tx.createdAt || '')
+      tx.expiresAt = Number.isFinite(createdAtMs)
+        ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
+        : new Date(0).toISOString()
+    }
+    migratedLegacyTransactionStatuses = true
+  })
   db.audit ||= []
   db.tenants ||= []
   db.rules ||= []
+  if (migratedLegacyTransactionStatuses) A.persist()
 
   // Public institution codes are human-readable identifiers, separate from internal tenant IDs.
   function tenantCodePrefix(name) {
@@ -1051,7 +1068,7 @@
     }
     const latestProgress = latestPeriodTransaction ? personalTransactionProgress(latestPeriodTransaction) : null
     const nextTxBlocked = period && oneTxPerTenantPeriod(account?.id, currentTenantId(), period.id, person?.id)
-    const pending = periodTransactions.filter((x) => ['pending', 'tercatat'].includes(x.status))
+    const pending = periodTransactions.filter((x) => x.status === 'pending')
     const historicalTransactions = transactions.filter((x) => !(x.tenantId === currentTenantId() && x.periodId === period?.id))
     const breakdownRows = activePeriodTransactions.flatMap((tx) => (tx.lines || []).map((line, index) => {
       const proofAction = actionFor('Lihat bukti / QR', 'receipt-open', tx.id, 'sm')
@@ -2320,22 +2337,19 @@
   }
 
   function dashboardChartRows(metrics, status, medium) {
-    if (status === 'terverifikasi') {
-      // Hanya berita acara serah terima yang sudah berstatus terverifikasi
-      // setelah Bendahara menyelesaikan rekonsiliasi kas/rekening yang menjadi sumber grafik.
-      const verifiedDepositIds = new Set((metrics.reconciledDeposits || [])
-        .flatMap((deposit) => Array.isArray(deposit.transactionIds) ? deposit.transactionIds : []))
-      return transactionCategoryChartRows(metrics.t.filter((tx) => verifiedDepositIds.has(tx.id)), medium)
-    }
     if (status === 'tersalurkan') return distributionCategoryChartRows(metrics.d || [], medium)
-    return transactionCategoryChartRows(metrics.t, medium)
+    // The only transaction-level chart state is Terverifikasi. Pending/Paid
+    // are workflow steps, not equivalent to a reconciled receipt.
+    const verifiedDepositIds = new Set((metrics.reconciledDeposits || [])
+      .flatMap((deposit) => Array.isArray(deposit.transactionIds) ? deposit.transactionIds : []))
+    return transactionCategoryChartRows(metrics.t.filter((tx) => verifiedDepositIds.has(tx.id)), medium)
   }
 
   function dashboardV5() {
     if (activeUser()?.role === 'Muzakki') { state.page = 'my-zis'; return myZisPage() }
     const m = A.metrics()
     const txs = m.t
-    const chartStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(state.filters.dashboardStatus) ? state.filters.dashboardStatus : 'tercatat'
+    const chartStatus = ['terverifikasi', 'tersalurkan'].includes(state.filters.dashboardStatus) ? state.filters.dashboardStatus : 'terverifikasi'
     const chartMedium = state.filters.dashboardMedium === 'beras' ? 'beras' : 'uang'
     const chartRows = dashboardChartRows(m, chartStatus, chartMedium)
     const max = Math.max(1, ...chartRows.map((x) => x.value))
@@ -2395,9 +2409,7 @@
     const verifiedMustahikCount = A.scoped('mustahiks').filter((x) => x.status === 'terverifikasi').length
     const chartNote = chartStatus === 'terverifikasi'
       ? 'Sumber: transaksi yang tercantum pada berita acara setoran berstatus Terverifikasi setelah rekonsiliasi Bendahara. Status Paid dari Amil saja belum cukup.'
-      : chartStatus === 'tersalurkan'
-        ? 'Sumber: konfirmasi distribusi berstatus Tersalurkan. Kategori hanya ditampilkan jika rincian kategori tersimpan lengkap; data lama tanpa rincian masuk Belum dipetakan.'
-        : 'Sumber: seluruh transaksi periode aktif yang belum dibatalkan/kedaluwarsa. Paid berarti pembayaran disahkan Amil, bukan lulus rekonsiliasi Bendahara.'
+      : 'Sumber: konfirmasi distribusi berstatus Tersalurkan. Kategori hanya ditampilkan jika rincian kategori tersimpan lengkap; data lama tanpa rincian masuk Belum dipetakan.'
     const formatChartValue = (value) => chartMedium === 'uang' ? money(value) : kilos(value)
     const summaryStats = `<div class="cards dashboard-summary-cards">
       ${A.stat('Total uang diterima tercatat', money(m.received), 'Akumulasi transaksi periode aktif')}
@@ -2416,7 +2428,6 @@
           </select>
           <label class="sr-only" for="dashboard-status-filter">Status penerimaan</label>
           <select id="dashboard-status-filter" aria-label="Filter status penerimaan">
-            <option value="tercatat" ${chartStatus === 'tercatat' ? 'selected' : ''}>Tercatat</option>
             <option value="terverifikasi" ${chartStatus === 'terverifikasi' ? 'selected' : ''}>Terverifikasi</option>
             <option value="tersalurkan" ${chartStatus === 'tersalurkan' ? 'selected' : ''}>Tersalurkan</option>
           </select>
@@ -2917,7 +2928,7 @@
       A.render()
     }
     if (field.id === 'dashboard-status-filter') {
-      state.filters.dashboardStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(field.value) ? field.value : 'tercatat'
+      state.filters.dashboardStatus = ['terverifikasi', 'tersalurkan'].includes(field.value) ? field.value : 'terverifikasi'
       A.render()
     }
     if (field.id === 'report-period') { state.filters.reportPeriod = field.value; A.render() }
