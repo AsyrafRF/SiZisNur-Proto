@@ -7,7 +7,7 @@
 
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 15 November 2026
+Tanggal pembaruan: 20 November 2026
 
 ## Pemeriksaan statis
 
@@ -18,7 +18,7 @@ Tanggal pembaruan: 15 November 2026
 | `node --check js/authentication.js` | Lulus |
 | `node --check js/public-intake.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 18 suite, 18/18 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 19 suite, 19/19 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
@@ -33,6 +33,7 @@ Tanggal pembaruan: 15 November 2026
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
 | `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
+| `node tests/transaction-line-adaptivity.test.cjs` | Lulus — visibilitas dan status aktif field per kategori, label Maal/Profesi, validasi input kondisional, dan normalisasi nilai yang tidak relevan |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -53,6 +54,7 @@ Tanggal pembaruan: 15 November 2026
 - Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
 - Cetak Thermal 80 mm memakai jendela khusus selebar 460 px untuk pratinjau roll, aturan `@page size: auto` di `<head>` yang mengikuti media pada driver, konten 74 mm, font monospace yang diperbesar, QR 28 mm, dan toolbar layar yang disembunyikan saat cetak; Cetak/Simpan PDF tetap memakai layout halaman normal.
 - Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
+- Bidang rincian transaksi hanya ditampilkan dan diaktifkan sesuai jenis yang dipilih. Maal/Profesi memakai input dasar nilai yang spesifik; Fidyah/Kafarat memakai kuantitas yang tepat; Infak/Sedekah tidak menampilkan input harta, periode, haul, kafarat, atau media yang tidak relevan.
 - Konfirmasi kelebihan pembayaran seragam pada tiga kanal; domisili warga daerah memakai RW/RT Master Wilayah Lembaga dengan filter RT per RW, sedangkan Non-daerah tidak memerlukan RW/RT.
 - Input Rupiah menggunakan pemisah titik ribuan sejak nilai awal dan saat diketik; input kilogram memakai koma desimal.
 - Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending tetap menghalangi transaksi ganda.

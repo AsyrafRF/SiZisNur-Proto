@@ -1,3 +1,12 @@
+## 20 November 2026 — Input rincian pembayaran adaptif per jenis zakat
+
+- Memperbaiki visibilitas atribut `hidden` pada pembungkus field rincian transaksi. Sebelumnya gaya `.field { display:flex }` membuat browser tetap menampilkan kolom yang sudah ditandai tersembunyi; akibatnya seluruh kolom Maal, Profesi, Haul, dan Kafarat ikut tampak pada baris Fitrah.
+- Menyelaraskan input per kategori pada modul transaksi bersama yang dipakai Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik: Fitrah menampilkan media dan jumlah jiwa; Maal menampilkan harta bersih dan haul; Profesi menampilkan penghasilan serta periodenya; Fidyah menampilkan hari; Kafarat menampilkan kasus, jenis, dan tahapan relevan; Infak/Sedekah hanya menampilkan nominal.
+- Menyembunyikan pilihan media pada kategori selain Fitrah karena kategori tersebut memakai Uang dalam aturan prototype. Field yang tidak relevan dinonaktifkan dan tidak ikut validasi/kirim FormData; field harta/penghasilan diwajibkan hanya untuk Maal/Profesi.
+- Mengubah label dasar nilai menjadi spesifik: harta bersih untuk Maal dan penghasilan pada periode terpilih untuk Profesi. Pilihan pemisahan kelebihan direset ketika jenis pada baris diganti.
+- Menormalkan data rincian agar nilai harta/periode/haul/parameter Kafarat yang tidak relevan tidak terbawa ke detail transaksi. Rumus estimasi, pemisahan uang/beras, konfirmasi kelebihan, status Pending, QR, dan renderer struk tetap memakai modul bersama yang sama.
+- Memperbarui tes adaptivitas, panduan transaksi, build standalone, dan cache service worker.
+
 ## 17 November 2026 — Penyelarasan status transaksi
 
 - Menghapus value **Tercatat** dari filter status grafik dashboard. Filter yang tetap tersedia adalah **Terverifikasi** dan **Tersalurkan**.

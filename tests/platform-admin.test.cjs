@@ -5,7 +5,7 @@ const vm = require('node:vm')
 const crypto = require('node:crypto')
 
 const root = path.resolve(__dirname, '..')
-let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8')
+let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace(/\r\n/g, '\n')
 source = source.replace('render();\n})();', 'window.__SiZisNurTest={html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\n})();')
 source += ';\n' + fs.readFileSync(path.join(root, 'js/revision-v5.js'), 'utf8')
 source += ';\n' + fs.readFileSync(path.join(root, 'js/platform-admin.js'), 'utf8')

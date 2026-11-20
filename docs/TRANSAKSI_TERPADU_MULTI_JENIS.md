@@ -39,6 +39,19 @@ Setiap baris menampilkan bidang yang sesuai kategorinya:
 - Kafarat: jenis kasus, tahap yang relevan, serta biaya makan yang dikonfigurasi Lembaga.
 - Infak/Sedekah: nominal sukarela.
 
+**Bidang input ditampilkan sesuai kategori yang dipilih pada setiap baris:**
+
+| Kategori | Bidang yang ditampilkan |
+|---|---|
+| Zakat Fitrah | Media (uang/beras), jumlah jiwa, dan pembayaran |
+| Zakat Maal | Harta bersih, status haul, dan pembayaran |
+| Zakat Profesi | Penghasilan pada periode terpilih (bulanan/tahunan) dan pembayaran |
+| Fidyah | Jumlah hari puasa yang ditinggalkan dan pembayaran |
+| Kafarat | Jumlah kasus, jenis kafarat, konfirmasi tahapan bila relevan, dan pembayaran |
+| Infak/Sedekah | Nominal sukarela saja |
+
+Media selain Fitrah ditetapkan sebagai uang oleh aturan prototype, sehingga pilihan media tidak ditampilkan sebagai input yang tidak dapat diubah. Kontrol yang sedang tidak relevan juga dinonaktifkan agar tidak ikut terkirim atau terkena validasi browser.
+
 Penambahan/penghapusan baris, perubahan jenis, kuantitas, harta/penghasilan, haul, tahap kafarat, atau media akan memperbarui pratinjau secara langsung. Ketika kategori/media diubah, nilai otomatis dihitung ulang untuk menghindari nominal lama tertinggal pada pilihan baru. Nilai yang dimasukkan sendiri oleh pengguna tidak ditimpa oleh kalkulasi otomatis.
 
 Semua nominal uang memakai format Rupiah Indonesia dengan titik setiap tiga digit, misalnya `1.250.000`. Pemisah tersebut dibersihkan saat data dibaca untuk perhitungan numerik. Input kilogram memakai koma desimal, misalnya `2,5 kg`.

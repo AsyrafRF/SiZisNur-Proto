@@ -1350,8 +1350,12 @@
       if (!TRANSACTION_CATEGORIES.some(([value]) => value === category)) throw new Error(`Pilih jenis zakat yang valid pada baris ${index + 1}.`)
       const result = lineEstimate(row, rules)
       if (!Number.isFinite(result.paid) || result.paid <= 0) throw new Error(`Nominal pembayaran pada baris ${index + 1} harus lebih besar dari nol.`)
-      const quantity = Number(row.jiwa || 1)
+      const quantityBased = ['Zakat Fitrah', 'Fidyah', 'Kafarat'].includes(category)
+      const quantity = quantityBased ? Number(row.jiwa || 1) : 1
       if (!Number.isInteger(quantity) || quantity < 1) throw new Error(`Jumlah jiwa / unit pada baris ${index + 1} harus bilangan bulat positif.`)
+      const assetsBased = ['Zakat Maal', 'Zakat Profesi'].includes(category)
+      const assetsValue = assetsBased ? toNumber(row.assetsValue || 0) : 0
+      if (assetsBased && assetsValue <= 0) throw new Error(`Nilai harta bersih / penghasilan pada baris ${index + 1} harus lebih besar dari nol.`)
       if (result.type === 'beras') { paidRice += result.paid; dueRice += result.due; excessRice += result.excess }
       else { paidMoney += result.paid; dueMoney += result.due; excessMoney += result.excess }
       if (category === 'Zakat Fitrah') fitrahUnits += quantity
@@ -1359,18 +1363,20 @@
       const splitExcess = result.splitExcessEligible && row.autoExcess === 'yes' && result.excess > 0.001
       const zakatValue = splitExcess ? result.due : result.paid
       const unitLabel = category === 'Zakat Fitrah' ? 'jiwa' : category === 'Fidyah' ? 'hari' : category === 'Kafarat' ? 'kasus' : category === 'Zakat Profesi' ? (row.professionPeriod === 'annual' ? 'tahun penghasilan' : 'bulan penghasilan') : category === 'Zakat Maal' ? 'perhitungan harta' : ''
-      lines.push({ category, type: result.type, value: zakatValue, quantity: unitLabel ? quantity : null, unitLabel, assetsValue: toNumber(row.assetsValue || 0) })
+      lines.push({ category, type: result.type, value: zakatValue, quantity: unitLabel ? quantity : null, unitLabel, assetsValue })
       if (splitExcess) {
         lines.push({ category: 'Infak/Sedekah', type: result.type, value: result.excess, quantity: null, unitLabel: '' })
         if (result.type === 'beras') excessAllocatedRice += result.excess
         else excessAllocatedMoney += result.excess
       }
       breakdown.push({
-        category, type: result.type, quantity, assetsValue: toNumber(row.assetsValue || 0), due: result.due,
+        category, type: result.type, quantity, assetsValue, due: result.due,
         paid: result.paid, excess: result.excess, excessAllocated: splitExcess ? result.excess : 0,
         detail: result.detail, eligible: result.eligible, note: result.note || '',
-        haulComplete: row.haulComplete || 'no', professionPeriod: row.professionPeriod || 'monthly',
-        kafaratType: row.kafaratType || 'yamin', kafaratFeedingConfirmed: row.kafaratFeedingConfirmed || 'no',
+        haulComplete: category === 'Zakat Maal' ? (row.haulComplete || 'no') : 'no',
+        professionPeriod: category === 'Zakat Profesi' ? (row.professionPeriod || 'monthly') : 'monthly',
+        kafaratType: category === 'Kafarat' ? (row.kafaratType || 'yamin') : 'yamin',
+        kafaratFeedingConfirmed: category === 'Kafarat' ? (row.kafaratFeedingConfirmed || 'no') : 'no',
       })
     })
     const jiwa = fitrahUnits || otherUnits || 1
@@ -1393,6 +1399,21 @@
     return db.rules.find((item) => item.tenantId === tenantId) || A.rule()
   }
 
+  function setTransactionLineFieldVisibility(row, name, visible, required = false) {
+    const controlNames = {
+      media: 'type', quantity: 'jiwa', assets: 'assetsValue',
+      'profession-period': 'professionPeriod', haul: 'haulComplete', kafarat: 'kafaratType',
+      'kafarat-stage': 'kafaratFeedingConfirmed', excess: 'autoExcess',
+    }
+    const wrapper = row?.querySelector(`[data-line-wrap="${name}"]`)
+    const control = row?.querySelector(`[data-line-field="${controlNames[name] || name}"]`)
+    if (wrapper) wrapper.hidden = !visible
+    if (control) {
+      control.disabled = !visible
+      if ('required' in control) control.required = Boolean(visible && required)
+    }
+  }
+
   function updateSharedTransactionForm(form) {
     if (!form) return
     if (!form.matches?.('[data-shared-transaction="yes"]')) form = form.querySelector?.('[data-shared-transaction="yes"]')
@@ -1403,27 +1424,34 @@
     const previews = []
     rows.forEach((row, idx) => {
       const field = (name) => row.querySelector(`[data-line-field="${name}"]`)
-      const wrap = (name) => row.querySelector(`[data-line-wrap="${name}"]`)
       const categoryInput = field('category')
       const category = categoryInput?.value || 'Zakat Fitrah'
       const fitrah = category === 'Zakat Fitrah'
       const assetsBased = ['Zakat Maal', 'Zakat Profesi'].includes(category)
+      const profession = category === 'Zakat Profesi'
+      const maal = category === 'Zakat Maal'
+      const kafarat = category === 'Kafarat'
+      const kafaratStageVisible = kafarat && field('kafaratType')?.value !== 'yamin'
+      const quantityBased = ['Zakat Fitrah', 'Fidyah', 'Kafarat'].includes(category)
       const typeInput = field('type')
-      if (typeInput) { if (!fitrah) typeInput.value = 'uang'; typeInput.disabled = !fitrah }
+      if (typeInput && !fitrah) typeInput.value = 'uang'
+      setTransactionLineFieldVisibility(row, 'media', fitrah, fitrah)
       const type = fitrah && typeInput?.value === 'beras' ? 'beras' : 'uang'
-      if (wrap('quantity')) wrap('quantity').hidden = assetsBased || category === 'Infak/Sedekah'
-      if (wrap('assets')) wrap('assets').hidden = !assetsBased
-      if (wrap('profession-period')) wrap('profession-period').hidden = category !== 'Zakat Profesi'
-      if (wrap('haul')) wrap('haul').hidden = category !== 'Zakat Maal'
-      if (wrap('kafarat')) wrap('kafarat').hidden = category !== 'Kafarat'
-      if (wrap('kafarat-stage')) wrap('kafarat-stage').hidden = category !== 'Kafarat' || field('kafaratType')?.value === 'yamin'
+      setTransactionLineFieldVisibility(row, 'quantity', quantityBased, quantityBased)
+      setTransactionLineFieldVisibility(row, 'assets', assetsBased, assetsBased)
+      setTransactionLineFieldVisibility(row, 'profession-period', profession, profession)
+      setTransactionLineFieldVisibility(row, 'haul', maal, maal)
+      setTransactionLineFieldVisibility(row, 'kafarat', kafarat, kafarat)
+      setTransactionLineFieldVisibility(row, 'kafarat-stage', kafaratStageVisible, kafaratStageVisible)
       const quantityLabel = row.querySelector('[data-line-label="quantity"]')
       if (quantityLabel) quantityLabel.textContent = fitrah ? 'Jumlah jiwa' : category === 'Fidyah' ? 'Jumlah hari puasa yang ditinggalkan' : category === 'Kafarat' ? 'Jumlah kasus kafarat' : 'Jumlah unit'
+      const assetsLabel = row.querySelector('[data-line-label="assets"]')
+      if (assetsLabel) assetsLabel.textContent = maal ? 'Harta bersih yang menjadi objek zakat (Rp)' : 'Penghasilan profesi pada periode terpilih (Rp)'
       const amount = field('value')
       if (amount) {
         amount.dataset.format = type === 'beras' ? 'kg' : 'idr'
         const amountLabel = row.querySelector('[data-line-label="value"]')
-        if (amountLabel) amountLabel.textContent = type === 'beras' ? 'Beras dibayarkan (kg)' : 'Nominal dibayarkan (Rp)'
+        if (amountLabel) amountLabel.textContent = type === 'beras' ? 'Beras dibayarkan (kg)' : category === 'Infak/Sedekah' ? 'Nominal infak/sedekah (Rp)' : 'Nominal dibayarkan (Rp)'
       }
       const data = {
         category, type, jiwa: field('jiwa')?.value || 1, assetsValue: field('assetsValue')?.value || 0,
@@ -1440,7 +1468,8 @@
       const paid = estimate?.paid || 0
       if (type === 'beras') { totalRice += paid; dueRice += estimate?.due || 0 }
       else { totalMoney += paid; dueMoney += estimate?.due || 0 }
-      if (wrap('excess')) wrap('excess').hidden = !estimate?.splitExcessEligible || !(estimate?.excess > 0.001)
+      const showExcess = Boolean(estimate?.splitExcessEligible && estimate?.excess > 0.001)
+      setTransactionLineFieldVisibility(row, 'excess', showExcess, false)
       const preview = row.querySelector('[data-line-preview]')
       if (preview && estimate) {
         const dueText = type === 'beras' ? kilos(estimate.due) : money(estimate.due)
@@ -2887,6 +2916,8 @@
         if (media && field.value !== 'Zakat Fitrah') media.value = 'uang'
         const kafaratStage = row?.querySelector('[data-line-field="kafaratFeedingConfirmed"]')
         if (kafaratStage) kafaratStage.value = 'no'
+        const excessChoice = row?.querySelector('[data-line-field="autoExcess"]')
+        if (excessChoice) excessChoice.checked = false
       }
       if (field.matches('[data-line-field="type"]')) {
         const amount = row?.querySelector('[data-line-field="value"]')
