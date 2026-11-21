@@ -283,6 +283,7 @@
   function openTenantCreate() {
     A.modal('Daftarkan Lembaga Baru', `<form data-root-form="tenant-create"><div class="grid-form">
       ${A.fld('Nama lembaga','name','','text','required')}${A.fld('Nama Admin lembaga pertama','adminName','','text','required')}
+      ${A.fld('Nomor HP Admin lembaga','adminPhone','','tel','required autocomplete="tel"')}
       ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Password awal Admin','adminPassword','','password','minlength="8" autocomplete="new-password" required')}
       ${A.fld('Ulangi password Admin','adminPasswordConfirm','','password','minlength="8" autocomplete="new-password" required')}${A.fld('Email lembaga','email','','email')}
       ${A.fld('Nomor telepon','phone','','tel')}${A.fld('Wilayah / daerah','daerah','','text')}
@@ -292,11 +293,15 @@
     </div><div class="alert light">Sistem akan membuat akun Admin lembaga terpisah, aturan zakat awal yang dapat disesuaikan, dan satu periode berstatus draf.</div><div class="form-actions"><button type="submit" class="btn primary">Buat lembaga</button></div></form>`, true)
   }
 
-  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
+  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, adminPhone, status = 'aktif', upzType = '', baznasArea = '' }) {
     const cleanName = String(name || '').trim()
     const cleanAdminEmail = String(adminEmail || '').trim().toLowerCase()
-    if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail) throw new Error('Nama lembaga, nama Admin, dan email Admin wajib diisi.')
-    if (db.users.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail) || db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun lain.')
+    const cleanAdminPhone = String(adminPhone || '').trim()
+    const adminPhoneDigits = cleanAdminPhone.replace(/\D/g, '')
+    const normalizedAdminPhone = adminPhoneDigits.startsWith('0') ? `62${adminPhoneDigits.slice(1)}` : adminPhoneDigits.startsWith('8') ? `62${adminPhoneDigits}` : adminPhoneDigits
+    if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail || !cleanAdminPhone) throw new Error('Nama lembaga, nama Admin, email Admin, dan nomor HP Admin wajib diisi.')
+    if (!/^\d{9,15}$/.test(normalizedAdminPhone)) throw new Error('Nomor HP Admin lembaga belum valid.')
+    if (db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun Admin SiZisNur.')
     const id = A.id('TN')
     const tenant = { id, publicCode: window.__SIZISNUR_GENERATE_TENANT_CODE ? window.__SIZISNUR_GENERATE_TENANT_CODE(cleanName) : id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), kelurahan: String(kelurahan || '').trim(), kecamatan: String(kecamatan || '').trim(), city: String(city || '').trim(), province: String(province || '').trim(), postalCode: '', latitude: '', longitude: '', gallery: [], upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
@@ -309,7 +314,7 @@
       db.areas.push({ id: `AREA-${id}`, tenantId: id, name: tenant.daerah || tenant.name, active: true })
       tenant.areaId = `AREA-${id}`
     }
-    db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
+    db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, phone: cleanAdminPhone, callName: '', emailVerifiedAt: null, phoneVerifiedAt: null, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
     db.rules.push(template
       ? { ...template, tenantId: id, source: 'Salinan parameter awal lembaga; Admin lembaga wajib meninjau dan mengesahkan.', weights: { ...(template.weights || {}) } }
@@ -322,7 +327,8 @@
   function reviewApplication(applicationId) {
     const item = db.applications.find((application) => application.id === applicationId && application.status === 'menunggu')
     if (!item) throw new Error('Pengajuan tidak ditemukan atau sudah ditinjau.')
-    A.modal(`Tinjau pengajuan · ${item.name}`, `<div class="mini-list"><div class="mini-item"><span>Nama lembaga</span><b>${esc(item.name)}</b></div><div class="mini-item"><span>Pemohon</span><b>${esc(item.contact || '—')}</b></div><div class="mini-item"><span>Email</span><b>${esc(item.email || '—')}</b></div><div class="mini-item"><span>Alamat</span><b>${esc(item.address || '—')}</b></div></div><form data-root-form="application-review" data-id="${esc(item.id)}"><div class="grid-form">${A.sel('Keputusan','decision',[['disetujui','Setujui dan buat lembaga'],['ditolak','Tolak pengajuan']])}${A.fld('Nama Admin lembaga awal','adminName',item.contact || '','text','required')}${A.fld('Email Admin lembaga awal','adminEmail',item.email || '','email','required')}</div>${A.textarea('Catatan pemeriksaan','note','Pemeriksaan awal melalui simulasi platform.')}
+    A.modal(`Tinjau pengajuan · ${item.name}`, `<div class="mini-list"><div class="mini-item"><span>Nama lembaga</span><b>${esc(item.name)}</b></div><div class="mini-item"><span>Pemohon</span><b>${esc(item.contact || '—')}</b></div><div class="mini-item"><span>Email</span><b>${esc(item.email || '—')}</b></div><div class="mini-item"><span>Alamat</span><b>${esc(item.address || '—')}</b></div></div><form data-root-form="application-review" data-id="${esc(item.id)}"><div class="grid-form">${A.sel('Keputusan','decision',[['disetujui','Setujui dan buat lembaga'],['ditolak','Tolak pengajuan']])}${A.fld('Nama Admin lembaga awal','adminName',item.contact || '','text','required')}${A.fld('Email Admin lembaga awal','adminEmail',item.email || '','email','required')}
+        ${A.fld('Nomor HP Admin lembaga awal','adminPhone',item.phone || '','tel','required autocomplete="tel"')}</div>${A.textarea('Catatan pemeriksaan','note','Pemeriksaan awal melalui simulasi platform.')}
       <div class="alert warn">Pastikan lembaga telah diverifikasi secara administratif di luar prototype. Persetujuan di sini hanya simulasi.</div><div class="form-actions"><button type="submit" class="btn primary">Simpan keputusan</button></div></form>`, true)
   }
 
@@ -396,7 +402,7 @@
           if (!application) throw new Error('Pengajuan tidak tersedia.')
           if (!String(data.note || '').trim()) throw new Error('Catatan pemeriksaan wajib diisi.')
           if (data.decision === 'disetujui') {
-            const tenant = makeTenant({ name: application.name, email: application.email, address: application.address, adminName: data.adminName, adminEmail: data.adminEmail, status: rootSetting().defaultTenantStatus })
+            const tenant = makeTenant({ name: application.name, email: application.email, address: application.address, adminName: data.adminName, adminEmail: data.adminEmail, adminPhone: data.adminPhone, status: rootSetting().defaultTenantStatus })
             application.tenantId = tenant.id
           }
           application.status = data.decision

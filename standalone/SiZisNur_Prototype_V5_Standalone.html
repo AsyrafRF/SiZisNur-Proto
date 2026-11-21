@@ -908,6 +908,74 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
  .transaction-line-preview .mini-item{gap:10px}
 }
 
+
+/* Evaluasi Prototype — setiap keputusan ditampilkan sebagai kartu terpisah. */
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0 22px;
+}
+.decision-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.decision-no {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid #cce7df;
+  border-radius: 12px;
+  background: #edf8f4;
+  color: #126b5c;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+.decision-card > div {
+  min-width: 0;
+  flex: 1;
+}
+.decision-card h3 {
+  margin: 1px 0 9px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.decision-card .tag {
+  display: inline-flex;
+  margin: 0 0 9px;
+}
+.decision-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+body.dark .decision-no {
+  border-color: #42685c;
+  background: #1d3b33;
+  color: #c7e9d8;
+}
+@media (max-width: 780px) {
+  .decision-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .decision-card {
+    padding: 16px;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -2238,7 +2306,7 @@ function seedMultiTenant(){const data={
  version:5, seedRevision:2,
  tenants:[{id:'TN-ANNUR',publicCode:'MAN-06426',name:'Masjid An-Nur Villa Pesona Asri',address:'Villa Pesona Asri (alamat contoh; lengkapi nomor jalan dan patokan di menu Kelola Lembaga)',daerah:'Perumahan Villa Pesona Asri',kelurahan:'',kecamatan:'',city:'Batam',province:'Kepulauan Riau',postalCode:'',latitude:'',longitude:'',gallery:[],phone:'0778-000000 (contoh)',email:'demo@annur.invalid',rt:'RT 01–06',status:'aktif',publicPortalEnabled:true},{id:'TN-ALHIKMAH',publicCode:'AH-6482',name:'Masjid Al-Hikmah',address:'Kompleks Buana Citra (alamat contoh; lengkapi nomor jalan dan patokan di menu Kelola Lembaga)',daerah:'Kompleks Buana Citra',kelurahan:'',kecamatan:'',city:'Batam',province:'Kepulauan Riau',postalCode:'',latitude:'',longitude:'',gallery:[],phone:'0000-000000 (contoh)',email:'demo@alhikmah.invalid',rt:'RT 01–02',status:'aktif',publicPortalEnabled:true}],
  applications:[{id:'APP-01',name:'Masjid Al-Falah',contact:'Koordinator Pengajuan Demo',email:'pengajuan@alfalah.demo.invalid',address:'Batam, Kepulauan Riau (alamat simulasi)',status:'menunggu',createdAt:'2026-11-14',note:'Pengajuan contoh yang menunggu tinjauan Admin SiZisNur.'}],
- users:[{id:'US-ADM',tenantId:'TN-ANNUR',name:'Admin Lembaga An-Nur',role:'Admin',email:'admin.annur@demo.invalid',active:true},{id:'US-PGR',tenantId:'TN-ANNUR',name:'Pengurus An-Nur',role:'Pengurus',email:'pengurus.annur@demo.invalid',active:true},{id:'US-PTG',tenantId:'TN-ANNUR',name:'Admin Pendataan',role:'Admin',email:'admin.data@demo.invalid',active:true},{id:'US-AML',tenantId:'TN-ANNUR',name:'Amil Konter 01',role:'Amil',email:'amil01@demo.invalid',active:true},{id:'US-AML2',tenantId:'TN-ANNUR',name:'Amil Konter 02',role:'Amil',email:'amil02@demo.invalid',active:true},{id:'US-OPR',tenantId:'TN-ANNUR',name:'Operator Penerimaan',role:'Operator',email:'operator@demo.invalid',active:true},{id:'US-BEN',tenantId:'TN-ANNUR',name:'Bendahara Lembaga',role:'Bendahara',email:'bendahara@demo.invalid',active:true},{id:'US-REL',tenantId:'TN-ANNUR',name:'Relawan Distribusi',role:'Relawan',email:'relawan@demo.invalid',active:true},{id:'US-T2',tenantId:'TN-ALHIKMAH',name:'Admin Lembaga Al-Hikmah',role:'Admin',email:'admin.alhikmah@demo.invalid',active:true},{id:'US-MZK',tenantId:'TN-ANNUR',name:'Muzakki Demo 01',role:'Muzakki',email:'muzakki01@demo.invalid',active:true,personId:'PS-01',accountId:'ACC-MZK-01'}],
+ users:[{id:'US-ADM',tenantId:'TN-ANNUR',name:'Admin Lembaga An-Nur',role:'Admin',email:'admin.annur@demo.invalid',phone:'081200001101',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-PGR',tenantId:'TN-ANNUR',name:'Pengurus An-Nur',role:'Pengurus',email:'pengurus.annur@demo.invalid',phone:'081200001102',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-PTG',tenantId:'TN-ANNUR',name:'Admin Pendataan',role:'Admin',email:'admin.data@demo.invalid',phone:'081200001103',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-AML',tenantId:'TN-ANNUR',name:'Amil Konter 01',role:'Amil',email:'amil01@demo.invalid',phone:'081200001104',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-AML2',tenantId:'TN-ANNUR',name:'Amil Konter 02',role:'Amil',email:'amil02@demo.invalid',phone:'081200001105',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-OPR',tenantId:'TN-ANNUR',name:'Operator Penerimaan',role:'Operator',email:'operator@demo.invalid',phone:'081200001106',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-BEN',tenantId:'TN-ANNUR',name:'Bendahara Lembaga',role:'Bendahara',email:'bendahara@demo.invalid',phone:'081200001107',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-REL',tenantId:'TN-ANNUR',name:'Relawan Distribusi',role:'Relawan',email:'relawan@demo.invalid',phone:'081200001108',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-T2',tenantId:'TN-ALHIKMAH',name:'Admin Lembaga Al-Hikmah',role:'Admin',email:'admin.alhikmah@demo.invalid',phone:'081200001109',emailVerifiedAt:null,phoneVerifiedAt:null,active:true},{id:'US-MZK',tenantId:'TN-ANNUR',name:'Muzakki Demo 01',role:'Muzakki',email:'muzakki01@demo.invalid',phone:'081200000101',emailVerifiedAt:null,phoneVerifiedAt:null,active:true,personId:'PS-01',accountId:'ACC-MZK-01'}],
  platformAdmins:[{id:'PA-SIZISNUR-ROOT',name:'Admin SiZisNur',role:'Admin SiZisNur',email:'root@sizisnur.demo',scope:'platform',active:true,createdAt:'2026-11-14T00:00:00.000Z',note:'Akun demonstrasi terpisah dari seluruh pengguna lembaga.'}],
  platformAudit:[],
  platformSettings:{platformName:'SiZisNur',supportEmail:'support@sizisnur.demo',publicRegistrationOpen:true,maintenanceMode:false,maintenanceMessage:'SiZisNur sedang menjalani pemeliharaan terjadwal. Silakan coba kembali nanti.',publicNotice:'',defaultTenantStatus:'aktif',updatedAt:null,updatedBy:null},
@@ -2288,6 +2356,11 @@ function seed(){
  return data;
  }
 let db=safeJSON(localStorage.getItem(DBKEY),null);if(!db||db.version!==5){db=seed();localStorage.setItem(DBKEY,JSON.stringify(db))}
+// Upgrade legacy synthetic demo accounts that predate mandatory phone capture.
+const demoContactPhones={'US-ADM':'081200001101','US-PGR':'081200001102','US-PTG':'081200001103','US-AML':'081200001104','US-AML2':'081200001105','US-OPR':'081200001106','US-BEN':'081200001107','US-REL':'081200001108','US-T2':'081200001109','US-MZK':'081200000101'}
+let demoContactsMigrated=false
+for(const account of db.users||[]){if(!String(account.phone||'').trim()&&demoContactPhones[account.id]){account.phone=demoContactPhones[account.id];account.emailVerifiedAt??=null;account.phoneVerifiedAt??=null;demoContactsMigrated=true}}
+if(demoContactsMigrated)localStorage.setItem(DBKEY,JSON.stringify(db))
 let session=safeJSON(sessionStorage.getItem(SESSIONKEY),null)||safeJSON(localStorage.getItem(SESSIONKEY),null);
 let state={page:session?'dashboard':'landing',modal:null,search:'',lines:[{category:'Zakat Fitrah',type:'uang',value:''}],filters:{},publicTab:'dashboard',pageTab:'list'};
 const persist=()=>localStorage.setItem(DBKEY,JSON.stringify(db));
@@ -2299,7 +2372,7 @@ function rule(){return db.rules.find(r=>r.tenantId===tenantId())}
 function activePeriod(){return scoped('periods').find(p=>p.status==='aktif')||null}
 function periodName(pid){return db.periods.find(p=>p.id===pid)?.name||'—'}
 function person(pid){return db.persons.find(p=>p.id===pid&&p.tenantId===tenantId())}
-function who(uid){return db.users.find(u=>u.id===uid&&u.tenantId===tenantId())?.name||'—'}
+function who(uid){const u=db.users.find(x=>x.id===uid&&x.tenantId===tenantId());return u?`${u.name}${u.callName?' · '+u.callName:''}`:'—'}
 function can(page){const p=PAGES[page],u=user();if(!u||!p)return false;if(page==='workbook'&&u.tenantId!=='TN-ANNUR')return false;return p[2]==='Semua'||p[2].includes(u.role)}
 function check(page){if(!can(page))throw Error('Role ini tidak memiliki izin pada modul tersebut (simulasi).')}
 function assertRole(roles){if(!user()||!roles.includes(user().role))throw Error('Aksi tidak diizinkan untuk role '+(user()?.role||'publik'))}
@@ -2373,8 +2446,8 @@ function metrics(){let p=activePeriod()||scoped('periods')[0],t=scoped('transact
 function flexibleMustahiks(){const periodId=activePeriod()?.id;const reserved=new Set(scoped('allocations').filter(a=>a.periodId===periodId&&a.status!=='ditolak').flatMap(a=>(a.items||[]).map(i=>i.mustahikId)));return scoped('mustahiks').filter(x=>x.status==='terverifikasi'&&!reserved.has(x.id))}
 function dashboard(){const m=metrics(),t=m.t.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));let cats=CATEGORIES.map(cat=>({name:cat,value:sum(m.t,x=>sum(x.lines.filter(l=>l.category===cat&&l.type==='uang'),'value'))})),max=Math.max(1,...cats.map(x=>x.value));return `${boxhead('Ringkasan Pengelolaan Zakat',`Periode ${e(m.p?.name||'belum dibuka')} • Peran: ${e(user().role)}. Dashboard ini menunjukkan transaksi demo lokal; angka agregat workbook 1447H tersedia di menu Acuan Workbook.`,btn('▶ Panduan alur demo','guided','primary'))}<div class="hero"><div><h2>Assalamu’alaikum, ${e(user().name.split(' ')[0])} 👋</h2><p>Semua modul pada prototype terhubung menggunakan data lokal yang sama.<br> Lanjutkan proses sesuai kewenangan role, lalu lihat perubahan ringkasan secara langsung.</p></div>${btn(can('reports')?'Lihat laporan':'Mulai simulasi',can('reports')?'navigate':'guided','',can('reports')?'data-page="reports"':'')}</div><div class="cards">${stat('Penerimaan uang tercatat',rup(m.received),'Belum tentu seluruhnya terverifikasi','◈')}${stat('Penerimaan beras',kg(m.rice),'Pisah dari kas uang','▥')}${stat('Total muzakki',m.people+' orang',m.jiwa+' jiwa dibayarkan','♙')}${stat('Terverifikasi bendahara',rup(m.verified),'Beras: '+kg(m.verifiedRice),'✓')}</div><div class="two-col"><div class="card"><div class="card-top"><h3>Penerimaan per kategori (uang)</h3>${tag('aktif')}</div>${cats.map(c=>`<div class="bar-row"><label>${e(c.name)}</label><div class="bar"><i style="width:${Math.max(0,c.value/max*100)}%"></i></div><b>${rup(c.value)}</b></div>`).join('')}<p class="caption">Penerimaan beras dicatat terpisah dan tidak dijumlahkan sebagai rupiah.</p></div><div class="card"><h3>Status distribusi</h3><div class="mini-list"><div class="mini-item"><span>Dana terverifikasi</span><b>${rup(m.verified)}</b></div><div class="mini-item"><span>Alokasi dari transaksi demo</span><b>${rup(m.allocatedLedger)}</b></div><div class="mini-item"><span>Rencana workbook disetujui</span><b>${rup(m.allocatedWorkbook)}</b></div><div class="mini-item"><span>Realisasi penyaluran</span><b>${rup(m.sent)}</b></div><div class="mini-item"><span>Sisa dana terverifikasi *</span><b>${rup(m.verified-m.sent-m.allocatedLedger)}</b></div><div class="mini-item"><span>Mustahik diverifikasi</span><b>${scoped('mustahiks').filter(x=>x.status==='terverifikasi').length} orang</b></div></div><p class="caption">* Saldo sederhana demonstrasi. Pada sistem produksi harus memperhitungkan komitmen, penolakan, koreksi, dan pos dana secara terpisah.</p></div></div><div class="two-col"><section class="card"><div class="card-top"><h3>Transaksi terbaru</h3>${can('transactions')?btn('Buka modul','navigate','sm','data-page="transactions"'):''}</div>${table(['Nomor','Muzakki','Uang','Beras','Status'],t.slice(0,6).map(x=>[`<b class="mono">${e(x.serial)}</b>`,e(person(x.personId)?.name),rup(transactionTotals(x).money),kg(transactionTotals(x).rice),tag(x.status)]))}</section><section class="card"><h3>Perjalanan alur yang disimulasikan</h3><div class="steps">${[['1','Penerimaan'],['2','Setoran'],['3','Mustahik'],['4','Alokasi'],['5','Distribusi']].map(([n,v])=>`<div class="step"><strong>${n}</strong>${v}</div>`).join('')}</div><p class="caption">Pengurus menyetujui alokasi; Bendahara memvalidasi setoran; Admin mengelola mustahik dan perencanaan. Untuk mencoba semua tahapan, gunakan login ulang sebagai tiap role.</p>${btn('Lihat daftar langkah uji coba','guided','primary')}</section></div>`}
 function tenantPage(){return `${boxhead('Profil Lembaga','Admin dan Pengurus dapat mengelola identitas masjid sesuai kewenangan masing-masing.') }<div class="two-col"><div class="card"><h3>Identitas masjid</h3><form data-form="tenant"><div class="grid-form">${fld('Nama lembaga','name',tenant().name,'text','required')}${fld('Nomor telepon','phone',tenant().phone)}${fld('Email','email',tenant().email,'email')}${fld('Wilayah RT/RW','rt',tenant().rt)}${textarea('Alamat','address',tenant().address)}</div>${frmBtn('Simpan profil lembaga')}</form></div><div class="card"><h3>Konfigurasi lembaga</h3><div class="mini-list"><div class="mini-item"><span>ID lembaga</span><b class="mono">${e(tenantId())}</b></div><div class="mini-item"><span>Status</span>${tag(tenant().status)}</div><div class="mini-item"><span>Pengguna aktif</span><b>${scoped('users').filter(x=>x.active).length}</b></div><div class="mini-item"><span>Periode</span><b>${scoped('periods').length}</b></div></div><div class="alert light">Isolasi pada prototype hanya berupa filter JavaScript (bukan keamanan server). Lembaga B tersedia sebagai contoh untuk pemeriksaan pemisahan antarmuka.</div></div></div>`}
-function usersPage(){return `${boxhead('Manajemen Akun & Role','Admin lembaga membuat dan mengelola akun Panitia dalam lembaga ini. Akun Muzakki dikelola melalui registrasi mandiri.',btn('Tambah pengguna','user-new','primary'))}<div class="card">${table(['Pengguna','Email','Peran','Status','Aksi'],scoped('users').filter(u=>u.role!=='Muzakki').map(u=>[`<b>${e(u.name)}</b><div class="tiny mono">${e(u.id)}</div>`,e(u.email),tag(u.role),tag(u.active?'aktif':'nonaktif'),`${btn('Edit','user-edit','sm',`data-id="${u.id}"`)} ${u.id!==user().id?btn(u.active?'Nonaktifkan':'Aktifkan','user-toggle','sm',`data-id="${u.id}"`):''}`]))}</div>`}
-function userModal(u){modal(u?'Edit akun':'Tambah pengguna',`<form data-form="user" data-id="${e(u?.id||'')}"><div class="grid-form">${fld('Nama lengkap *','name',u?.name||'','text','required')}${fld('Alamat email / username *','email',u?.email||'','email','required')}${sel('Peran','role',ROLES.filter(r=>r!=='Muzakki').map(r=>[r,r]),u?.role&&u.role!=='Muzakki'?u.role:'Amil')}${fld(u?'Password baru (opsional)':'Password awal *','password','','password',u?'minlength="8" autocomplete="new-password"':'minlength="8" autocomplete="new-password" required')}${fld(u?'Ulangi password baru':'Ulangi password *','passwordConfirm','','password',u?'minlength="8" autocomplete="new-password"':'minlength="8" autocomplete="new-password" required')}</div><div class="alert light">Admin lembaga membuat akun panitia dari menu ini. Setiap pengguna memakai email dan password masing-masing. Saat mengedit akun, kosongkan kedua kolom password jika tidak ingin menggantinya.</div>${frmBtn(u?'Simpan perubahan akun':'Buat akun panitia')}</form>`)}
+function usersPage(){return `${boxhead('Manajemen Akun & Role','Admin lembaga mengelola akun Panitia. Email dan nomor HP wajib diisi; identitas yang sama boleh memiliki role berbeda, tetapi tidak boleh terduplikasi pada role yang sama.',btn('Tambah pengguna','user-new','primary'))}<div class="alert light">Pencegahan duplikasi berlaku per Lembaga dan per role berdasarkan email atau nomor HP yang dinormalisasi. Nama bukan kunci unik. Jika dua orang berbeda memiliki nama sama, gunakan Nama panggilan / penanda agar mudah dibedakan. Kolom verifikasi menampilkan status kontak yang tersimpan; verifikasi OTP sungguhan memerlukan layanan backend yang belum terhubung pada prototype.</div><div class="card">${table(['Pengguna','Email','Nomor HP','Verifikasi Email','Verifikasi HP','Peran','Status','Aksi'],scoped('users').filter(u=>u.role!=='Muzakki').map(u=>[`<b>${e(u.name)}</b>${u.callName?`<div class="tiny">Panggilan: ${e(u.callName)}</div>`:''}<div class="tiny mono">${e(u.id)}</div>`,e(u.email||'—'),e(u.phone||'Belum diisi'),tag(u.emailVerifiedAt?'terverifikasi':'belum diverifikasi'),tag(u.phoneVerifiedAt?'terverifikasi':'belum diverifikasi'),tag(u.role),tag(u.active?'aktif':'nonaktif'),`${btn('Edit','user-edit','sm',`data-id="${u.id}"`)} ${u.id!==user().id?btn(u.active?'Nonaktifkan':'Aktifkan','user-toggle','sm',`data-id="${u.id}"`):''}`]))}</div>`}
+function userModal(u){modal(u?'Edit akun':'Tambah pengguna',`<form data-form="user" data-id="${e(u?.id||'')}"><div class="grid-form">${fld('Nama lengkap *','name',u?.name||'','text','required autocomplete="name"')}${fld('Nama panggilan / penanda (opsional)','callName',u?.callName||'','text','autocomplete="nickname" placeholder="Contoh: Asyraf Operator"')}${fld('Nomor HP *','phone',u?.phone||'','tel','required autocomplete="tel" inputmode="tel"')}${fld('Alamat email *','email',u?.email||'','email','required autocomplete="email"')}${sel('Peran','role',ROLES.filter(r=>r!=='Muzakki').map(r=>[r,r]),u?.role&&u.role!=='Muzakki'?u.role:'Amil')}${fld(u?'Password baru (opsional)':'Password awal *','password','','password',u?'minlength="8" autocomplete="new-password"':'minlength="8" autocomplete="new-password" required')}${fld(u?'Ulangi password baru':'Ulangi password *','passwordConfirm','','password',u?'minlength="8" autocomplete="new-password"':'minlength="8" autocomplete="new-password" required')}</div><div class="alert light">Email dan nomor HP wajib diisi untuk identifikasi kontak. Email atau nomor HP yang sama boleh dipakai pada role berbeda, tetapi tidak boleh dipakai dua akun pada role yang sama dalam satu Lembaga. Nama bukan kunci unik; bila nama orang berbeda sama, isi Nama panggilan / penanda. Verifikasi OTP nyata belum tersedia karena provider email/WhatsApp/SMS dan backend belum terhubung.</div><div class="alert warn">Saat mengedit akun, kosongkan kedua kolom password jika tidak ingin menggantinya. Perubahan email atau nomor HP harus diverifikasi ulang saat integrasi verifikasi kontak tersedia.</div>${frmBtn(u?'Simpan perubahan akun':'Buat akun panitia')}</form>`)}
 function periodsPage(){const ps=scoped('periods');return `${boxhead('Periode Pengelolaan Zakat','Hanya satu periode aktif per lembaga. Arsip bersifat baca-saja secara konsep.',btn('Buat periode baru','period-new','primary'))}<div class="card">${table(['Periode','Dibuka','Ditutup','Status','Tindakan'],ps.map(p=>[`<b>${e(p.name)}</b><div class="tiny mono">${e(p.id)}</div>`,prettyDate(p.openedAt),prettyDate(p.closedAt),tag(p.status),p.status==='aktif'?btn('Tutup & arsipkan','period-close','sm danger',`data-id="${p.id}"`):p.status==='draf'?btn('Aktifkan','period-open','sm primary',`data-id="${p.id}"`):'<span class="muted">Arsip historis</span>']))}</div><div class="alert warn">Penutupan akan ditolak apabila masih terdapat setoran belum diverifikasi atau rencana alokasi menunggu persetujuan. Data tetap tersimpan untuk pelacakan; penghapusan otomatis 5–6 tahun tidak dieksekusi di prototype.</div>`}
 function settingsPage(){const r=rule(),idr=v=>Math.round(Number(v||0)).toLocaleString('id-ID');return `${boxhead('Tarif & Konfigurasi Perhitungan','Seluruh tarif perhitungan zakat dikelola terpisah untuk setiap lembaga. Perubahan berlaku pada transaksi baru dan tidak mengubah transaksi historis.')}<div class="two-col"><section class="card"><h3>Tarif kewajiban dan parameter syariah</h3><form data-form="rules"><div class="grid-form">${fld('Tarif zakat fitrah / jiwa (Rp)','moneyRate',idr(r.moneyRate),'text','inputmode="numeric" data-format="idr" min="1" required')}${fld('Beras zakat fitrah / jiwa (kg)','riceRate',r.riceRate,'number','min="0.1" step="0.1" required')}${fld('Tarif fidyah / hari puasa (Rp)','fidyahRate',idr(r.fidyahRate??65000),'text','inputmode="numeric" data-format="idr" min="1" required')}${fld('Biaya makan kafarat / orang (Rp)','kafaratMealRate',idr(r.kafaratMealRate??r.kafaratRate??0),'text','inputmode="numeric" data-format="idr" min="0" required')}${fld('Nisab emas (gram)','nisabGoldGram',r.nisabGoldGram??85,'number','min="1" step="0.1" required')}${fld('Harga emas acuan / gram untuk maal (Rp)','goldPricePerGram',idr(r.goldPricePerGram??1078608.56),'text','inputmode="numeric" data-format="idr" min="1" required')}${fld('Nisab zakat profesi bulanan (Rp)','professionNisabMonthly',idr(r.professionNisabMonthly??7640144),'text','inputmode="numeric" data-format="idr" min="1" required')}${fld('Kadar zakat maal/profesi (%)','zakatRate',r.zakatRate??2.5,'number','min="0.1" max="100" step="0.1" required')}${sel('Kelipatan pembulatan alokasi (Rp)','rounding',[[1000,'Rp 1.000'],[10000,'Rp 10.000'],[50000,'Rp 50.000'],[100000,'Rp 100.000']],r.rounding)}${fld('Total insentif contoh (Rp)','monthlyIncentive',idr(r.monthlyIncentive),'text','inputmode="numeric" data-format="idr" min="0"')}${fld('Bobot fakir (%)','fakir',r.weights.fakir,'number','min="0" max="100"')}${fld('Bobot miskin (%)','miskin',r.weights.miskin,'number','min="0" max="100"')}${fld('Bobot mualaf (%)','mualaf',r.weights.mualaf,'number','min="0" max="100"')}${fld('Ambang skor fleksibel (demo; bukan workbook)','scoreThreshold',r.scoreThreshold??'','number','min="0" placeholder="Belum disahkan"')}${textarea('Sumber/keputusan aturan dan SK wilayah','source',r.source)}</div><div class="alert light">Zakat maal memakai nisab 85 gram emas dan syarat haul satu tahun untuk harta yang mensyaratkannya. Zakat profesi memakai nisab penghasilan bulanan yang dapat diatur terpisah; mode tahunan mengalikan nilai nisab bulanan dengan 12. Fidyah memakai tarif per hari. Kafarat bergantung pada jenis pelanggaran dan tahapan syariat; biaya makan di sini hanya parameter konversi nilai yang harus disahkan pengelola dan pembimbing agama.</div>${frmBtn('Simpan tarif dan parameter lembaga')}</form></section><section class="card"><h3>Catatan penerapan</h3><div class="alert warn">Nilai BAZNAS RI 1447 H/2026 M yang menjadi referensi awal adalah fitrah Rp50.000 atau 2,5 kg per jiwa dan fidyah Rp65.000 per hari. Tarif fitrah lembaga yang sudah ada tidak ditimpa otomatis. Harga emas pada data demo hanya nilai awal simulasi, bukan harga pasar yang dijamin terkini; Admin wajib memperbaruinya sesuai sumber harga dan keputusan yang digunakan lembaga sebelum hasil maal dipakai.</div><div class="mini-list"><div class="mini-item"><span>Nisab tahunan</span><b>${(Number(r.nisabGoldGram??85)*Number(r.goldPricePerGram??1078608.56)).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0})}</b></div><div class="mini-item"><span>Nisab profesi / bulan</span><b>${Number(r.professionNisabMonthly??7640144).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0})}</b></div><div class="mini-item"><span>Kadar zakat maal/profesi</span><b>${r.zakatRate??2.5}%</b></div><div class="mini-item"><span>Tarif kafarat / orang</span><b>${Number(r.kafaratMealRate??r.kafaratRate??0).toLocaleString('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0})}</b></div></div><p class="caption">Rumus digital adalah alat bantu estimasi, bukan penetapan hukum untuk semua kasus. Jenis kafarat, haul, harta yang wajib dizakati, dan cara penunaian harus diperiksa sesuai fatwa/keputusan yang berlaku.</p><p class="caption">Bobot alokasi fleksibel: ${r.weights.fakir+r.weights.miskin+r.weights.mualaf}%. Formula workbook tetap memakai batas >360 = Fakir dan >240 = Miskin; perubahan tarif tidak mengubah hasil workbook historis.</p></section></div>`}
 function schedulePage(){const s=scoped('schedule'),ptg=scoped('users').filter(x=>x.role==='Amil');return `${boxhead('Jadwal & Kehadiran Amil','Jadwal, kehadiran, dan petugas pengganti menjadi dasar rekam kontribusi.',can('periods')?btn('Tambah jadwal','schedule-new','primary'):'')}<div class="card">${table(['Tanggal','Shift','Amil dijadwalkan','Pengganti','Kehadiran','Tindakan'],s.map(j=>[prettyDate(j.date),e(j.shift),e(who(j.amilId)),e(j.substituteId?who(j.substituteId):'—'),tag(j.attendance),user().role==='Admin'?btn('Ubah catatan','schedule-edit','sm',`data-id="${j.id}"`):'—']))}</div><div class="alert light">Simulasi insentif memperlihatkan kontribusi berdasarkan kehadiran dan jiwa yang dilayani. Rumus resmi harus ditetapkan sebelum digunakan.</div>`}
@@ -2575,7 +2648,7 @@ case'login':{login(d.account,!!f.elements.remember.checked);return}
 case'tenant-application':{if(!f.elements.terms.checked)throw Error('Setujui ketentuan simulasi');if(!d.name.trim()||!d.address.trim())throw Error('Nama dan alamat wajib');db.applications.push({id:id('APP'),name:d.name.trim(),contact:d.contact.trim(),email:d.email.trim(),address:d.address.trim(),status:'menunggu',createdAt:today(),note:'Menunggu tinjauan Admin SiZisNur'});state.page='public';toast('Pengajuan tercatat dan menunggu tinjauan Admin SiZisNur.');break}
 case'tenant-review':{let a=db.applications.find(x=>x.id===idKey);if(!a||a.status!=='menunggu')throw Error('Pengajuan tidak tersedia');if(d.decision==='ditolak'&&!d.note.trim())throw Error('Penolakan membutuhkan alasan');a.status=d.decision;a.note=d.note.trim();a.reviewedAt=now();if(d.decision==='disetujui'){let newId=id('TN');db.tenants.push({id:newId,name:a.name,address:a.address||'Alamat fiktif dalam pengajuan',phone:'',email:a.email,rt:'Belum ditentukan',status:'aktif',publicPortalEnabled:true});db.users.push({id:id('US'),tenantId:newId,name:a.contact,role:'Admin',email:a.email,active:true});db.rules.push({...db.rules[0],tenantId:newId,source:'Demo lembaga baru; semua parameter belum disahkan',weights:{...db.rules[0].weights}});db.periods.push({id:id('PR'),tenantId:newId,name:'Periode Baru (Draf)',status:'draf',openedAt:null,closedAt:null});a.tenantId=newId}break}
 case'tenant':{check('tenant');Object.assign(tenant(),{name:d.name.trim(),address:d.address.trim(),phone:d.phone.trim(),email:d.email.trim(),rt:d.rt.trim()});if(!tenant().name||!tenant().address)throw Error('Nama dan alamat tidak boleh kosong');aud('LEMBAGA','Perubahan identitas lembaga');break}
-case'user':{check('users');assertRole(['Admin']);let u=idKey?scoped('users').find(x=>x.id===idKey):null;if(!u){u={id:id('US'),tenantId:tenantId(),active:true};db.users.push(u)}Object.assign(u,{name:d.name.trim(),email:d.email.trim(),role:d.role});aud('USER','Simpan akun '+u.name);break}
+case'user':{check('users');assertRole(['Admin']);let u=idKey?scoped('users').find(x=>x.id===idKey):null;const email=String(d.email||'').trim().toLowerCase(),phone=String(d.phone||'').trim(),digits=phone.replace(/\D/g,''),phoneKey=digits.startsWith('0')?'62'+digits.slice(1):digits.startsWith('8')?'62'+digits:digits,role=String(d.role||''),name=String(d.name||'').trim(),callName=String(d.callName||'').trim();if(!name||!email||!phone)throw Error('Nama, email, dan nomor HP wajib diisi');if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Format email belum valid');if(!/^\d{9,15}$/.test(phoneKey))throw Error('Nomor HP belum valid');if(scoped('users').some(x=>x.id!==idKey&&x.role===role&&(String(x.email||'').trim().toLowerCase()===email||normalizePhone(x.phone)===phoneKey)))throw Error('Email atau nomor HP sudah digunakan pada role yang sama di lembaga ini');const sameName=scoped('users').filter(x=>x.id!==idKey&&x.role!=='Muzakki'&&String(x.name||'').trim().toLocaleLowerCase('id-ID').replace(/\s+/g,' ')===name.toLocaleLowerCase('id-ID').replace(/\s+/g,' '));const sameNameOther=sameName.some(x=>String(x.email||'').trim().toLowerCase()!==email||normalizePhone(x.phone)!==phoneKey);if(sameNameOther&&(!callName||callName.toLocaleLowerCase('id-ID')===name.toLocaleLowerCase('id-ID')))throw Error('Nama sudah digunakan pengguna lain. Isi Nama panggilan / penanda yang berbeda dari nama lengkap.');if(sameNameOther&&sameName.some(x=>String(x.callName||'').trim().toLocaleLowerCase('id-ID')===callName.toLocaleLowerCase('id-ID')))throw Error('Nama panggilan / penanda sudah digunakan oleh nama lengkap yang sama.');if(!u){u={id:id('US'),tenantId:tenantId(),active:true};db.users.push(u)}Object.assign(u,{name,callName,phone,email,role});aud('USER','Simpan akun '+u.name);break}
 case'period-new':{check('periods');assertRole(['Admin']);if(!d.name.trim())throw Error('Nama periode harus diisi');db.periods.push({id:id('PR'),tenantId:tenantId(),name:d.name.trim(),status:'draf',openedAt:null,closedAt:null});aud('PERIODE','Buat draf '+d.name);break}
 case'rules':{check('settings');let r=rule(),weights={fakir:num(d.fakir),miskin:num(d.miskin),mualaf:num(d.mualaf)};if(sum(Object.values(weights).map(v=>({v})),'v')!==100)throw Error('Bobot alokasi harus berjumlah tepat 100%');if(num(d.moneyRate)<=0||num(d.riceRate)<=0||num(d.fidyahRate)<=0||num(d.nisabGoldGram)<=0||num(d.goldPricePerGram)<=0||num(d.professionNisabMonthly)<=0||num(d.zakatRate)<=0||num(d.kafaratMealRate)<0)throw Error('Tarif, nisab, dan harga emas harus bernilai valid');Object.assign(r,{moneyRate:num(d.moneyRate),riceRate:num(d.riceRate),fidyahRate:num(d.fidyahRate),kafaratMealRate:num(d.kafaratMealRate),kafaratRate:num(d.kafaratMealRate),nisabGoldGram:num(d.nisabGoldGram),goldPricePerGram:num(d.goldPricePerGram),professionNisabMonthly:num(d.professionNisabMonthly),zakatRate:num(d.zakatRate),rounding:num(d.rounding),monthlyIncentive:num(d.monthlyIncentive),weights,scoreThreshold:d.scoreThreshold?num(d.scoreThreshold):null,source:d.source.trim()});aud('ATURAN','Ubah tarif zakat, fidyah, kafarat, nisab, dan bobot per lembaga');break}
 case'schedule':{check('schedule');assertRole(['Admin']);let j=idKey?scoped('schedule').find(x=>x.id===idKey):null;if(!j){j={id:id('JD'),tenantId:tenantId(),periodId:requirePeriod().id};db.schedule.push(j)}Object.assign(j,{date:d.date,shift:d.shift,amilId:d.amilId,substituteId:d.substituteId||null,attendance:d.attendance});aud('JADWAL','Simpan jadwal '+d.date);break}
@@ -3796,7 +3869,7 @@ render();
     const household = householdForUser()
     const serviceSections = `<div class="my-zis-tools-content my-zis-services-content">
       <section class="card"><div class="card-top"><h3>Lembaga yang terhubung</h3>${action('Gabung lembaga lain', 'tenant-join', 'sm')}</div>${A.table(['Lembaga', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section>
-      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
+      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP *', 'phone', person?.phone || account?.phone || '', 'tel', 'required autocomplete="tel"')}${A.fld('Email *', 'email', person?.email || account?.email || '', 'email', 'required autocomplete="email"')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
       <section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Data keluarga membantu menghitung kewajiban zakat fitrah dan jumlah jiwa yang ditanggung.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section></div>
       <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter lembaga yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['profesi', 'Zakat profesi'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Harta bersih (maal) / penghasilan profesi (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.sel('Periode penghasilan profesi', 'calcProfessionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}${A.fld('Jumlah jiwa / hari / kasus', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.sel('Status haul untuk zakat maal', 'calcHaul', [['no', 'Belum / tidak mencapai haul'], ['yes', 'Sudah mencapai haul satu tahun']], 'no')}${A.sel('Jenis kafarat', 'calcKafaratType', [['yamin', 'Melanggar sumpah (memberi makan 10 orang)'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}${A.sel('Tahapan kafarat 60 orang', 'calcKafaratFeeding', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Tidak mampu tahapan sebelumnya; hitung opsi memberi makan 60 orang']], 'no')}${A.fld('Harga emas acuan per gram (Rp)', 'goldPrice', Math.round(A.rule()?.goldPricePerGram || 1078609), 'text', 'inputmode="numeric" data-format="idr" min="1" required')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
       <div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>
@@ -4322,12 +4395,29 @@ render();
     let person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     const isNewPerson = !person
     if (!person) person = { id: newId('PS'), tenantId: currentTenantId() }
-    if (!d.name.trim() || !d.address.trim()) throw new Error('Nama dan alamat wajib diisi')
+    const name = String(d.name || '').trim()
+    const phone = String(d.phone || '').trim()
+    const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
+    if (!name || !phone || !email || !String(d.address || '').trim()) throw new Error('Nama, nomor HP, email, dan alamat wajib diisi')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const normalizePhone = (value) => { const raw = String(value || '').replace(/\D/g, ''); return raw.startsWith('0') ? `62${raw.slice(1)}` : raw.startsWith('8') ? `62${raw}` : raw }
+    const duplicate = db.users.find((item) => {
+      const existingAccountPhone = item.phone || db.accounts.find((entry) => entry.userId === item.id)?.phone
+      return item.id !== activeUser().id && item.role === 'Muzakki' && (String(item.email || '').trim().toLowerCase() === email || normalizePhone(existingAccountPhone) === phoneKey)
+    })
+    if (duplicate) throw new Error('Email atau nomor HP sudah digunakan akun Muzakki lain')
+    const user = activeUser()
+    const contactChanged = String(user.email || '').trim().toLowerCase() !== email || normalizePhone(user.phone || account.phone) !== phoneKey
     applyDomicile(person, d, currentTenantId())
-    Object.assign(person, { name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim() })
+    Object.assign(person, { name, phone, email, address: String(d.address).trim() })
     if (isNewPerson) { db.persons.push(person); member.personId = person.id }
     mirrorMembershipDomicile(member, person)
-    Object.assign(account, { displayName: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim(), consentAt: timestamp() })
+    Object.assign(account, { displayName: name, phone, email, address: String(d.address).trim(), consentAt: timestamp() })
+    Object.assign(user, { name, phone, email })
+    if (contactChanged) { user.emailVerifiedAt = null; user.phoneVerifiedAt = null }
     A.aud('MUZAKKI_PROFILE', `Profil akun ${person.name} diperbarui`)
     enqueueSync('muzakki.profile_updated', { tenantId: currentTenantId(), userId: activeUser().id, accountId: account.id, membershipId: member.id, personId: person.id })
   }
@@ -4789,7 +4879,7 @@ render();
   function muzakkiRegisterModal() {
     A.modal('Daftar akun Muzakki', `<form data-v5-form="muzakki-register"><div class="grid-form">
       ${A.fld('Nama lengkap', 'name', '', 'text', 'required autocomplete="name"')}
-      ${A.fld('Nomor HP', 'phone', '', 'tel', 'required autocomplete="tel"')}
+      ${A.fld('Nomor HP *', 'phone', '', 'tel', 'required autocomplete="tel"')}
       ${A.fld('Email', 'email', '', 'email', 'required autocomplete="email"')}
       ${A.textarea('Alamat lengkap', 'address', '').replace('<textarea ', '<textarea required ')}
     </div><div class="alert light">Pendaftaran ini hanya membuat akun pribadi. Pemilihan dan pendaftaran lembaga dilakukan setelah Anda masuk, melalui menu Lembaga yang terhubung.</div>${formButton('Buat akun Muzakki')}</form>`)
@@ -4798,13 +4888,17 @@ render();
     const name = String(d.name || '').trim()
     const phone = String(d.phone || '').trim()
     const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
     const address = String(d.address || '').trim()
     if (!name || !phone || !email || !address) throw new Error('Nama lengkap, nomor HP, email, dan alamat lengkap wajib diisi')
-    const duplicate = db.accounts.find((x) => (phone && String(x.phone || '').trim() === phone) || (email && String(x.email || '').trim().toLowerCase() === email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const duplicate = db.accounts.find((x) => (phoneKey && (String(x.phone || '').replace(/\D/g, '').replace(/^0/, '62').replace(/^8/, '628') === phoneKey)) || (email && String(x.email || '').trim().toLowerCase() === email))
     if (duplicate) throw new Error('Nomor HP atau email sudah terhubung dengan akun. Silakan masuk menggunakan akun yang sudah ada.')
     const userId = newId('US')
     const accountId = newId('ACC')
-    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, active: true, personId: null, accountId })
+    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, phone, emailVerifiedAt: null, phoneVerifiedAt: null, active: true, personId: null, accountId })
     db.accounts.push({ id: accountId, userId, displayName: name, phone, email, address, consentAt: null })
     // The account is intentionally not attached to a tenant, person, or membership at registration.
     // A tenant-scoped person and muzakki card are created only after the user joins a lembaga.
@@ -6243,6 +6337,7 @@ render();
   function openTenantCreate() {
     A.modal('Daftarkan Lembaga Baru', `<form data-root-form="tenant-create"><div class="grid-form">
       ${A.fld('Nama lembaga','name','','text','required')}${A.fld('Nama Admin lembaga pertama','adminName','','text','required')}
+      ${A.fld('Nomor HP Admin lembaga','adminPhone','','tel','required autocomplete="tel"')}
       ${A.fld('Email Admin lembaga','adminEmail','','email','required')}${A.fld('Password awal Admin','adminPassword','','password','minlength="8" autocomplete="new-password" required')}
       ${A.fld('Ulangi password Admin','adminPasswordConfirm','','password','minlength="8" autocomplete="new-password" required')}${A.fld('Email lembaga','email','','email')}
       ${A.fld('Nomor telepon','phone','','tel')}${A.fld('Wilayah / daerah','daerah','','text')}
@@ -6252,11 +6347,15 @@ render();
     </div><div class="alert light">Sistem akan membuat akun Admin lembaga terpisah, aturan zakat awal yang dapat disesuaikan, dan satu periode berstatus draf.</div><div class="form-actions"><button type="submit" class="btn primary">Buat lembaga</button></div></form>`, true)
   }
 
-  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, status = 'aktif', upzType = '', baznasArea = '' }) {
+  function makeTenant({ name, email, phone, address, daerah, kelurahan = '', kecamatan = '', city = '', province = '', adminName, adminEmail, adminPhone, status = 'aktif', upzType = '', baznasArea = '' }) {
     const cleanName = String(name || '').trim()
     const cleanAdminEmail = String(adminEmail || '').trim().toLowerCase()
-    if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail) throw new Error('Nama lembaga, nama Admin, dan email Admin wajib diisi.')
-    if (db.users.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail) || db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun lain.')
+    const cleanAdminPhone = String(adminPhone || '').trim()
+    const adminPhoneDigits = cleanAdminPhone.replace(/\D/g, '')
+    const normalizedAdminPhone = adminPhoneDigits.startsWith('0') ? `62${adminPhoneDigits.slice(1)}` : adminPhoneDigits.startsWith('8') ? `62${adminPhoneDigits}` : adminPhoneDigits
+    if (!cleanName || !String(adminName || '').trim() || !cleanAdminEmail || !cleanAdminPhone) throw new Error('Nama lembaga, nama Admin, email Admin, dan nomor HP Admin wajib diisi.')
+    if (!/^\d{9,15}$/.test(normalizedAdminPhone)) throw new Error('Nomor HP Admin lembaga belum valid.')
+    if (db.platformAdmins.some((user) => String(user.email || '').toLowerCase() === cleanAdminEmail)) throw new Error('Email Admin sudah dipakai akun Admin SiZisNur.')
     const id = A.id('TN')
     const tenant = { id, publicCode: window.__SIZISNUR_GENERATE_TENANT_CODE ? window.__SIZISNUR_GENERATE_TENANT_CODE(cleanName) : id, name: cleanName, address: String(address || '').trim(), phone: String(phone || '').trim(), email: String(email || '').trim(), daerah: String(daerah || '').trim(), kelurahan: String(kelurahan || '').trim(), kecamatan: String(kecamatan || '').trim(), city: String(city || '').trim(), province: String(province || '').trim(), postalCode: '', latitude: '', longitude: '', gallery: [], upzType: String(upzType || 'UPZ Masjid / Lembaga'), baznasArea: String(baznasArea || ''), status, publicPortalEnabled: status === 'aktif', createdAt: A.now() }
     db.tenants.push(tenant)
@@ -6269,7 +6368,7 @@ render();
       db.areas.push({ id: `AREA-${id}`, tenantId: id, name: tenant.daerah || tenant.name, active: true })
       tenant.areaId = `AREA-${id}`
     }
-    db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, active: true, createdAt: A.now() })
+    db.users.push({ id: A.id('US'), tenantId: id, name: String(adminName).trim(), role: 'Admin', email: cleanAdminEmail, phone: cleanAdminPhone, callName: '', emailVerifiedAt: null, phoneVerifiedAt: null, active: true, createdAt: A.now() })
     const template = db.rules.find((rule) => rule.tenantId === 'TN-ANNUR') || db.rules[0]
     db.rules.push(template
       ? { ...template, tenantId: id, source: 'Salinan parameter awal lembaga; Admin lembaga wajib meninjau dan mengesahkan.', weights: { ...(template.weights || {}) } }
@@ -6282,7 +6381,8 @@ render();
   function reviewApplication(applicationId) {
     const item = db.applications.find((application) => application.id === applicationId && application.status === 'menunggu')
     if (!item) throw new Error('Pengajuan tidak ditemukan atau sudah ditinjau.')
-    A.modal(`Tinjau pengajuan · ${item.name}`, `<div class="mini-list"><div class="mini-item"><span>Nama lembaga</span><b>${esc(item.name)}</b></div><div class="mini-item"><span>Pemohon</span><b>${esc(item.contact || '—')}</b></div><div class="mini-item"><span>Email</span><b>${esc(item.email || '—')}</b></div><div class="mini-item"><span>Alamat</span><b>${esc(item.address || '—')}</b></div></div><form data-root-form="application-review" data-id="${esc(item.id)}"><div class="grid-form">${A.sel('Keputusan','decision',[['disetujui','Setujui dan buat lembaga'],['ditolak','Tolak pengajuan']])}${A.fld('Nama Admin lembaga awal','adminName',item.contact || '','text','required')}${A.fld('Email Admin lembaga awal','adminEmail',item.email || '','email','required')}</div>${A.textarea('Catatan pemeriksaan','note','Pemeriksaan awal melalui simulasi platform.')}
+    A.modal(`Tinjau pengajuan · ${item.name}`, `<div class="mini-list"><div class="mini-item"><span>Nama lembaga</span><b>${esc(item.name)}</b></div><div class="mini-item"><span>Pemohon</span><b>${esc(item.contact || '—')}</b></div><div class="mini-item"><span>Email</span><b>${esc(item.email || '—')}</b></div><div class="mini-item"><span>Alamat</span><b>${esc(item.address || '—')}</b></div></div><form data-root-form="application-review" data-id="${esc(item.id)}"><div class="grid-form">${A.sel('Keputusan','decision',[['disetujui','Setujui dan buat lembaga'],['ditolak','Tolak pengajuan']])}${A.fld('Nama Admin lembaga awal','adminName',item.contact || '','text','required')}${A.fld('Email Admin lembaga awal','adminEmail',item.email || '','email','required')}
+        ${A.fld('Nomor HP Admin lembaga awal','adminPhone',item.phone || '','tel','required autocomplete="tel"')}</div>${A.textarea('Catatan pemeriksaan','note','Pemeriksaan awal melalui simulasi platform.')}
       <div class="alert warn">Pastikan lembaga telah diverifikasi secara administratif di luar prototype. Persetujuan di sini hanya simulasi.</div><div class="form-actions"><button type="submit" class="btn primary">Simpan keputusan</button></div></form>`, true)
   }
 
@@ -6356,7 +6456,7 @@ render();
           if (!application) throw new Error('Pengajuan tidak tersedia.')
           if (!String(data.note || '').trim()) throw new Error('Catatan pemeriksaan wajib diisi.')
           if (data.decision === 'disetujui') {
-            const tenant = makeTenant({ name: application.name, email: application.email, address: application.address, adminName: data.adminName, adminEmail: data.adminEmail, status: rootSetting().defaultTenantStatus })
+            const tenant = makeTenant({ name: application.name, email: application.email, address: application.address, adminName: data.adminName, adminEmail: data.adminEmail, adminPhone: data.adminPhone, status: rootSetting().defaultTenantStatus })
             application.tenantId = tenant.id
           }
           application.status = data.decision
@@ -7157,6 +7257,14 @@ render();
   const $ = (id) => document.getElementById(id)
   const esc = A.e
   const fmtEmail = (value) => String(value || '').trim().toLowerCase()
+  const fmtPhone = (value) => {
+    const digits = String(value || '').replace(/\D/g, '')
+    if (!digits) return ''
+    if (digits.startsWith('0')) return `62${digits.slice(1)}`
+    if (digits.startsWith('8')) return `62${digits}`
+    return digits
+  }
+  const fmtName = (value) => String(value || '').trim().toLocaleLowerCase('id-ID').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')
   const passwordRules = 'minimal 8 karakter'
 
   function base64(bytes) {
@@ -7263,7 +7371,8 @@ render();
       : 'Masuk ke ruang kerja lembaga menggunakan akun yang dibuat oleh Admin lembaga.',
     `<button type="button" class="btn sm ghost" data-auth-view="choose">← Ganti jenis login</button>
       <form class="auth-form" data-auth-form="login" data-role="${role}">
-        <div class="field"><label for="auth-identifier">Username / Email</label><input id="auth-identifier" name="identifier" type="text" placeholder="${isMuzakki ? 'nama@email.com' : 'panitia@lembaga.id'}" autocomplete="username" required></div>
+        ${!isMuzakki ? `<div class="field"><label for="auth-account-role">Peran Panitia</label><select id="auth-account-role" name="accountRole" required><option value="">Pilih role akun</option>${A.ROLES.filter((item) => item !== 'Muzakki').map((item) => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></div>` : ''}
+        <div class="field"><label for="auth-identifier">Email atau Nomor HP</label><input id="auth-identifier" name="identifier" type="text" placeholder="${isMuzakki ? 'nama@email.com atau nomor HP' : 'email atau nomor HP panitia'}" autocomplete="username" required></div>
         <div class="field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required></div>
         <label class="check auth-remember"><input type="checkbox" name="remember"> Ingat saya di perangkat ini</label>
         <div class="form-actions"><button class="btn primary auth-submit" type="submit">Login sebagai ${label}</button></div>
@@ -7275,7 +7384,7 @@ render();
   }
   function demoMarkup() {
     const tenantName = (id) => db.tenants.find((tenant) => tenant.id === id)?.name || 'Belum terhubung lembaga'
-    const userTiles = (db.users || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}</b><span>${esc(user.role)} · ${esc(tenantName(user.tenantId))}</span><small>${esc(user.email || user.id)}</small></button>`).join('')
+    const userTiles = (db.users || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}${user.callName ? ` · ${esc(user.callName)}` : ''}</b><span>${esc(user.role)} · ${esc(tenantName(user.tenantId))}</span><small>${esc(user.email || user.id)}${user.phone ? ` · ${esc(user.phone)}` : ''}</small></button>`).join('')
     const rootTiles = (db.platformAdmins || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile auth-demo-root" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}</b><span>Admin SiZisNur · Konsol platform</span><small>${esc(user.email || user.id)}</small></button>`).join('')
     return authShell('Akses Demo Langsung', 'Pilih akun contoh untuk langsung membuka dashboard sesuai role. Halaman ini terpisah dari simulasi login email dan password.',
       `<button type="button" class="btn sm ghost" data-auth-view="choose">← Kembali ke pilihan akses</button>
@@ -7307,7 +7416,7 @@ render();
           ${A.fld('Nama masjid / lembaga *','name','','text','required')}
           ${A.fld('Nama penanggung jawab *','contact','','text','required')}
           ${A.fld('Email penanggung jawab *','email','','email','required')}
-          ${A.fld('Nomor HP penanggung jawab','phone','','tel')}
+          ${A.fld('Nomor HP penanggung jawab *','phone','','tel','required autocomplete="tel"')}
           ${A.textarea('Alamat lengkap lembaga *','address','').replace('<textarea ', '<textarea required ')}
         </div>
         <label class="check auth-terms"><input type="checkbox" name="terms" required> Saya memahami bahwa ini adalah pengajuan lembaga dan harus melalui proses peninjauan.</label>
@@ -7370,18 +7479,36 @@ render();
     window.scrollTo?.(0, 0)
   }
   function allAccounts() { return [...(db.users || []), ...(db.platformAdmins || [])] }
-  function findAccount(identifier) {
+  function findAccounts(identifier) {
     const key = fmtEmail(identifier)
-    return allAccounts().find((user) => fmtEmail(user.email) === key || fmtEmail(user.username) === key || String(user.id || '').toLowerCase() === key)
+    const phoneKey = /[a-z]/i.test(String(identifier || '')) || String(identifier || '').includes('@') ? '' : fmtPhone(identifier)
+    return allAccounts().filter((user) => {
+      const accountPhone = user.phone || db.accounts?.find((account) => account.userId === user.id)?.phone
+      return fmtEmail(user.email) === key ||
+        fmtEmail(user.username) === key ||
+        String(user.id || '').toLowerCase() === key ||
+        (!!phoneKey && !!fmtPhone(accountPhone) && fmtPhone(accountPhone) === phoneKey)
+    })
   }
-  async function authenticate(identifier, password, role) {
+  async function authenticate(identifier, password, role, accountRole = '') {
     await initializeCredentials()
-    const account = findAccount(identifier)
-    if (!account || account.active === false) throw new Error('Username/email atau password tidak sesuai, atau akun tidak aktif.')
-    if (role === 'muzakki' && account.role !== 'Muzakki') throw new Error('Akun ini bukan akun Muzakki. Silakan gunakan Login sebagai Panitia.')
-    if (role === 'panitia' && (!account.tenantId || account.scope === 'platform' || account.role === 'Muzakki')) throw new Error('Akun ini bukan akun Panitia lembaga. Periksa pilihan jenis login Anda.')
-    if (account.scope === 'platform' || account.role === 'Admin SiZisNur') throw new Error('Admin SiZisNur menggunakan Akses Demo Langsung pada prototype ini.')
-    if (!await verifyPassword(password, account.passwordAuth)) throw new Error('Username/email atau password tidak sesuai.')
+    let candidates = findAccounts(identifier).filter((account) => account.active !== false)
+    if (role === 'muzakki') {
+      candidates = candidates.filter((account) => account.role === 'Muzakki')
+    } else if (role === 'panitia') {
+      candidates = candidates.filter((account) => !!account.tenantId && account.scope !== 'platform' && account.role !== 'Muzakki')
+      if (accountRole) candidates = candidates.filter((account) => account.role === accountRole)
+    }
+    candidates = candidates.filter((account) => account.scope !== 'platform' && account.role !== 'Admin SiZisNur')
+    const authenticated = []
+    for (const account of candidates) {
+      if (await verifyPassword(password, account.passwordAuth)) authenticated.push(account)
+    }
+    if (!authenticated.length) throw new Error('Email/nomor HP atau password tidak sesuai, atau akun tidak aktif.')
+    if (authenticated.length > 1) {
+      throw new Error('Kontak ini cocok dengan lebih dari satu akun. Pilih role yang tepat atau minta Admin memastikan data akun.')
+    }
+    const account = authenticated[0]
     if (account.mustChangePassword) {
       state.pendingAuthUserId = account.id
       switchView('first-password')
@@ -7401,13 +7528,14 @@ render();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
     if (password.length < 8) throw new Error('Password harus minimal 8 karakter.')
     if (password !== String(data.passwordConfirm || '')) throw new Error('Konfirmasi password tidak sama.')
-    if (db.accounts.some((account) => fmtEmail(account.email) === email || (phone && String(account.phone || '').trim() === phone)) || db.users.some((user) => fmtEmail(user.email) === email)) {
-      throw new Error('Nomor HP atau email sudah digunakan. Silakan login dengan akun yang sudah ada.')
+    const phoneKey = fmtPhone(phone)
+    if (db.accounts.some((account) => fmtEmail(account.email) === email || (phoneKey && fmtPhone(account.phone) === phoneKey)) || db.users.some((user) => user.role === 'Muzakki' && (fmtEmail(user.email) === email || (phoneKey && fmtPhone(user.phone || db.accounts.find((account) => account.userId === user.id)?.phone) === phoneKey)))) {
+      throw new Error('Nomor HP atau email sudah digunakan oleh akun Muzakki. Silakan login dengan akun yang sudah ada.')
     }
     const credential = await hashPassword(password)
     const userId = A.id('US')
     const accountId = A.id('ACC')
-    const user = { id: userId, tenantId: null, name, role: 'Muzakki', email, active: true, personId: null, accountId, passwordAuth: credential, mustChangePassword: false, createdAt: A.now() }
+    const user = { id: userId, tenantId: null, name, role: 'Muzakki', email, phone, emailVerifiedAt: null, phoneVerifiedAt: null, active: true, personId: null, accountId, passwordAuth: credential, mustChangePassword: false, createdAt: A.now() }
     db.users.push(user)
     db.accounts.push({ id: accountId, userId, displayName: name, phone, email, address, consentAt: null, createdAt: A.now() })
     A.aud('MUZAKKI_REGISTER', `Akun Muzakki mandiri ${userId} dibuat tanpa keanggotaan lembaga`)
@@ -7422,10 +7550,11 @@ render();
     const phone = String(data.phone || '').trim()
     const address = String(data.address || '').trim()
     if (!db.platformSettings?.publicRegistrationOpen) throw new Error('Pendaftaran lembaga sedang ditutup oleh Admin SiZisNur.')
-    if (!name || !contact || !email || !address) throw new Error('Nama lembaga, penanggung jawab, email, dan alamat wajib diisi.')
+    if (!name || !contact || !email || !phone || !address) throw new Error('Nama lembaga, penanggung jawab, email, nomor HP, dan alamat wajib diisi.')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
+    if (!/^\d{9,15}$/.test(fmtPhone(phone))) throw new Error('Nomor HP penanggung jawab belum valid.')
     if (data.terms !== 'on' && data.terms !== 'yes') throw new Error('Persetujuan pengajuan lembaga wajib dicentang.')
-    if (db.users.some((user) => fmtEmail(user.email) === email) || db.platformAdmins.some((user) => fmtEmail(user.email) === email)) throw new Error('Email tersebut sudah digunakan oleh akun SiZisNur.')
+    if (db.platformAdmins.some((user) => fmtEmail(user.email) === email)) throw new Error('Email tersebut digunakan oleh akun Admin SiZisNur.')
     if (db.applications.some((item) => item.status === 'menunggu' && fmtEmail(item.email) === email)) throw new Error('Masih ada pengajuan lembaga yang menunggu dengan email ini.')
     const applicationId = A.id('APP')
     db.applications.push({ id: applicationId, name, contact, email, phone, address, status: 'menunggu', createdAt: A.today(), note: 'Menunggu peninjauan Admin SiZisNur melalui simulasi.' })
@@ -7458,12 +7587,27 @@ render();
     let user = id ? db.users.find((item) => item.id === id && item.tenantId === tenantId) : null
     if (id && (!user || user.role === 'Muzakki')) throw new Error('Akun Panitia tidak ditemukan.')
     const name = String(data.name || '').trim()
+    const callName = String(data.callName || '').trim()
     const email = fmtEmail(data.email)
+    const phone = String(data.phone || '').trim()
+    const phoneKey = fmtPhone(phone)
     const role = String(data.role || '')
     const allowedRoles = A.ROLES.filter((item) => item !== 'Muzakki')
-    if (!name || !email || !allowedRoles.includes(role)) throw new Error('Nama, email, dan peran Panitia wajib dipilih dengan benar.')
+    if (!name || !email || !phone || !allowedRoles.includes(role)) throw new Error('Nama lengkap, email, nomor HP, dan role Panitia wajib diisi.')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
-    if (allAccounts().some((item) => item.id !== id && fmtEmail(item.email) === email)) throw new Error('Email sudah digunakan akun lain.')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid. Gunakan nomor yang dapat dihubungi.')
+    if (db.platformAdmins.some((item) => fmtEmail(item.email) === email || (phoneKey && fmtPhone(item.phone) === phoneKey))) throw new Error('Kontak tersebut digunakan oleh akun Admin SiZisNur.')
+    const duplicate = db.users.find((item) => item.id !== id && item.tenantId === tenantId && item.role === role && (fmtEmail(item.email) === email || (phoneKey && fmtPhone(item.phone) === phoneKey)))
+    if (duplicate) {
+      const matched = fmtEmail(duplicate.email) === email ? 'email' : 'nomor HP'
+      throw new Error(`Akun ${role} dengan ${matched} tersebut sudah terdaftar pada Lembaga ini. Satu kontak tidak boleh digandakan dalam role yang sama.`)
+    }
+    const sameName = db.users.filter((item) => item.id !== id && item.tenantId === tenantId && item.role !== 'Muzakki' && fmtName(item.name) === fmtName(name))
+    const sameNameDifferentPerson = sameName.some((item) => fmtEmail(item.email) !== email || fmtPhone(item.phone) !== phoneKey)
+    if (sameNameDifferentPerson && (!callName || fmtName(callName) === fmtName(name))) throw new Error('Nama lengkap ini sudah dipakai pengguna lain. Isi Nama panggilan / penanda yang berbeda dari nama lengkap agar keduanya dapat dibedakan.')
+    if (sameNameDifferentPerson && sameName.some((item) => fmtName(item.callName) && fmtName(item.callName) === fmtName(callName))) {
+      throw new Error('Nama panggilan / penanda sudah digunakan oleh pengguna dengan nama lengkap yang sama.')
+    }
     const password = String(data.password || '')
     const confirm = String(data.passwordConfirm || '')
     if (!user && password.length < 8) throw new Error('Password awal wajib diisi minimal 8 karakter.')
@@ -7472,7 +7616,12 @@ render();
     const credential = password ? await hashPassword(password) : null
     const isNew = !user
     if (!user) user = { id: A.id('US'), tenantId, active: true, createdAt: A.now() }
-    Object.assign(user, { name, email, role, active: true })
+    const contactChanged = fmtEmail(user.email) !== email || fmtPhone(user.phone) !== phoneKey
+    Object.assign(user, { name, callName, email, phone, role, active: true })
+    if (contactChanged) {
+      user.emailVerifiedAt = null
+      user.phoneVerifiedAt = null
+    }
     if (credential) {
       user.passwordAuth = credential
       user.mustChangePassword = false
@@ -7507,14 +7656,15 @@ render();
     }
     const adminName = String(data.adminName || application.contact || '').trim()
     const adminEmail = fmtEmail(data.adminEmail || application.email)
-    if (!adminName || !adminEmail) throw new Error('Nama dan email Admin awal wajib diisi.')
-    if (allAccounts().some((item) => fmtEmail(item.email) === adminEmail)) throw new Error('Email Admin awal sudah digunakan akun lain.')
+    const adminPhone = String(data.adminPhone || application.phone || '').trim()
+    if (!adminName || !adminEmail || !adminPhone) throw new Error('Nama, email, dan nomor HP Admin awal wajib diisi.')
+    if (db.platformAdmins.some((item) => fmtEmail(item.email) === adminEmail)) throw new Error('Email Admin awal digunakan akun Admin SiZisNur.')
     const password = temporaryPassword()
     const credential = await hashPassword(password)
     const tenant = platform.makeTenant({
       name: application.name, email: application.email, phone: application.phone || '', address: application.address,
       daerah: application.daerah || '', kelurahan: application.kelurahan || '', kecamatan: application.kecamatan || '', city: application.city || '', province: application.province || '',
-      adminName, adminEmail, status: db.platformSettings?.defaultTenantStatus || 'aktif',
+      adminName, adminEmail, adminPhone, status: db.platformSettings?.defaultTenantStatus || 'aktif',
     })
     const admin = db.users.find((item) => item.tenantId === tenant.id && item.role === 'Admin' && fmtEmail(item.email) === adminEmail)
     if (!admin) throw new Error('Akun Admin awal gagal dibuat.')
@@ -7567,7 +7717,7 @@ render();
     const adminEmail = fmtEmail(application.email)
     const password = temporaryPassword()
     const credential = await hashPassword(password)
-    const tenant = platform.makeTenant({ name: application.name, email: application.email, phone: application.phone || '', address: application.address, adminName, adminEmail, status: db.platformSettings?.defaultTenantStatus || 'aktif' })
+    const tenant = platform.makeTenant({ name: application.name, email: application.email, phone: application.phone || '', address: application.address, adminName, adminEmail, adminPhone: application.phone || '', status: db.platformSettings?.defaultTenantStatus || 'aktif' })
     const admin = db.users.find((item) => item.tenantId === tenant.id && fmtEmail(item.email) === adminEmail)
     admin.passwordAuth = credential
     admin.mustChangePassword = true
@@ -7604,7 +7754,7 @@ render();
     const submit = form.querySelector('button[type="submit"]')
     if (submit) submit.disabled = true
     try {
-      if (form.dataset.authForm === 'login') await authenticate(data.identifier, data.password, form.dataset.role)
+      if (form.dataset.authForm === 'login') await authenticate(data.identifier, data.password, form.dataset.role, data.accountRole || '')
       else if (form.dataset.authForm === 'register-muzakki') await registerMuzakki(data)
       else if (form.dataset.authForm === 'register-institution') await submitInstitutionApplication(data)
       else if (form.dataset.authForm === 'first-password') await changeFirstPassword(data)

@@ -897,3 +897,71 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
  .transaction-line-head .btn{flex:0 0 auto}
  .transaction-line-preview .mini-item{gap:10px}
 }
+
+
+/* Evaluasi Prototype — setiap keputusan ditampilkan sebagai kartu terpisah. */
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0 22px;
+}
+.decision-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.decision-no {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid #cce7df;
+  border-radius: 12px;
+  background: #edf8f4;
+  color: #126b5c;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+.decision-card > div {
+  min-width: 0;
+  flex: 1;
+}
+.decision-card h3 {
+  margin: 1px 0 9px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.decision-card .tag {
+  display: inline-flex;
+  margin: 0 0 9px;
+}
+.decision-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+body.dark .decision-no {
+  border-color: #42685c;
+  background: #1d3b33;
+  color: #c7e9d8;
+}
+@media (max-width: 780px) {
+  .decision-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .decision-card {
+    padding: 16px;
+  }
+}

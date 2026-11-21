@@ -105,7 +105,7 @@ assert.match(publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-001|WRO
 // Platform Admin can control visibility per lembaga; new active tenants are listed by default.
 const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
   name: 'UPZ Uji Transparansi', adminName: 'Admin Uji', adminEmail: 'admin.transparansi@example.invalid',
-  email: 'kontak@example.invalid', status: 'aktif', daerah: 'Kota Uji',
+  adminPhone: '081211111005', email: 'kontak@example.invalid', status: 'aktif', daerah: 'Kota Uji',
 })
 assert.equal(created.publicPortalEnabled, true)
 assert.ok(publicPortal.publicTenants().some((item) => item.id === created.id))

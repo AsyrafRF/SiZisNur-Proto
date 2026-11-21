@@ -1,5 +1,5 @@
 /* Local-first shell cache only. Transaction sync still requires an authenticated API. */
-const CACHE_NAME = 'sizisnur-shell-v5-20261120-adaptive-zakat-line-fields'
+const CACHE_NAME = 'sizisnur-shell-v5-20261122-contact-identity-evaluation-cards'
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/app.js', './js/revision-v5.js', './js/platform-admin.js', './js/public-portal.js', './js/prototype-settings.js', './js/authentication.js', './js/public-intake.js', './js/qrcode.js',

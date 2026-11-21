@@ -280,3 +280,14 @@ Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook y
 - Layout PDF biasa tidak berubah dan tetap menggunakan ukuran halaman normal browser.
 - Menambahkan pengujian regresi untuk aksi thermal dan PDF menggunakan transaksi gabungan Fitrah uang, Fitrah beras, dan Fidyah.
 - Menaikkan versi cache service worker agar browser mengambil modul revisi terbaru setelah pembaruan.
+
+
+## Pembaruan Evaluasi Prototype dan Manajemen Akun — 22 November 2026
+
+- Sebelas keputusan pada **Evaluasi Prototype** ditampilkan sebagai kartu terpisah yang responsif, dengan nomor, judul, status, dan uraian yang mudah dipindai; isi dan urutan keputusan tidak diubah.
+- Form **Akun & Peran** mewajibkan nama, email, nomor HP, role, dan password awal. Email dinormalisasi, nomor HP Indonesia dinormalisasi agar format `08...` dan `+62...` dianggap sama.
+- Email atau nomor HP yang sama ditolak bila akan digunakan lagi pada role yang sama dalam Lembaga yang sama. Kontak yang sama diperbolehkan pada role berbeda; Login Panitia meminta pilihan role supaya akun tidak tertukar.
+- Nama lengkap bukan kunci unik. Jika nama yang sama dipakai orang berbeda (kontak berbeda), form meminta Nama panggilan / penanda yang unik; penanda ditampilkan pada daftar akun, akses demo, dan penugasan petugas.
+- Akun Admin awal yang dibuat melalui pendaftaran/pembuatan lembaga juga memerlukan nomor HP. Registrasi dan pembaruan profil Muzakki turut menyimpan nomor HP pada identitas login, sehingga email maupun HP dapat dipakai sebagai pengenal. Status verifikasi email dan HP disimpan secara terpisah; perubahan kontak mengembalikan statusnya menjadi belum diverifikasi. Data HP pada akun demo adalah nomor sintetis.
+- Batas penting: prototype belum mengirim atau memvalidasi OTP email/HP sungguhan. Status verifikasi baru menjadi terverifikasi setelah integrasi backend dan provider email/WhatsApp/SMS. Jangan anggap field wajib sebagai bukti kepemilikan kontak.
+- Pengujian otomatis diperluas untuk duplikasi email/HP, normalisasi nomor, nama sama, role berbeda dengan kontak sama, login role terpilih, dan jumlah 11 kartu evaluasi.

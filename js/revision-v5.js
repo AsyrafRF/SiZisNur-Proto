@@ -1137,7 +1137,7 @@
     const household = householdForUser()
     const serviceSections = `<div class="my-zis-tools-content my-zis-services-content">
       <section class="card"><div class="card-top"><h3>Lembaga yang terhubung</h3>${action('Gabung lembaga lain', 'tenant-join', 'sm')}</div>${A.table(['Lembaga', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section>
-      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
+      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP *', 'phone', person?.phone || account?.phone || '', 'tel', 'required autocomplete="tel"')}${A.fld('Email *', 'email', person?.email || account?.email || '', 'email', 'required autocomplete="email"')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
       <section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Data keluarga membantu menghitung kewajiban zakat fitrah dan jumlah jiwa yang ditanggung.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section></div>
       <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter lembaga yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['profesi', 'Zakat profesi'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Harta bersih (maal) / penghasilan profesi (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.sel('Periode penghasilan profesi', 'calcProfessionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}${A.fld('Jumlah jiwa / hari / kasus', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.sel('Status haul untuk zakat maal', 'calcHaul', [['no', 'Belum / tidak mencapai haul'], ['yes', 'Sudah mencapai haul satu tahun']], 'no')}${A.sel('Jenis kafarat', 'calcKafaratType', [['yamin', 'Melanggar sumpah (memberi makan 10 orang)'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}${A.sel('Tahapan kafarat 60 orang', 'calcKafaratFeeding', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Tidak mampu tahapan sebelumnya; hitung opsi memberi makan 60 orang']], 'no')}${A.fld('Harga emas acuan per gram (Rp)', 'goldPrice', Math.round(A.rule()?.goldPricePerGram || 1078609), 'text', 'inputmode="numeric" data-format="idr" min="1" required')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
       <div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>
@@ -1663,12 +1663,29 @@
     let person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     const isNewPerson = !person
     if (!person) person = { id: newId('PS'), tenantId: currentTenantId() }
-    if (!d.name.trim() || !d.address.trim()) throw new Error('Nama dan alamat wajib diisi')
+    const name = String(d.name || '').trim()
+    const phone = String(d.phone || '').trim()
+    const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
+    if (!name || !phone || !email || !String(d.address || '').trim()) throw new Error('Nama, nomor HP, email, dan alamat wajib diisi')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const normalizePhone = (value) => { const raw = String(value || '').replace(/\D/g, ''); return raw.startsWith('0') ? `62${raw.slice(1)}` : raw.startsWith('8') ? `62${raw}` : raw }
+    const duplicate = db.users.find((item) => {
+      const existingAccountPhone = item.phone || db.accounts.find((entry) => entry.userId === item.id)?.phone
+      return item.id !== activeUser().id && item.role === 'Muzakki' && (String(item.email || '').trim().toLowerCase() === email || normalizePhone(existingAccountPhone) === phoneKey)
+    })
+    if (duplicate) throw new Error('Email atau nomor HP sudah digunakan akun Muzakki lain')
+    const user = activeUser()
+    const contactChanged = String(user.email || '').trim().toLowerCase() !== email || normalizePhone(user.phone || account.phone) !== phoneKey
     applyDomicile(person, d, currentTenantId())
-    Object.assign(person, { name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim() })
+    Object.assign(person, { name, phone, email, address: String(d.address).trim() })
     if (isNewPerson) { db.persons.push(person); member.personId = person.id }
     mirrorMembershipDomicile(member, person)
-    Object.assign(account, { displayName: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim(), consentAt: timestamp() })
+    Object.assign(account, { displayName: name, phone, email, address: String(d.address).trim(), consentAt: timestamp() })
+    Object.assign(user, { name, phone, email })
+    if (contactChanged) { user.emailVerifiedAt = null; user.phoneVerifiedAt = null }
     A.aud('MUZAKKI_PROFILE', `Profil akun ${person.name} diperbarui`)
     enqueueSync('muzakki.profile_updated', { tenantId: currentTenantId(), userId: activeUser().id, accountId: account.id, membershipId: member.id, personId: person.id })
   }
@@ -2130,7 +2147,7 @@
   function muzakkiRegisterModal() {
     A.modal('Daftar akun Muzakki', `<form data-v5-form="muzakki-register"><div class="grid-form">
       ${A.fld('Nama lengkap', 'name', '', 'text', 'required autocomplete="name"')}
-      ${A.fld('Nomor HP', 'phone', '', 'tel', 'required autocomplete="tel"')}
+      ${A.fld('Nomor HP *', 'phone', '', 'tel', 'required autocomplete="tel"')}
       ${A.fld('Email', 'email', '', 'email', 'required autocomplete="email"')}
       ${A.textarea('Alamat lengkap', 'address', '').replace('<textarea ', '<textarea required ')}
     </div><div class="alert light">Pendaftaran ini hanya membuat akun pribadi. Pemilihan dan pendaftaran lembaga dilakukan setelah Anda masuk, melalui menu Lembaga yang terhubung.</div>${formButton('Buat akun Muzakki')}</form>`)
@@ -2139,13 +2156,17 @@
     const name = String(d.name || '').trim()
     const phone = String(d.phone || '').trim()
     const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
     const address = String(d.address || '').trim()
     if (!name || !phone || !email || !address) throw new Error('Nama lengkap, nomor HP, email, dan alamat lengkap wajib diisi')
-    const duplicate = db.accounts.find((x) => (phone && String(x.phone || '').trim() === phone) || (email && String(x.email || '').trim().toLowerCase() === email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const duplicate = db.accounts.find((x) => (phoneKey && (String(x.phone || '').replace(/\D/g, '').replace(/^0/, '62').replace(/^8/, '628') === phoneKey)) || (email && String(x.email || '').trim().toLowerCase() === email))
     if (duplicate) throw new Error('Nomor HP atau email sudah terhubung dengan akun. Silakan masuk menggunakan akun yang sudah ada.')
     const userId = newId('US')
     const accountId = newId('ACC')
-    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, active: true, personId: null, accountId })
+    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, phone, emailVerifiedAt: null, phoneVerifiedAt: null, active: true, personId: null, accountId })
     db.accounts.push({ id: accountId, userId, displayName: name, phone, email, address, consentAt: null })
     // The account is intentionally not attached to a tenant, person, or membership at registration.
     // A tenant-scoped person and muzakki card are created only after the user joins a lembaga.

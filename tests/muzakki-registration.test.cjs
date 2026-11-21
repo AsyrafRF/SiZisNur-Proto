@@ -97,6 +97,9 @@ submitForm('muzakki-register', {
 const registered = bridge.db.users.find((user) => user.email === 'muzakki.mandiri@example.invalid');
 assert.ok(registered, 'new user account is created');
 assert.equal(registered.role, 'Muzakki');
+assert.equal(registered.phone, '081298765432', 'phone is stored on the login identity as well as the profile account');
+assert.equal(registered.emailVerifiedAt, null, 'email starts pending actual verification');
+assert.equal(registered.phoneVerifiedAt, null, 'phone starts pending actual verification');
 assert.equal(registered.tenantId, null, 'registration must not assign a first tenant');
 assert.equal(bridge.db.users.length, before.users + 1);
 assert.equal(bridge.db.accounts.length, before.accounts + 1);
@@ -107,6 +110,9 @@ assert.equal(bridge.db.muzakkiMemberships.length, before.memberships, 'registrat
 const account = bridge.db.accounts.find((item) => item.userId === registered.id);
 assert.equal(account.address, 'Jl. Contoh Nomor 10, Takokak');
 assert.equal(account.consentAt, null, 'tenant-specific data consent is requested only when joining a lembaga');
+const beforeDuplicate = bridge.db.users.length;
+submitForm('muzakki-register', { name: 'Muzakki Duplikat', phone: '+62 812 9876 5432', email: 'different@example.invalid', address: 'Alamat lain' });
+assert.equal(bridge.db.users.length, beforeDuplicate, 'normalized duplicate phone is rejected even when formatting differs');
 assert.equal(bridge.session.userId, registered.id);
 assert.equal(bridge.session.tenantId, null);
 assert.equal(bridge.tenantId(), null);

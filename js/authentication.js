@@ -15,6 +15,14 @@
   const $ = (id) => document.getElementById(id)
   const esc = A.e
   const fmtEmail = (value) => String(value || '').trim().toLowerCase()
+  const fmtPhone = (value) => {
+    const digits = String(value || '').replace(/\D/g, '')
+    if (!digits) return ''
+    if (digits.startsWith('0')) return `62${digits.slice(1)}`
+    if (digits.startsWith('8')) return `62${digits}`
+    return digits
+  }
+  const fmtName = (value) => String(value || '').trim().toLocaleLowerCase('id-ID').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ')
   const passwordRules = 'minimal 8 karakter'
 
   function base64(bytes) {
@@ -121,7 +129,8 @@
       : 'Masuk ke ruang kerja lembaga menggunakan akun yang dibuat oleh Admin lembaga.',
     `<button type="button" class="btn sm ghost" data-auth-view="choose">← Ganti jenis login</button>
       <form class="auth-form" data-auth-form="login" data-role="${role}">
-        <div class="field"><label for="auth-identifier">Username / Email</label><input id="auth-identifier" name="identifier" type="text" placeholder="${isMuzakki ? 'nama@email.com' : 'panitia@lembaga.id'}" autocomplete="username" required></div>
+        ${!isMuzakki ? `<div class="field"><label for="auth-account-role">Peran Panitia</label><select id="auth-account-role" name="accountRole" required><option value="">Pilih role akun</option>${A.ROLES.filter((item) => item !== 'Muzakki').map((item) => `<option value="${esc(item)}">${esc(item)}</option>`).join('')}</select></div>` : ''}
+        <div class="field"><label for="auth-identifier">Email atau Nomor HP</label><input id="auth-identifier" name="identifier" type="text" placeholder="${isMuzakki ? 'nama@email.com atau nomor HP' : 'email atau nomor HP panitia'}" autocomplete="username" required></div>
         <div class="field"><label for="auth-password">Password</label><input id="auth-password" name="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required></div>
         <label class="check auth-remember"><input type="checkbox" name="remember"> Ingat saya di perangkat ini</label>
         <div class="form-actions"><button class="btn primary auth-submit" type="submit">Login sebagai ${label}</button></div>
@@ -133,7 +142,7 @@
   }
   function demoMarkup() {
     const tenantName = (id) => db.tenants.find((tenant) => tenant.id === id)?.name || 'Belum terhubung lembaga'
-    const userTiles = (db.users || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}</b><span>${esc(user.role)} · ${esc(tenantName(user.tenantId))}</span><small>${esc(user.email || user.id)}</small></button>`).join('')
+    const userTiles = (db.users || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}${user.callName ? ` · ${esc(user.callName)}` : ''}</b><span>${esc(user.role)} · ${esc(tenantName(user.tenantId))}</span><small>${esc(user.email || user.id)}${user.phone ? ` · ${esc(user.phone)}` : ''}</small></button>`).join('')
     const rootTiles = (db.platformAdmins || []).filter((user) => user.active).map((user) => `<button type="button" class="auth-demo-tile auth-demo-root" data-auth-demo="${esc(user.id)}"><b>${esc(user.name)}</b><span>Admin SiZisNur · Konsol platform</span><small>${esc(user.email || user.id)}</small></button>`).join('')
     return authShell('Akses Demo Langsung', 'Pilih akun contoh untuk langsung membuka dashboard sesuai role. Halaman ini terpisah dari simulasi login email dan password.',
       `<button type="button" class="btn sm ghost" data-auth-view="choose">← Kembali ke pilihan akses</button>
@@ -165,7 +174,7 @@
           ${A.fld('Nama masjid / lembaga *','name','','text','required')}
           ${A.fld('Nama penanggung jawab *','contact','','text','required')}
           ${A.fld('Email penanggung jawab *','email','','email','required')}
-          ${A.fld('Nomor HP penanggung jawab','phone','','tel')}
+          ${A.fld('Nomor HP penanggung jawab *','phone','','tel','required autocomplete="tel"')}
           ${A.textarea('Alamat lengkap lembaga *','address','').replace('<textarea ', '<textarea required ')}
         </div>
         <label class="check auth-terms"><input type="checkbox" name="terms" required> Saya memahami bahwa ini adalah pengajuan lembaga dan harus melalui proses peninjauan.</label>
@@ -228,18 +237,36 @@
     window.scrollTo?.(0, 0)
   }
   function allAccounts() { return [...(db.users || []), ...(db.platformAdmins || [])] }
-  function findAccount(identifier) {
+  function findAccounts(identifier) {
     const key = fmtEmail(identifier)
-    return allAccounts().find((user) => fmtEmail(user.email) === key || fmtEmail(user.username) === key || String(user.id || '').toLowerCase() === key)
+    const phoneKey = /[a-z]/i.test(String(identifier || '')) || String(identifier || '').includes('@') ? '' : fmtPhone(identifier)
+    return allAccounts().filter((user) => {
+      const accountPhone = user.phone || db.accounts?.find((account) => account.userId === user.id)?.phone
+      return fmtEmail(user.email) === key ||
+        fmtEmail(user.username) === key ||
+        String(user.id || '').toLowerCase() === key ||
+        (!!phoneKey && !!fmtPhone(accountPhone) && fmtPhone(accountPhone) === phoneKey)
+    })
   }
-  async function authenticate(identifier, password, role) {
+  async function authenticate(identifier, password, role, accountRole = '') {
     await initializeCredentials()
-    const account = findAccount(identifier)
-    if (!account || account.active === false) throw new Error('Username/email atau password tidak sesuai, atau akun tidak aktif.')
-    if (role === 'muzakki' && account.role !== 'Muzakki') throw new Error('Akun ini bukan akun Muzakki. Silakan gunakan Login sebagai Panitia.')
-    if (role === 'panitia' && (!account.tenantId || account.scope === 'platform' || account.role === 'Muzakki')) throw new Error('Akun ini bukan akun Panitia lembaga. Periksa pilihan jenis login Anda.')
-    if (account.scope === 'platform' || account.role === 'Admin SiZisNur') throw new Error('Admin SiZisNur menggunakan Akses Demo Langsung pada prototype ini.')
-    if (!await verifyPassword(password, account.passwordAuth)) throw new Error('Username/email atau password tidak sesuai.')
+    let candidates = findAccounts(identifier).filter((account) => account.active !== false)
+    if (role === 'muzakki') {
+      candidates = candidates.filter((account) => account.role === 'Muzakki')
+    } else if (role === 'panitia') {
+      candidates = candidates.filter((account) => !!account.tenantId && account.scope !== 'platform' && account.role !== 'Muzakki')
+      if (accountRole) candidates = candidates.filter((account) => account.role === accountRole)
+    }
+    candidates = candidates.filter((account) => account.scope !== 'platform' && account.role !== 'Admin SiZisNur')
+    const authenticated = []
+    for (const account of candidates) {
+      if (await verifyPassword(password, account.passwordAuth)) authenticated.push(account)
+    }
+    if (!authenticated.length) throw new Error('Email/nomor HP atau password tidak sesuai, atau akun tidak aktif.')
+    if (authenticated.length > 1) {
+      throw new Error('Kontak ini cocok dengan lebih dari satu akun. Pilih role yang tepat atau minta Admin memastikan data akun.')
+    }
+    const account = authenticated[0]
     if (account.mustChangePassword) {
       state.pendingAuthUserId = account.id
       switchView('first-password')
@@ -259,13 +286,14 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
     if (password.length < 8) throw new Error('Password harus minimal 8 karakter.')
     if (password !== String(data.passwordConfirm || '')) throw new Error('Konfirmasi password tidak sama.')
-    if (db.accounts.some((account) => fmtEmail(account.email) === email || (phone && String(account.phone || '').trim() === phone)) || db.users.some((user) => fmtEmail(user.email) === email)) {
-      throw new Error('Nomor HP atau email sudah digunakan. Silakan login dengan akun yang sudah ada.')
+    const phoneKey = fmtPhone(phone)
+    if (db.accounts.some((account) => fmtEmail(account.email) === email || (phoneKey && fmtPhone(account.phone) === phoneKey)) || db.users.some((user) => user.role === 'Muzakki' && (fmtEmail(user.email) === email || (phoneKey && fmtPhone(user.phone || db.accounts.find((account) => account.userId === user.id)?.phone) === phoneKey)))) {
+      throw new Error('Nomor HP atau email sudah digunakan oleh akun Muzakki. Silakan login dengan akun yang sudah ada.')
     }
     const credential = await hashPassword(password)
     const userId = A.id('US')
     const accountId = A.id('ACC')
-    const user = { id: userId, tenantId: null, name, role: 'Muzakki', email, active: true, personId: null, accountId, passwordAuth: credential, mustChangePassword: false, createdAt: A.now() }
+    const user = { id: userId, tenantId: null, name, role: 'Muzakki', email, phone, emailVerifiedAt: null, phoneVerifiedAt: null, active: true, personId: null, accountId, passwordAuth: credential, mustChangePassword: false, createdAt: A.now() }
     db.users.push(user)
     db.accounts.push({ id: accountId, userId, displayName: name, phone, email, address, consentAt: null, createdAt: A.now() })
     A.aud('MUZAKKI_REGISTER', `Akun Muzakki mandiri ${userId} dibuat tanpa keanggotaan lembaga`)
@@ -280,10 +308,11 @@
     const phone = String(data.phone || '').trim()
     const address = String(data.address || '').trim()
     if (!db.platformSettings?.publicRegistrationOpen) throw new Error('Pendaftaran lembaga sedang ditutup oleh Admin SiZisNur.')
-    if (!name || !contact || !email || !address) throw new Error('Nama lembaga, penanggung jawab, email, dan alamat wajib diisi.')
+    if (!name || !contact || !email || !phone || !address) throw new Error('Nama lembaga, penanggung jawab, email, nomor HP, dan alamat wajib diisi.')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
+    if (!/^\d{9,15}$/.test(fmtPhone(phone))) throw new Error('Nomor HP penanggung jawab belum valid.')
     if (data.terms !== 'on' && data.terms !== 'yes') throw new Error('Persetujuan pengajuan lembaga wajib dicentang.')
-    if (db.users.some((user) => fmtEmail(user.email) === email) || db.platformAdmins.some((user) => fmtEmail(user.email) === email)) throw new Error('Email tersebut sudah digunakan oleh akun SiZisNur.')
+    if (db.platformAdmins.some((user) => fmtEmail(user.email) === email)) throw new Error('Email tersebut digunakan oleh akun Admin SiZisNur.')
     if (db.applications.some((item) => item.status === 'menunggu' && fmtEmail(item.email) === email)) throw new Error('Masih ada pengajuan lembaga yang menunggu dengan email ini.')
     const applicationId = A.id('APP')
     db.applications.push({ id: applicationId, name, contact, email, phone, address, status: 'menunggu', createdAt: A.today(), note: 'Menunggu peninjauan Admin SiZisNur melalui simulasi.' })
@@ -316,12 +345,27 @@
     let user = id ? db.users.find((item) => item.id === id && item.tenantId === tenantId) : null
     if (id && (!user || user.role === 'Muzakki')) throw new Error('Akun Panitia tidak ditemukan.')
     const name = String(data.name || '').trim()
+    const callName = String(data.callName || '').trim()
     const email = fmtEmail(data.email)
+    const phone = String(data.phone || '').trim()
+    const phoneKey = fmtPhone(phone)
     const role = String(data.role || '')
     const allowedRoles = A.ROLES.filter((item) => item !== 'Muzakki')
-    if (!name || !email || !allowedRoles.includes(role)) throw new Error('Nama, email, dan peran Panitia wajib dipilih dengan benar.')
+    if (!name || !email || !phone || !allowedRoles.includes(role)) throw new Error('Nama lengkap, email, nomor HP, dan role Panitia wajib diisi.')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid.')
-    if (allAccounts().some((item) => item.id !== id && fmtEmail(item.email) === email)) throw new Error('Email sudah digunakan akun lain.')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid. Gunakan nomor yang dapat dihubungi.')
+    if (db.platformAdmins.some((item) => fmtEmail(item.email) === email || (phoneKey && fmtPhone(item.phone) === phoneKey))) throw new Error('Kontak tersebut digunakan oleh akun Admin SiZisNur.')
+    const duplicate = db.users.find((item) => item.id !== id && item.tenantId === tenantId && item.role === role && (fmtEmail(item.email) === email || (phoneKey && fmtPhone(item.phone) === phoneKey)))
+    if (duplicate) {
+      const matched = fmtEmail(duplicate.email) === email ? 'email' : 'nomor HP'
+      throw new Error(`Akun ${role} dengan ${matched} tersebut sudah terdaftar pada Lembaga ini. Satu kontak tidak boleh digandakan dalam role yang sama.`)
+    }
+    const sameName = db.users.filter((item) => item.id !== id && item.tenantId === tenantId && item.role !== 'Muzakki' && fmtName(item.name) === fmtName(name))
+    const sameNameDifferentPerson = sameName.some((item) => fmtEmail(item.email) !== email || fmtPhone(item.phone) !== phoneKey)
+    if (sameNameDifferentPerson && (!callName || fmtName(callName) === fmtName(name))) throw new Error('Nama lengkap ini sudah dipakai pengguna lain. Isi Nama panggilan / penanda yang berbeda dari nama lengkap agar keduanya dapat dibedakan.')
+    if (sameNameDifferentPerson && sameName.some((item) => fmtName(item.callName) && fmtName(item.callName) === fmtName(callName))) {
+      throw new Error('Nama panggilan / penanda sudah digunakan oleh pengguna dengan nama lengkap yang sama.')
+    }
     const password = String(data.password || '')
     const confirm = String(data.passwordConfirm || '')
     if (!user && password.length < 8) throw new Error('Password awal wajib diisi minimal 8 karakter.')
@@ -330,7 +374,12 @@
     const credential = password ? await hashPassword(password) : null
     const isNew = !user
     if (!user) user = { id: A.id('US'), tenantId, active: true, createdAt: A.now() }
-    Object.assign(user, { name, email, role, active: true })
+    const contactChanged = fmtEmail(user.email) !== email || fmtPhone(user.phone) !== phoneKey
+    Object.assign(user, { name, callName, email, phone, role, active: true })
+    if (contactChanged) {
+      user.emailVerifiedAt = null
+      user.phoneVerifiedAt = null
+    }
     if (credential) {
       user.passwordAuth = credential
       user.mustChangePassword = false
@@ -365,14 +414,15 @@
     }
     const adminName = String(data.adminName || application.contact || '').trim()
     const adminEmail = fmtEmail(data.adminEmail || application.email)
-    if (!adminName || !adminEmail) throw new Error('Nama dan email Admin awal wajib diisi.')
-    if (allAccounts().some((item) => fmtEmail(item.email) === adminEmail)) throw new Error('Email Admin awal sudah digunakan akun lain.')
+    const adminPhone = String(data.adminPhone || application.phone || '').trim()
+    if (!adminName || !adminEmail || !adminPhone) throw new Error('Nama, email, dan nomor HP Admin awal wajib diisi.')
+    if (db.platformAdmins.some((item) => fmtEmail(item.email) === adminEmail)) throw new Error('Email Admin awal digunakan akun Admin SiZisNur.')
     const password = temporaryPassword()
     const credential = await hashPassword(password)
     const tenant = platform.makeTenant({
       name: application.name, email: application.email, phone: application.phone || '', address: application.address,
       daerah: application.daerah || '', kelurahan: application.kelurahan || '', kecamatan: application.kecamatan || '', city: application.city || '', province: application.province || '',
-      adminName, adminEmail, status: db.platformSettings?.defaultTenantStatus || 'aktif',
+      adminName, adminEmail, adminPhone, status: db.platformSettings?.defaultTenantStatus || 'aktif',
     })
     const admin = db.users.find((item) => item.tenantId === tenant.id && item.role === 'Admin' && fmtEmail(item.email) === adminEmail)
     if (!admin) throw new Error('Akun Admin awal gagal dibuat.')
@@ -425,7 +475,7 @@
     const adminEmail = fmtEmail(application.email)
     const password = temporaryPassword()
     const credential = await hashPassword(password)
-    const tenant = platform.makeTenant({ name: application.name, email: application.email, phone: application.phone || '', address: application.address, adminName, adminEmail, status: db.platformSettings?.defaultTenantStatus || 'aktif' })
+    const tenant = platform.makeTenant({ name: application.name, email: application.email, phone: application.phone || '', address: application.address, adminName, adminEmail, adminPhone: application.phone || '', status: db.platformSettings?.defaultTenantStatus || 'aktif' })
     const admin = db.users.find((item) => item.tenantId === tenant.id && fmtEmail(item.email) === adminEmail)
     admin.passwordAuth = credential
     admin.mustChangePassword = true
@@ -462,7 +512,7 @@
     const submit = form.querySelector('button[type="submit"]')
     if (submit) submit.disabled = true
     try {
-      if (form.dataset.authForm === 'login') await authenticate(data.identifier, data.password, form.dataset.role)
+      if (form.dataset.authForm === 'login') await authenticate(data.identifier, data.password, form.dataset.role, data.accountRole || '')
       else if (form.dataset.authForm === 'register-muzakki') await registerMuzakki(data)
       else if (form.dataset.authForm === 'register-institution') await submitInstitutionApplication(data)
       else if (form.dataset.authForm === 'first-password') await changeFirstPassword(data)
