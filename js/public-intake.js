@@ -12,7 +12,7 @@
   const TERMINAL = new Set(['batal', 'expired', 'kedaluwarsa', 'ditolak'])
   // Hanya status yang belum disahkan sebagai pembayaran yang memblokir rencana baru.
   // Status Paid/disetor/terverifikasi tetap dapat dilihat pada riwayat, tetapi bukan unpaid.
-  const UNPAID_STATUSES = new Set(['pending', 'tercatat'])
+  const UNPAID_STATUSES = new Set(['pending'])
   const CANCELABLE_SOURCES = new Set(['public-intake', 'self-service'])
   const DEMO_NOTICE = 'TAHAP EVALUASI SIMULASI — Portal ini belum menggunakan backend standar aman untuk produksi. OTP hanya dibuat dan ditampilkan di browser; tidak ada WhatsApp, SMS, atau email sungguhan. Data tersimpan lokal pada browser ini. Jangan gunakan data pribadi atau transaksi nyata.'
   let intakeSession = null
@@ -268,7 +268,7 @@
     const totalMoney = (tx.lines || []).filter((line) => line.type === 'uang').reduce((sum, line) => sum + Number(line.value || 0), 0)
     const totalRice = (tx.lines || []).filter((line) => line.type === 'beras').reduce((sum, line) => sum + Number(line.value || 0), 0)
     const canCancel = canCancelPublic(tx, person?.id, tx.tenantId)
-    const stateLabel = ({ pending: 'Menunggu verifikasi Amil', tercatat: 'Menunggu penanganan petugas', paid: 'Disahkan Amil · menunggu proses Bendahara', disetor: 'Diserahkan ke Bendahara', terverifikasi: 'Terverifikasi Bendahara', expired: 'Kedaluwarsa', batal: 'Dibatalkan' })[tx.status] || String(tx.status || '—')
+    const stateLabel = ({ pending: 'Menunggu verifikasi Amil', paid: 'Disahkan Amil · menunggu proses Bendahara', disetor: 'Diserahkan ke Bendahara', terverifikasi: 'Terverifikasi Bendahara', expired: 'Kedaluwarsa', batal: 'Dibatalkan' })[tx.status] || String(tx.status || '—')
     return `<article class="card pi-transaction-card"><div class="pi-card-heading"><div><small>TRANSAKSI ${esc(tenant?.publicCode || tenant?.id || '')}</small><h3 class="mono">${esc(tx.serial || tx.id)}</h3></div><span class="tag ${tx.status === 'pending' ? 'warn' : ['paid', 'disetor', 'terverifikasi'].includes(tx.status) ? 'ok' : 'bad'}">${esc(stateLabel)}</span></div><div class="pi-tx-facts"><div><small>Nama</small><b>${esc(person?.name || 'Muzakki')}</b></div><div><small>Tanggal</small><b>${esc(new Date(tx.createdAt).toLocaleString('id-ID'))}</b></div><div><small>Jenis</small><b>${esc((tx.lines || []).map((line) => line.category).join(', '))}</b></div><div><small>Jumlah</small><b>${tx.jiwa || 1} orang / unit</b></div><div><small>Total uang</small><b>${money(totalMoney)}</b></div><div><small>Total beras</small><b>${kilos(totalRice)}</b></div></div><div class="actions"><button type="button" class="btn sm primary" data-public-intake-action="view-receipt" data-id="${esc(tx.id)}">Lihat / unduh bukti dan QR</button>${canCancel ? `<button type="button" class="btn sm danger" data-public-intake-action="start-cancel" data-id="${esc(tx.id)}">Batalkan rencana</button>` : ''}</div>${canCancel ? '<p class="caption">Rencana ini masih Pending dan belum diproses petugas. Pembatalan tersedia setelah konfirmasi dan alasan.</p>' : '<p class="caption">Pembatalan tidak tersedia untuk transaksi yang sudah diproses Amil/panitia, berstatus Paid, atau bukan transaksi mandiri.</p>'}</article>`
   }
   function paymentForm(ctx, session) {
@@ -281,7 +281,7 @@
       ${sharedFields}
       <div class="field"><label for="pi-note">Catatan untuk Amil (opsional)</label><textarea id="pi-note" name="note" rows="2"></textarea></div>
       <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami ini rencana pembayaran berstatus Pending. Pembayaran baru sah setelah diterima, diperiksa, dan disahkan Amil.</label>
-      <div class="form-actions"><button type="submit" class="btn primary">Simpan rencana & terbitkan QR</button></div>
+      <div class="form-actions"><button type="submit" class="btn primary">Konfirmasi Zakat</button></div>
     </form></section>`
   }
   function renderExistingTransactions(ctx, session) {

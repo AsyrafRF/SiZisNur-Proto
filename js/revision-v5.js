@@ -43,9 +43,26 @@
   db.syncQueue ||= []
   db.periodReports ||= []
   db.transactions ||= []
+  // The old `tercatat` transaction state has no transition in the V5 workflow.
+  // Preserve the transaction record, map it to Pending, and apply the existing
+  // 24-hour QR lifetime from its original creation time (or expire immediately
+  // when the legacy record has no usable timestamp).
+  let migratedLegacyTransactionStatuses = false
+  db.transactions.forEach((tx) => {
+    if (String(tx.status || '').trim().toLowerCase() !== 'tercatat') return
+    tx.status = 'pending'
+    if (!tx.expiresAt) {
+      const createdAtMs = Date.parse(tx.createdAt || '')
+      tx.expiresAt = Number.isFinite(createdAtMs)
+        ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
+        : new Date(0).toISOString()
+    }
+    migratedLegacyTransactionStatuses = true
+  })
   db.audit ||= []
   db.tenants ||= []
   db.rules ||= []
+  if (migratedLegacyTransactionStatuses) A.persist()
 
   // Public institution codes are human-readable identifiers, separate from internal tenant IDs.
   function tenantCodePrefix(name) {
@@ -1051,7 +1068,7 @@
     }
     const latestProgress = latestPeriodTransaction ? personalTransactionProgress(latestPeriodTransaction) : null
     const nextTxBlocked = period && oneTxPerTenantPeriod(account?.id, currentTenantId(), period.id, person?.id)
-    const pending = periodTransactions.filter((x) => ['pending', 'tercatat'].includes(x.status))
+    const pending = periodTransactions.filter((x) => x.status === 'pending')
     const historicalTransactions = transactions.filter((x) => !(x.tenantId === currentTenantId() && x.periodId === period?.id))
     const breakdownRows = activePeriodTransactions.flatMap((tx) => (tx.lines || []).map((line, index) => {
       const proofAction = actionFor('Lihat bukti / QR', 'receipt-open', tx.id, 'sm')
@@ -1120,7 +1137,7 @@
     const household = householdForUser()
     const serviceSections = `<div class="my-zis-tools-content my-zis-services-content">
       <section class="card"><div class="card-top"><h3>Lembaga yang terhubung</h3>${action('Gabung lembaga lain', 'tenant-join', 'sm')}</div>${A.table(['Lembaga', 'Daerah / RT', 'Status', 'Aksi'], tenants.map((m) => [esc(tenantLabel(m.tenantId)), esc(domicileLabel(db.persons.find((p) => p.id === m.personId && p.tenantId === m.tenantId), m.tenantId)), m.tenantId === currentTenantId() ? '<span class="tag ok">Aktif</span>' : '<span class="tag info">Terhubung</span>', m.tenantId === currentTenantId() ? '—' : actionFor('Pilih', 'tenant-switch-button', m.tenantId, 'sm')]))}</section>
-      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP', 'phone', person?.phone || account?.phone || '', 'tel')}${A.fld('Email', 'email', person?.email || account?.email || '', 'email')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
+      <div class="two-col"><section class="card"><h3>Profil dan wilayah alamat</h3><form data-v5-form="self-profile"><div class="grid-form">${A.fld('Nama lengkap', 'name', person?.name || account?.displayName || '', 'text', 'required')}${A.fld('Nomor HP *', 'phone', person?.phone || account?.phone || '', 'tel', 'required autocomplete="tel"')}${A.fld('Email *', 'email', person?.email || account?.email || '', 'email', 'required autocomplete="email"')}${domicileFieldMarkup(person, currentTenantId())}${A.textarea('Alamat lengkap', 'address', person?.address || account?.address || '')}</div><label class="check"><input type="checkbox" name="consent" value="yes" required> Saya menyetujui penggunaan data ini untuk layanan lembaga pada prototype</label>${formButton('Simpan profil')}</form></section>
       <section class="card"><div class="card-top"><h3>Data keluarga tanggungan</h3>${action('Tambah anggota', 'household-add', 'sm')}</div><p class="caption">Data keluarga membantu menghitung kewajiban zakat fitrah dan jumlah jiwa yang ditanggung.</p><form data-v5-form="family-save"><div id="household-rows">${household.map((x) => `<div class="household-row"><input name="memberName" value="${esc(x.name)}" placeholder="Nama anggota" required><input name="relation" value="${esc(x.relation)}" placeholder="Hubungan"><button type="button" class="btn sm danger" data-v5-action="household-remove">Hapus</button></div>`).join('')}</div>${formButton('Simpan data keluarga')}</form></section></div>
       <section class="card"><h3>Kalkulator zakat</h3><p class="caption">Hitung estimasi sebelum membuat transaksi. Nilai tarif merupakan parameter lembaga yang harus disahkan pengelola.</p><form data-v5-form="zakat-calc"><div class="grid-form">${A.sel('Jenis perhitungan', 'calcType', [['fitrah', 'Zakat fitrah'], ['maal', 'Zakat maal'], ['profesi', 'Zakat profesi'], ['fidyah', 'Fidyah'], ['kafarat', 'Kafarat'], ['sedekah', 'Infak / sedekah']], 'fitrah')}${A.sel('Media', 'calcMedia', [['uang', 'Uang (Rp)'], ['beras', 'Beras (kg)']], 'uang')}${A.fld('Harta bersih (maal) / penghasilan profesi (Rp)', 'assetsValue', '', 'text', 'inputmode="numeric" data-format="idr"')}${A.sel('Periode penghasilan profesi', 'calcProfessionPeriod', [['monthly', 'Penghasilan bulanan'], ['annual', 'Akumulasi penghasilan satu tahun']], 'monthly')}${A.fld('Jumlah jiwa / hari / kasus', 'calcCount', household.length || 1, 'number', 'min="1"')}${A.sel('Status haul untuk zakat maal', 'calcHaul', [['no', 'Belum / tidak mencapai haul'], ['yes', 'Sudah mencapai haul satu tahun']], 'no')}${A.sel('Jenis kafarat', 'calcKafaratType', [['yamin', 'Melanggar sumpah (memberi makan 10 orang)'], ['puasa', 'Hubungan suami-istri pada siang Ramadan'], ['zihar', 'Zihar']], 'yamin')}${A.sel('Tahapan kafarat 60 orang', 'calcKafaratFeeding', [['no', 'Belum dipastikan / masih mampu tahapan sebelumnya'], ['yes', 'Tidak mampu tahapan sebelumnya; hitung opsi memberi makan 60 orang']], 'no')}${A.fld('Harga emas acuan per gram (Rp)', 'goldPrice', Math.round(A.rule()?.goldPricePerGram || 1078609), 'text', 'inputmode="numeric" data-format="idr" min="1" required')}</div><div id="zakat-calc-result" class="alert light">Pilih jenis perhitungan lalu tekan Hitung estimasi.</div><div class="form-actions"><button class="btn primary" type="submit">Hitung estimasi</button></div></form></section>
       <div class="alert light">Email dan WhatsApp hanya ditampilkan sebagai kanal notifikasi yang direncanakan. Pengiriman eksternal memerlukan API, persetujuan kontak, dan pengendalian privasi pada backend produksi.</div>
@@ -1333,8 +1350,12 @@
       if (!TRANSACTION_CATEGORIES.some(([value]) => value === category)) throw new Error(`Pilih jenis zakat yang valid pada baris ${index + 1}.`)
       const result = lineEstimate(row, rules)
       if (!Number.isFinite(result.paid) || result.paid <= 0) throw new Error(`Nominal pembayaran pada baris ${index + 1} harus lebih besar dari nol.`)
-      const quantity = Number(row.jiwa || 1)
+      const quantityBased = ['Zakat Fitrah', 'Fidyah', 'Kafarat'].includes(category)
+      const quantity = quantityBased ? Number(row.jiwa || 1) : 1
       if (!Number.isInteger(quantity) || quantity < 1) throw new Error(`Jumlah jiwa / unit pada baris ${index + 1} harus bilangan bulat positif.`)
+      const assetsBased = ['Zakat Maal', 'Zakat Profesi'].includes(category)
+      const assetsValue = assetsBased ? toNumber(row.assetsValue || 0) : 0
+      if (assetsBased && assetsValue <= 0) throw new Error(`Nilai harta bersih / penghasilan pada baris ${index + 1} harus lebih besar dari nol.`)
       if (result.type === 'beras') { paidRice += result.paid; dueRice += result.due; excessRice += result.excess }
       else { paidMoney += result.paid; dueMoney += result.due; excessMoney += result.excess }
       if (category === 'Zakat Fitrah') fitrahUnits += quantity
@@ -1342,18 +1363,20 @@
       const splitExcess = result.splitExcessEligible && row.autoExcess === 'yes' && result.excess > 0.001
       const zakatValue = splitExcess ? result.due : result.paid
       const unitLabel = category === 'Zakat Fitrah' ? 'jiwa' : category === 'Fidyah' ? 'hari' : category === 'Kafarat' ? 'kasus' : category === 'Zakat Profesi' ? (row.professionPeriod === 'annual' ? 'tahun penghasilan' : 'bulan penghasilan') : category === 'Zakat Maal' ? 'perhitungan harta' : ''
-      lines.push({ category, type: result.type, value: zakatValue, quantity: unitLabel ? quantity : null, unitLabel, assetsValue: toNumber(row.assetsValue || 0) })
+      lines.push({ category, type: result.type, value: zakatValue, quantity: unitLabel ? quantity : null, unitLabel, assetsValue })
       if (splitExcess) {
         lines.push({ category: 'Infak/Sedekah', type: result.type, value: result.excess, quantity: null, unitLabel: '' })
         if (result.type === 'beras') excessAllocatedRice += result.excess
         else excessAllocatedMoney += result.excess
       }
       breakdown.push({
-        category, type: result.type, quantity, assetsValue: toNumber(row.assetsValue || 0), due: result.due,
+        category, type: result.type, quantity, assetsValue, due: result.due,
         paid: result.paid, excess: result.excess, excessAllocated: splitExcess ? result.excess : 0,
         detail: result.detail, eligible: result.eligible, note: result.note || '',
-        haulComplete: row.haulComplete || 'no', professionPeriod: row.professionPeriod || 'monthly',
-        kafaratType: row.kafaratType || 'yamin', kafaratFeedingConfirmed: row.kafaratFeedingConfirmed || 'no',
+        haulComplete: category === 'Zakat Maal' ? (row.haulComplete || 'no') : 'no',
+        professionPeriod: category === 'Zakat Profesi' ? (row.professionPeriod || 'monthly') : 'monthly',
+        kafaratType: category === 'Kafarat' ? (row.kafaratType || 'yamin') : 'yamin',
+        kafaratFeedingConfirmed: category === 'Kafarat' ? (row.kafaratFeedingConfirmed || 'no') : 'no',
       })
     })
     const jiwa = fitrahUnits || otherUnits || 1
@@ -1376,6 +1399,21 @@
     return db.rules.find((item) => item.tenantId === tenantId) || A.rule()
   }
 
+  function setTransactionLineFieldVisibility(row, name, visible, required = false) {
+    const controlNames = {
+      media: 'type', quantity: 'jiwa', assets: 'assetsValue',
+      'profession-period': 'professionPeriod', haul: 'haulComplete', kafarat: 'kafaratType',
+      'kafarat-stage': 'kafaratFeedingConfirmed', excess: 'autoExcess',
+    }
+    const wrapper = row?.querySelector(`[data-line-wrap="${name}"]`)
+    const control = row?.querySelector(`[data-line-field="${controlNames[name] || name}"]`)
+    if (wrapper) wrapper.hidden = !visible
+    if (control) {
+      control.disabled = !visible
+      if ('required' in control) control.required = Boolean(visible && required)
+    }
+  }
+
   function updateSharedTransactionForm(form) {
     if (!form) return
     if (!form.matches?.('[data-shared-transaction="yes"]')) form = form.querySelector?.('[data-shared-transaction="yes"]')
@@ -1386,27 +1424,34 @@
     const previews = []
     rows.forEach((row, idx) => {
       const field = (name) => row.querySelector(`[data-line-field="${name}"]`)
-      const wrap = (name) => row.querySelector(`[data-line-wrap="${name}"]`)
       const categoryInput = field('category')
       const category = categoryInput?.value || 'Zakat Fitrah'
       const fitrah = category === 'Zakat Fitrah'
       const assetsBased = ['Zakat Maal', 'Zakat Profesi'].includes(category)
+      const profession = category === 'Zakat Profesi'
+      const maal = category === 'Zakat Maal'
+      const kafarat = category === 'Kafarat'
+      const kafaratStageVisible = kafarat && field('kafaratType')?.value !== 'yamin'
+      const quantityBased = ['Zakat Fitrah', 'Fidyah', 'Kafarat'].includes(category)
       const typeInput = field('type')
-      if (typeInput) { if (!fitrah) typeInput.value = 'uang'; typeInput.disabled = !fitrah }
+      if (typeInput && !fitrah) typeInput.value = 'uang'
+      setTransactionLineFieldVisibility(row, 'media', fitrah, fitrah)
       const type = fitrah && typeInput?.value === 'beras' ? 'beras' : 'uang'
-      if (wrap('quantity')) wrap('quantity').hidden = assetsBased || category === 'Infak/Sedekah'
-      if (wrap('assets')) wrap('assets').hidden = !assetsBased
-      if (wrap('profession-period')) wrap('profession-period').hidden = category !== 'Zakat Profesi'
-      if (wrap('haul')) wrap('haul').hidden = category !== 'Zakat Maal'
-      if (wrap('kafarat')) wrap('kafarat').hidden = category !== 'Kafarat'
-      if (wrap('kafarat-stage')) wrap('kafarat-stage').hidden = category !== 'Kafarat' || field('kafaratType')?.value === 'yamin'
+      setTransactionLineFieldVisibility(row, 'quantity', quantityBased, quantityBased)
+      setTransactionLineFieldVisibility(row, 'assets', assetsBased, assetsBased)
+      setTransactionLineFieldVisibility(row, 'profession-period', profession, profession)
+      setTransactionLineFieldVisibility(row, 'haul', maal, maal)
+      setTransactionLineFieldVisibility(row, 'kafarat', kafarat, kafarat)
+      setTransactionLineFieldVisibility(row, 'kafarat-stage', kafaratStageVisible, kafaratStageVisible)
       const quantityLabel = row.querySelector('[data-line-label="quantity"]')
       if (quantityLabel) quantityLabel.textContent = fitrah ? 'Jumlah jiwa' : category === 'Fidyah' ? 'Jumlah hari puasa yang ditinggalkan' : category === 'Kafarat' ? 'Jumlah kasus kafarat' : 'Jumlah unit'
+      const assetsLabel = row.querySelector('[data-line-label="assets"]')
+      if (assetsLabel) assetsLabel.textContent = maal ? 'Harta bersih yang menjadi objek zakat (Rp)' : 'Penghasilan profesi pada periode terpilih (Rp)'
       const amount = field('value')
       if (amount) {
         amount.dataset.format = type === 'beras' ? 'kg' : 'idr'
         const amountLabel = row.querySelector('[data-line-label="value"]')
-        if (amountLabel) amountLabel.textContent = type === 'beras' ? 'Beras dibayarkan (kg)' : 'Nominal dibayarkan (Rp)'
+        if (amountLabel) amountLabel.textContent = type === 'beras' ? 'Beras dibayarkan (kg)' : category === 'Infak/Sedekah' ? 'Nominal infak/sedekah (Rp)' : 'Nominal dibayarkan (Rp)'
       }
       const data = {
         category, type, jiwa: field('jiwa')?.value || 1, assetsValue: field('assetsValue')?.value || 0,
@@ -1423,7 +1468,8 @@
       const paid = estimate?.paid || 0
       if (type === 'beras') { totalRice += paid; dueRice += estimate?.due || 0 }
       else { totalMoney += paid; dueMoney += estimate?.due || 0 }
-      if (wrap('excess')) wrap('excess').hidden = !estimate?.splitExcessEligible || !(estimate?.excess > 0.001)
+      const showExcess = Boolean(estimate?.splitExcessEligible && estimate?.excess > 0.001)
+      setTransactionLineFieldVisibility(row, 'excess', showExcess, false)
       const preview = row.querySelector('[data-line-preview]')
       if (preview && estimate) {
         const dueText = type === 'beras' ? kilos(estimate.due) : money(estimate.due)
@@ -1617,12 +1663,29 @@
     let person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     const isNewPerson = !person
     if (!person) person = { id: newId('PS'), tenantId: currentTenantId() }
-    if (!d.name.trim() || !d.address.trim()) throw new Error('Nama dan alamat wajib diisi')
+    const name = String(d.name || '').trim()
+    const phone = String(d.phone || '').trim()
+    const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
+    if (!name || !phone || !email || !String(d.address || '').trim()) throw new Error('Nama, nomor HP, email, dan alamat wajib diisi')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const normalizePhone = (value) => { const raw = String(value || '').replace(/\D/g, ''); return raw.startsWith('0') ? `62${raw.slice(1)}` : raw.startsWith('8') ? `62${raw}` : raw }
+    const duplicate = db.users.find((item) => {
+      const existingAccountPhone = item.phone || db.accounts.find((entry) => entry.userId === item.id)?.phone
+      return item.id !== activeUser().id && item.role === 'Muzakki' && (String(item.email || '').trim().toLowerCase() === email || normalizePhone(existingAccountPhone) === phoneKey)
+    })
+    if (duplicate) throw new Error('Email atau nomor HP sudah digunakan akun Muzakki lain')
+    const user = activeUser()
+    const contactChanged = String(user.email || '').trim().toLowerCase() !== email || normalizePhone(user.phone || account.phone) !== phoneKey
     applyDomicile(person, d, currentTenantId())
-    Object.assign(person, { name: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim() })
+    Object.assign(person, { name, phone, email, address: String(d.address).trim() })
     if (isNewPerson) { db.persons.push(person); member.personId = person.id }
     mirrorMembershipDomicile(member, person)
-    Object.assign(account, { displayName: d.name.trim(), phone: d.phone.trim(), email: d.email.trim(), address: d.address.trim(), consentAt: timestamp() })
+    Object.assign(account, { displayName: name, phone, email, address: String(d.address).trim(), consentAt: timestamp() })
+    Object.assign(user, { name, phone, email })
+    if (contactChanged) { user.emailVerifiedAt = null; user.phoneVerifiedAt = null }
     A.aud('MUZAKKI_PROFILE', `Profil akun ${person.name} diperbarui`)
     enqueueSync('muzakki.profile_updated', { tenantId: currentTenantId(), userId: activeUser().id, accountId: account.id, membershipId: member.id, personId: person.id })
   }
@@ -2084,7 +2147,7 @@
   function muzakkiRegisterModal() {
     A.modal('Daftar akun Muzakki', `<form data-v5-form="muzakki-register"><div class="grid-form">
       ${A.fld('Nama lengkap', 'name', '', 'text', 'required autocomplete="name"')}
-      ${A.fld('Nomor HP', 'phone', '', 'tel', 'required autocomplete="tel"')}
+      ${A.fld('Nomor HP *', 'phone', '', 'tel', 'required autocomplete="tel"')}
       ${A.fld('Email', 'email', '', 'email', 'required autocomplete="email"')}
       ${A.textarea('Alamat lengkap', 'address', '').replace('<textarea ', '<textarea required ')}
     </div><div class="alert light">Pendaftaran ini hanya membuat akun pribadi. Pemilihan dan pendaftaran lembaga dilakukan setelah Anda masuk, melalui menu Lembaga yang terhubung.</div>${formButton('Buat akun Muzakki')}</form>`)
@@ -2093,13 +2156,17 @@
     const name = String(d.name || '').trim()
     const phone = String(d.phone || '').trim()
     const email = String(d.email || '').trim().toLowerCase()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const phoneKey = phoneDigits.startsWith('0') ? `62${phoneDigits.slice(1)}` : phoneDigits.startsWith('8') ? `62${phoneDigits}` : phoneDigits
     const address = String(d.address || '').trim()
     if (!name || !phone || !email || !address) throw new Error('Nama lengkap, nomor HP, email, dan alamat lengkap wajib diisi')
-    const duplicate = db.accounts.find((x) => (phone && String(x.phone || '').trim() === phone) || (email && String(x.email || '').trim().toLowerCase() === email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Format email belum valid')
+    if (!/^\d{9,15}$/.test(phoneKey)) throw new Error('Nomor HP belum valid')
+    const duplicate = db.accounts.find((x) => (phoneKey && (String(x.phone || '').replace(/\D/g, '').replace(/^0/, '62').replace(/^8/, '628') === phoneKey)) || (email && String(x.email || '').trim().toLowerCase() === email))
     if (duplicate) throw new Error('Nomor HP atau email sudah terhubung dengan akun. Silakan masuk menggunakan akun yang sudah ada.')
     const userId = newId('US')
     const accountId = newId('ACC')
-    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, active: true, personId: null, accountId })
+    db.users.push({ id: userId, tenantId: null, name, role: 'Muzakki', email, phone, emailVerifiedAt: null, phoneVerifiedAt: null, active: true, personId: null, accountId })
     db.accounts.push({ id: accountId, userId, displayName: name, phone, email, address, consentAt: null })
     // The account is intentionally not attached to a tenant, person, or membership at registration.
     // A tenant-scoped person and muzakki card are created only after the user joins a lembaga.
@@ -2320,22 +2387,19 @@
   }
 
   function dashboardChartRows(metrics, status, medium) {
-    if (status === 'terverifikasi') {
-      // Hanya berita acara serah terima yang sudah berstatus terverifikasi
-      // setelah Bendahara menyelesaikan rekonsiliasi kas/rekening yang menjadi sumber grafik.
-      const verifiedDepositIds = new Set((metrics.reconciledDeposits || [])
-        .flatMap((deposit) => Array.isArray(deposit.transactionIds) ? deposit.transactionIds : []))
-      return transactionCategoryChartRows(metrics.t.filter((tx) => verifiedDepositIds.has(tx.id)), medium)
-    }
     if (status === 'tersalurkan') return distributionCategoryChartRows(metrics.d || [], medium)
-    return transactionCategoryChartRows(metrics.t, medium)
+    // The only transaction-level chart state is Terverifikasi. Pending/Paid
+    // are workflow steps, not equivalent to a reconciled receipt.
+    const verifiedDepositIds = new Set((metrics.reconciledDeposits || [])
+      .flatMap((deposit) => Array.isArray(deposit.transactionIds) ? deposit.transactionIds : []))
+    return transactionCategoryChartRows(metrics.t.filter((tx) => verifiedDepositIds.has(tx.id)), medium)
   }
 
   function dashboardV5() {
     if (activeUser()?.role === 'Muzakki') { state.page = 'my-zis'; return myZisPage() }
     const m = A.metrics()
     const txs = m.t
-    const chartStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(state.filters.dashboardStatus) ? state.filters.dashboardStatus : 'tercatat'
+    const chartStatus = ['terverifikasi', 'tersalurkan'].includes(state.filters.dashboardStatus) ? state.filters.dashboardStatus : 'terverifikasi'
     const chartMedium = state.filters.dashboardMedium === 'beras' ? 'beras' : 'uang'
     const chartRows = dashboardChartRows(m, chartStatus, chartMedium)
     const max = Math.max(1, ...chartRows.map((x) => x.value))
@@ -2395,9 +2459,7 @@
     const verifiedMustahikCount = A.scoped('mustahiks').filter((x) => x.status === 'terverifikasi').length
     const chartNote = chartStatus === 'terverifikasi'
       ? 'Sumber: transaksi yang tercantum pada berita acara setoran berstatus Terverifikasi setelah rekonsiliasi Bendahara. Status Paid dari Amil saja belum cukup.'
-      : chartStatus === 'tersalurkan'
-        ? 'Sumber: konfirmasi distribusi berstatus Tersalurkan. Kategori hanya ditampilkan jika rincian kategori tersimpan lengkap; data lama tanpa rincian masuk Belum dipetakan.'
-        : 'Sumber: seluruh transaksi periode aktif yang belum dibatalkan/kedaluwarsa. Paid berarti pembayaran disahkan Amil, bukan lulus rekonsiliasi Bendahara.'
+      : 'Sumber: konfirmasi distribusi berstatus Tersalurkan. Kategori hanya ditampilkan jika rincian kategori tersimpan lengkap; data lama tanpa rincian masuk Belum dipetakan.'
     const formatChartValue = (value) => chartMedium === 'uang' ? money(value) : kilos(value)
     const summaryStats = `<div class="cards dashboard-summary-cards">
       ${A.stat('Total uang diterima tercatat', money(m.received), 'Akumulasi transaksi periode aktif')}
@@ -2416,7 +2478,6 @@
           </select>
           <label class="sr-only" for="dashboard-status-filter">Status penerimaan</label>
           <select id="dashboard-status-filter" aria-label="Filter status penerimaan">
-            <option value="tercatat" ${chartStatus === 'tercatat' ? 'selected' : ''}>Tercatat</option>
             <option value="terverifikasi" ${chartStatus === 'terverifikasi' ? 'selected' : ''}>Terverifikasi</option>
             <option value="tersalurkan" ${chartStatus === 'tersalurkan' ? 'selected' : ''}>Tersalurkan</option>
           </select>
@@ -2876,6 +2937,8 @@
         if (media && field.value !== 'Zakat Fitrah') media.value = 'uang'
         const kafaratStage = row?.querySelector('[data-line-field="kafaratFeedingConfirmed"]')
         if (kafaratStage) kafaratStage.value = 'no'
+        const excessChoice = row?.querySelector('[data-line-field="autoExcess"]')
+        if (excessChoice) excessChoice.checked = false
       }
       if (field.matches('[data-line-field="type"]')) {
         const amount = row?.querySelector('[data-line-field="value"]')
@@ -2917,7 +2980,7 @@
       A.render()
     }
     if (field.id === 'dashboard-status-filter') {
-      state.filters.dashboardStatus = ['tercatat', 'terverifikasi', 'tersalurkan'].includes(field.value) ? field.value : 'tercatat'
+      state.filters.dashboardStatus = ['terverifikasi', 'tersalurkan'].includes(field.value) ? field.value : 'terverifikasi'
       A.render()
     }
     if (field.id === 'report-period') { state.filters.reportPeriod = field.value; A.render() }

@@ -1,3 +1,32 @@
+# Changelog SiZisNur Prototype
+
+## Pembaruan Evaluasi Prototype dan Manajemen Akun — 22 November 2026
+
+- Sebelas keputusan pada **Evaluasi Prototype** ditampilkan sebagai kartu terpisah yang responsif, dengan nomor, judul, status, dan uraian yang mudah dipindai; isi dan urutan keputusan tidak diubah.
+- Form **Akun & Peran** mewajibkan nama, email, nomor HP, role, dan password awal. Email dinormalisasi, nomor HP Indonesia dinormalisasi agar format `08...` dan `+62...` dianggap sama.
+- Email atau nomor HP yang sama ditolak bila akan digunakan lagi pada role yang sama dalam Lembaga yang sama. Kontak yang sama diperbolehkan pada role berbeda; Login Panitia meminta pilihan role supaya akun tidak tertukar.
+- Nama lengkap bukan kunci unik. Jika nama yang sama dipakai orang berbeda (kontak berbeda), form meminta Nama panggilan / penanda yang unik; penanda ditampilkan pada daftar akun, akses demo, dan penugasan petugas.
+- Akun Admin awal yang dibuat melalui pendaftaran/pembuatan lembaga juga memerlukan nomor HP. Registrasi dan pembaruan profil Muzakki turut menyimpan nomor HP pada identitas login, sehingga email maupun HP dapat dipakai sebagai pengenal. Status verifikasi email dan HP disimpan secara terpisah; perubahan kontak mengembalikan statusnya menjadi belum diverifikasi. Data HP pada akun demo adalah nomor sintetis.
+- Batas penting: prototype belum mengirim atau memvalidasi OTP email/HP sungguhan. Status verifikasi baru menjadi terverifikasi setelah integrasi backend dan provider email/WhatsApp/SMS. Jangan anggap field wajib sebagai bukti kepemilikan kontak.
+- Pengujian otomatis diperluas untuk duplikasi email/HP, normalisasi nomor, nama sama, role berbeda dengan kontak sama, login role terpilih, dan jumlah 11 kartu evaluasi.
+
+## 20 November 2026 — Input rincian pembayaran adaptif per jenis zakat
+
+- Memperbaiki visibilitas atribut `hidden` pada pembungkus field rincian transaksi. Sebelumnya gaya `.field { display:flex }` membuat browser tetap menampilkan kolom yang sudah ditandai tersembunyi; akibatnya seluruh kolom Maal, Profesi, Haul, dan Kafarat ikut tampak pada baris Fitrah.
+- Menyelaraskan input per kategori pada modul transaksi bersama yang dipakai Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik: Fitrah menampilkan media dan jumlah jiwa; Maal menampilkan harta bersih dan haul; Profesi menampilkan penghasilan serta periodenya; Fidyah menampilkan hari; Kafarat menampilkan kasus, jenis, dan tahapan relevan; Infak/Sedekah hanya menampilkan nominal.
+- Menyembunyikan pilihan media pada kategori selain Fitrah karena kategori tersebut memakai Uang dalam aturan prototype. Field yang tidak relevan dinonaktifkan dan tidak ikut validasi/kirim FormData; field harta/penghasilan diwajibkan hanya untuk Maal/Profesi.
+- Mengubah label dasar nilai menjadi spesifik: harta bersih untuk Maal dan penghasilan pada periode terpilih untuk Profesi. Pilihan pemisahan kelebihan direset ketika jenis pada baris diganti.
+- Menormalkan data rincian agar nilai harta/periode/haul/parameter Kafarat yang tidak relevan tidak terbawa ke detail transaksi. Rumus estimasi, pemisahan uang/beras, konfirmasi kelebihan, status Pending, QR, dan renderer struk tetap memakai modul bersama yang sama.
+- Memperbarui tes adaptivitas, panduan transaksi, build standalone, dan cache service worker.
+
+## 17 November 2026 — Penyelarasan status transaksi
+
+- Menghapus value **Tercatat** dari filter status grafik dashboard. Filter yang tetap tersedia adalah **Terverifikasi** dan **Tersalurkan**.
+- Menyelaraskan alur status transaksi dengan workflow V5: `Pending` → `Paid` (disahkan Amil) → `Disetor` → `Terverifikasi` setelah rekonsiliasi Bendahara. Status terminal seperti `batal`, `expired`, dan `ditolak` tetap dipertahankan.
+- Data lama yang masih menyimpan status transaksi `tercatat` dimigrasikan ke `pending`, lalu mengikuti masa berlaku QR 24 jam yang sudah digunakan workflow V5; record tetap disimpan dan QR lama tidak diaktifkan kembali.
+- Backup lama juga dinormalisasi ketika diimpor agar value status yang sudah tidak digunakan tidak masuk kembali ke sistem.
+- Memperbarui dokumentasi, pengujian migrasi/status grafik, dan build HTML standalone. Cache service worker dinaikkan agar browser mengambil kode terbaru.
+
 ## 15 November 2026 — Perbaikan ukuran halaman dan pratinjau thermal 80 mm di Edge
 
 - Memindahkan stylesheet thermal dan aturan `@page` ke dalam `<head>` jendela cetak khusus; sebelumnya aturan ukuran halaman disisipkan dari fragmen body dan berpotensi diabaikan browser.
@@ -60,6 +89,23 @@
 - Data person, kartu Muzakki, dan `muzakkiMemberships` baru dibuat setelah lembaga dipilih. Pencocokan nomor HP/email tidak otomatis mengklaim data walk-in yang belum diverifikasi.
 - Menambahkan `tests/muzakki-registration.test.cjs` untuk menguji pemisahan tahap registrasi dan penghubungan lembaga.
 
+## Navigasi akun Muzakki: pemisahan halaman mandiri dan rencana bayar (15 November 2026)
+
+- Menu **Dashboard Zakat Saya** dipertahankan sebagai halaman ringkasan pribadi, termasuk status zakat periode aktif, rincian zakat, transaksi periode berjalan, dan riwayat sebelumnya. Panel dropdown layanan mandiri dihapus dari halaman dashboard.
+- Konten **Profil, Keluarga, dan Kalkulator Zakat** dipindahkan ke halaman/menu **Layanan Mandiri** tersendiri. Pada halaman ini Muzakki mengelola daftar lembaga yang terhubung, profil dan wilayah alamat pada lembaga aktif, data keluarga tanggungan, serta kalkulator zakat.
+- Ditambahkan halaman/menu **Rencana Bayar Zakat**. Halaman ini menunjukkan lembaga dan periode aktif, status rencana/transaksi, langkah pembayaran, serta tombol untuk membuka formulir perencanaan transaksi yang sudah ada. Pembuatan QR, status Pending, validasi akun/keanggotaan/periode, dan pemeriksaan Amil tetap memakai alur transaksi lama.
+- Untuk akun yang belum terhubung ke lembaga, halaman Layanan Mandiri mengarahkan Muzakki memilih lembaga; halaman Rencana Bayar menjelaskan bahwa keanggotaan dan periode aktif diperlukan sebelum membuat rencana.
+- Navigasi sidebar untuk role Muzakki menggunakan kelompok **Menu Akun Muzakki** dan hanya menampilkan halaman yang sesuai; kedua halaman baru dibatasi pada role Muzakki.
+- Uji regresi khusus memastikan menu baru muncul untuk Muzakki, dropdown tidak lagi ada di Dashboard, formulir layanan tersedia di halaman terpisah, rencana bayar membuka alur QR yang sama, dan role selain Muzakki tidak memperoleh akses.
+
+## Perbaikan cetak thermal 80 mm (15 November 2026)
+
+- Memulihkan helper `makeReceiptPrint` yang tertinggal setelah penyatuan renderer bukti transaksi. Tombol Cetak thermal 80 mm sebelumnya masih memanggil nama fungsi lama yang sudah tidak didefinisikan sehingga memunculkan `makeReceiptPrint is not defined`.
+- Cetak thermal sekarang menggunakan HTML struk bersama yang juga dipakai oleh Cetak / Simpan PDF, dengan layout kertas 80 mm, area konten 74 mm, QR, seluruh rincian multi-jenis/multi-media, total uang dan beras, serta label simulasi.
+- Layout PDF biasa tidak berubah dan tetap menggunakan ukuran halaman normal browser.
+- Menambahkan pengujian regresi untuk aksi thermal dan PDF menggunakan transaksi gabungan Fitrah uang, Fitrah beras, dan Fidyah.
+- Menaikkan versi cache service worker agar browser mengambil modul revisi terbaru setelah pembaruan.
+
 ## 14 November 2026 — Penyelarasan Istilah Antarmuka
 
 - Mengganti istilah antarmuka dan dokumentasi dari “tenant” menjadi “Lembaga” agar lebih akrab bagi pengurus masjid, UPZ, dan komunitas.
@@ -90,8 +136,29 @@
 - Menambahkan test integrasi untuk pemisahan akun root, pembuatan lembaga, audit, dan pembatasan akses.
 - Batas: autentikasi root, RBAC, audit immutable, dan isolasi lembaga masih perlu ditegakkan pada backend sebelum produksi.
 
-## 13 November 2026 — Dashboard pribadi Muzakki dan pemisahan dashboard panitia
+## 14 November 2026 — Pengaturan Prototype dan perapian dataset bawaan
 
+- Menambahkan tab **Pengaturan Prototype** khusus Admin SiZisNur pada konsol root.
+- Menyediakan ekspor cadangan JSON lengkap, impor dengan validasi schema V5 dan konfirmasi, reset ke seed terbaru, hapus semua data simulasi, pemeriksaan integritas relasi dasar, pengaturan tema, dan keluar dari sesi root.
+- Reset/hapus data memerlukan frasa konfirmasi; penghapusan total mempertahankan satu akun Admin SiZisNur dan pengaturan platform default agar konsol dapat digunakan kembali.
+- Import menormalkan koleksi opsional, memastikan akun root aktif dan tetap berada pada `platformAdmins`, serta tidak mengizinkan root masuk ke koleksi `users` lembaga.
+- Kegagalan penyimpanan lokal memicu rollback objek database sebelumnya, bukan membiarkannya dalam kondisi setengah terganti.
+- Merapikan label akun pendataan dan dataset akun contoh non-Mustahik. Array `mustahiks` tidak diubah; mutasi startup yang menghapus kolom RT Mustahik juga sudah dihilangkan.
+- Reset mengembalikan seed Mustahik yang ada pada project; hapus semua data mengosongkan Mustahik dan impor mengikuti file cadangan.
+- Menambahkan `docs/PENGATURAN_PROTOTYPE.md` serta `tests/prototype-settings.test.cjs` untuk menguji ekspor/impor, reset, hapus data, akses root, dan baseline dataset Mustahik.
+- Menambahkan styling responsif halaman pengaturan dan memperbarui cache service worker.
+
+## 14 November 2026 — Perbaikan freeze pada Pengaturan Prototype
+
+- Menghapus `MutationObserver` yang mengawasi seluruh subtree `#app` dan mengganti `innerHTML` dari callback-nya; pola ini dapat memicu siklus mutasi/render berulang pada browser.
+- Mendaftarkan **Pengaturan Prototype** sebagai tab native pada konsol Admin SiZisNur dan merender konten langsung melalui `rootContent()`.
+- Menghilangkan dekorasi DOM dan observer tambahan dari modul pengaturan agar navigasi masuk/keluar tab tidak menginisiasi render ulang tak berujung.
+- Mengoptimalkan informasi ukuran data dengan membaca panjang JSON yang sudah tersimpan, bukan menserialisasi ulang seluruh database pada setiap render halaman.
+- Memperbarui nama cache service worker agar deployment menggunakan berkas aplikasi terbaru.
+- Menambahkan pengujian navigasi tab root langsung serta pemeriksaan statis agar observer rekursif tidak kembali.
+- Seluruh 13 suite pengujian otomatis lulus. Chromium headless dicoba, tetapi proses browser pada lingkungan build tidak menyelesaikan `--dump-dom`; karena itu pengujian visual browser tidak diklaim berhasil.
+
+## 13 November 2026 — Dashboard pribadi Muzakki dan pemisahan dashboard panitia
 
 - Menghapus akses role Muzakki ke dashboard agregat panitia. Dashboard ringkasan penerimaan, grafik kategori, Status Distribusi, transaksi terbaru, dan angka agregat hanya tersedia bagi anggota panitia zakat.
 - Mengganti halaman awal Muzakki menjadi **Dashboard Zakat Saya** yang menampilkan status zakat periode aktif, total uang dan beras pribadi yang tercatat, jiwa/unit pada transaksi, rincian jenis zakat, dan status verifikasi Bendahara.
@@ -107,7 +174,7 @@
 - Mengembalikan ringkasan dashboard: total uang dan beras tercatat, total Muzakki aktif terdaftar, serta total jiwa dari Muzakki beserta tanggungan dalam transaksi.
 - Mengganti metrik verifikasi Amil pada kartu dashboard dengan zakat tersalurkan yang menampilkan uang dan beras secara terpisah.
 - Memulihkan panel Status Distribusi dan mempertahankan Transaksi Terbaru.
-- Mengubah grafik kategori agar enam kategori ZIS selalu ditampilkan, dengan filter media Uang/Beras dan filter status Tercatat/Terverifikasi/Tersalurkan.
+- Mengubah grafik kategori agar enam kategori ZIS selalu ditampilkan, dengan filter media Uang/Beras dan filter status Terverifikasi/Tersalurkan.
 - Menegaskan perbedaan status: Paid adalah pembayaran yang disahkan Amil; Terverifikasi hanya berasal dari berita acara setoran yang statusnya Terverifikasi setelah pencocokan kas fisik dan rekening/logistik oleh Bendahara.
 - Grafik Tersalurkan hanya memetakan kategori bila rincian kategori lengkap dan cocok dengan total uang/beras distribusi. Distribusi lama atau rincian tidak lengkap masuk ke label Belum dipetakan; tidak ada pembagian berdasarkan asumsi.
 - Mengganti alur dashboard generik menjadi langkah kerja sesuai role aktif: Admin, Muzakki, Operator, Amil, Bendahara, Relawan, atau Pengurus.
@@ -143,21 +210,6 @@
 - Menambahkan `docs/TEMA_DARK_MODE.md` dan `tests/dark-ui-theme.test.cjs`.
 - Memperbarui cache service worker agar stylesheet baru dimuat sesudah deployment.
 
-# Changelog SiZisNur
-
-## 14 November 2026 — Pengaturan Prototype dan perapian dataset bawaan
-
-- Menambahkan tab **Pengaturan Prototype** khusus Admin SiZisNur pada konsol root.
-- Menyediakan ekspor cadangan JSON lengkap, impor dengan validasi schema V5 dan konfirmasi, reset ke seed terbaru, hapus semua data simulasi, pemeriksaan integritas relasi dasar, pengaturan tema, dan keluar dari sesi root.
-- Reset/hapus data memerlukan frasa konfirmasi; penghapusan total mempertahankan satu akun Admin SiZisNur dan pengaturan platform default agar konsol dapat digunakan kembali.
-- Import menormalkan koleksi opsional, memastikan akun root aktif dan tetap berada pada `platformAdmins`, serta tidak mengizinkan root masuk ke koleksi `users` lembaga.
-- Kegagalan penyimpanan lokal memicu rollback objek database sebelumnya, bukan membiarkannya dalam kondisi setengah terganti.
-- Merapikan label akun pendataan dan dataset akun contoh non-Mustahik. Array `mustahiks` tidak diubah; mutasi startup yang menghapus kolom RT Mustahik juga sudah dihilangkan.
-- Reset mengembalikan seed Mustahik yang ada pada project; hapus semua data mengosongkan Mustahik dan impor mengikuti file cadangan.
-- Menambahkan `docs/PENGATURAN_PROTOTYPE.md` serta `tests/prototype-settings.test.cjs` untuk menguji ekspor/impor, reset, hapus data, akses root, dan baseline dataset Mustahik.
-- Menambahkan styling responsif halaman pengaturan dan memperbarui cache service worker.
-
-
 ## 13 November 2026 — Penyesuaian alert untuk dark mode seluruh halaman
 
 - Menyatukan palet alert semantik untuk pesan umum, peringatan, kesalahan, keberhasilan, informasi, dan catatan netral melalui token warna global.
@@ -166,7 +218,6 @@
 - Menyamakan toast/notifikasi sementara agar varian success, info, warning, dan error tetap memiliki kontras yang jelas pada kedua tema.
 - Memperbarui nama cache service worker supaya browser mengambil stylesheet terbaru setelah deployment.
 - Menambahkan pemeriksaan otomatis kontras warna minimum WCAG AA untuk pasangan warna teks/latar alert dan toast.
-
 
 ## 13 November 2026 — Panduan penggunaan rinci untuk tujuh role
 
@@ -233,33 +284,3 @@ Login, peran, database, notifikasi, audit dan antrean sync masih simulasi browse
 ### Perlindungan data dan validasi workbook
 
 Tidak ada nama, NIK, nomor HP, alamat, atau catatan survei warga dari workbook yang disalin. Dataset 129 mustahik dibuat sintetis untuk menguji komposisi agregat 21 Fakir, 103 Miskin, dan 5 Mualaf. Nama amil diganti kode anonim. Pengujian formula, hak akses, alokasi dan integritas audit dijelaskan pada `docs/QA_HASIL_PENGUJIAN.md`.
-
-
-## 14 November 2026 — Perbaikan freeze pada Pengaturan Prototype
-
-- Menghapus `MutationObserver` yang mengawasi seluruh subtree `#app` dan mengganti `innerHTML` dari callback-nya; pola ini dapat memicu siklus mutasi/render berulang pada browser.
-- Mendaftarkan **Pengaturan Prototype** sebagai tab native pada konsol Admin SiZisNur dan merender konten langsung melalui `rootContent()`.
-- Menghilangkan dekorasi DOM dan observer tambahan dari modul pengaturan agar navigasi masuk/keluar tab tidak menginisiasi render ulang tak berujung.
-- Mengoptimalkan informasi ukuran data dengan membaca panjang JSON yang sudah tersimpan, bukan menserialisasi ulang seluruh database pada setiap render halaman.
-- Memperbarui nama cache service worker agar deployment menggunakan berkas aplikasi terbaru.
-- Menambahkan pengujian navigasi tab root langsung serta pemeriksaan statis agar observer rekursif tidak kembali.
-- Seluruh 13 suite pengujian otomatis lulus. Chromium headless dicoba, tetapi proses browser pada lingkungan build tidak menyelesaikan `--dump-dom`; karena itu pengujian visual browser tidak diklaim berhasil.
-
-
-## Navigasi akun Muzakki: pemisahan halaman mandiri dan rencana bayar (15 November 2026)
-
-- Menu **Dashboard Zakat Saya** dipertahankan sebagai halaman ringkasan pribadi, termasuk status zakat periode aktif, rincian zakat, transaksi periode berjalan, dan riwayat sebelumnya. Panel dropdown layanan mandiri dihapus dari halaman dashboard.
-- Konten **Profil, Keluarga, dan Kalkulator Zakat** dipindahkan ke halaman/menu **Layanan Mandiri** tersendiri. Pada halaman ini Muzakki mengelola daftar lembaga yang terhubung, profil dan wilayah alamat pada lembaga aktif, data keluarga tanggungan, serta kalkulator zakat.
-- Ditambahkan halaman/menu **Rencana Bayar Zakat**. Halaman ini menunjukkan lembaga dan periode aktif, status rencana/transaksi, langkah pembayaran, serta tombol untuk membuka formulir perencanaan transaksi yang sudah ada. Pembuatan QR, status Pending, validasi akun/keanggotaan/periode, dan pemeriksaan Amil tetap memakai alur transaksi lama.
-- Untuk akun yang belum terhubung ke lembaga, halaman Layanan Mandiri mengarahkan Muzakki memilih lembaga; halaman Rencana Bayar menjelaskan bahwa keanggotaan dan periode aktif diperlukan sebelum membuat rencana.
-- Navigasi sidebar untuk role Muzakki menggunakan kelompok **Menu Akun Muzakki** dan hanya menampilkan halaman yang sesuai; kedua halaman baru dibatasi pada role Muzakki.
-- Uji regresi khusus memastikan menu baru muncul untuk Muzakki, dropdown tidak lagi ada di Dashboard, formulir layanan tersedia di halaman terpisah, rencana bayar membuka alur QR yang sama, dan role selain Muzakki tidak memperoleh akses.
-
-
-## Perbaikan cetak thermal 80 mm (15 November 2026)
-
-- Memulihkan helper `makeReceiptPrint` yang tertinggal setelah penyatuan renderer bukti transaksi. Tombol Cetak thermal 80 mm sebelumnya masih memanggil nama fungsi lama yang sudah tidak didefinisikan sehingga memunculkan `makeReceiptPrint is not defined`.
-- Cetak thermal sekarang menggunakan HTML struk bersama yang juga dipakai oleh Cetak / Simpan PDF, dengan layout kertas 80 mm, area konten 74 mm, QR, seluruh rincian multi-jenis/multi-media, total uang dan beras, serta label simulasi.
-- Layout PDF biasa tidak berubah dan tetap menggunakan ukuran halaman normal browser.
-- Menambahkan pengujian regresi untuk aksi thermal dan PDF menggunakan transaksi gabungan Fitrah uang, Fitrah beras, dan Fidyah.
-- Menaikkan versi cache service worker agar browser mengambil modul revisi terbaru setelah pembaruan.

@@ -192,7 +192,7 @@
 
     let validity = 'unconfirmed'
     let label = 'Belum disahkan Amil'
-    let detail = 'Transaksi tercatat, tetapi pembayaran belum disahkan oleh Amil. Struk ini belum dapat dinyatakan valid sebagai bukti pembayaran.'
+    let detail = 'Transaksi masih menunggu verifikasi Amil. Struk ini belum dapat dinyatakan valid sebagai bukti pembayaran.'
     if (VERIFIED_STATUSES.has(tx.status)) {
       validity = 'valid'
       if (tx.status === 'paid') { label = 'Disahkan Amil'; detail = 'Pembayaran telah disahkan Amil. Status rekonsiliasi Bendahara belum dinyatakan selesai.' }

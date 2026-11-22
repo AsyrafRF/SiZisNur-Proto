@@ -123,7 +123,7 @@ reloaded.A.login(ROOT_ID, false)
 const tenant = reloaded.platform.makeTenant({
   name: 'Masjid Baru Uji', email: 'masjid.baru@demo.invalid', phone: '080000000001',
   address: 'Jalan Uji No. 1', daerah: 'Kawasan Uji', adminName: 'Admin Baru',
-  adminEmail: 'admin.baru@demo.invalid', status: 'aktif', city: 'Kota Uji', province: 'Jawa Barat',
+  adminEmail: 'admin.baru@demo.invalid', adminPhone: '081211111001', status: 'aktif', city: 'Kota Uji', province: 'Jawa Barat',
 })
 const newArea = reloaded.A.db.areas.find((area) => area.tenantId === tenant.id)
 assert.ok(newArea, 'a new tenant must receive a master area root after data clear')

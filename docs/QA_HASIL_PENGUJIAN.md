@@ -1,6 +1,13 @@
+## Penyelarasan status transaksi — 17 November 2026
+
+- Filter status grafik dashboard hanya menyediakan **Terverifikasi** dan **Tersalurkan**; opsi **Tercatat** dihapus. Filter media Uang/Beras serta panel ringkasan, Status Distribusi, Transaksi Terbaru, dan alur role tidak diubah.
+- Workflow transaksi V5 tetap `Pending` → `Paid` (pengesahan Amil) → `Disetor` → `Terverifikasi` setelah rekonsiliasi Bendahara. Status terminal seperti `batal`, `expired`, dan `ditolak` tetap ada.
+- Status legacy `tercatat` pada database lokal dan backup lama dinormalisasi menjadi `pending`, menggunakan batas QR 24 jam dari waktu pembuatan; data yang sudah melewati masa tersebut menjadi `expired` sesuai mekanisme yang tersedia.
+- Validasi otomatis mencakup filter dashboard, migrasi data lokal, normalisasi backup impor, serta seluruh role. Build standalone diperbarui.
+
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 15 November 2026
+Tanggal pembaruan: 20 November 2026
 
 ## Pemeriksaan statis
 
@@ -11,7 +18,7 @@ Tanggal pembaruan: 15 November 2026
 | `node --check js/authentication.js` | Lulus |
 | `node --check js/public-intake.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 18 suite, 18/18 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 19 suite, 19/19 |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
@@ -26,6 +33,7 @@ Tanggal pembaruan: 15 November 2026
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
 | `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
+| `node tests/transaction-line-adaptivity.test.cjs` | Lulus — visibilitas dan status aktif field per kategori, label Maal/Profesi, validasi input kondisional, dan normalisasi nilai yang tidak relevan |
 | `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
@@ -46,9 +54,10 @@ Tanggal pembaruan: 15 November 2026
 - Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
 - Cetak Thermal 80 mm memakai jendela khusus selebar 460 px untuk pratinjau roll, aturan `@page size: auto` di `<head>` yang mengikuti media pada driver, konten 74 mm, font monospace yang diperbesar, QR 28 mm, dan toolbar layar yang disembunyikan saat cetak; Cetak/Simpan PDF tetap memakai layout halaman normal.
 - Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
+- Bidang rincian transaksi hanya ditampilkan dan diaktifkan sesuai jenis yang dipilih. Maal/Profesi memakai input dasar nilai yang spesifik; Fidyah/Kafarat memakai kuantitas yang tepat; Infak/Sedekah tidak menampilkan input harta, periode, haul, kafarat, atau media yang tidak relevan.
 - Konfirmasi kelebihan pembayaran seragam pada tiga kanal; domisili warga daerah memakai RW/RT Master Wilayah Lembaga dengan filter RT per RW, sedangkan Non-daerah tidak memerlukan RW/RT.
 - Input Rupiah menggunakan pemisah titik ribuan sejak nilai awal dan saat diketik; input kilogram memakai koma desimal.
-- Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending/tercatat tetap menghalangi transaksi ganda.
+- Status Paid/terverifikasi ditampilkan sebagai riwayat dan tidak dianggap sebagai transaksi unpaid yang mengunci formulir baru; status Pending tetap menghalangi transaksi ganda.
 - Dataset Mustahik sintetis 129 data dan komposisi 21 Fakir, 103 Miskin, 5 Mualaf; preset An-Nur hanya satu lembaga dan preset multi-tenant menambahkan Al-Hikmah serta pengajuan Al-Falah.
 - Formula skor, ambang klasifikasi, dan perbedaan cache/formula workbook row 16.
 - Angka penerimaan workbook serta total alokasi Tahap 1 dan Tahap 2 sebesar Rp148.287.500 dan 1.882,6 kg.
@@ -106,7 +115,7 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 ## Pembaruan dashboard analitik — 13 November 2026
 
 - Ringkasan dashboard mengembalikan penerimaan uang/beras tercatat, Muzakki terdaftar, jiwa dibayarkan (Muzakki dan tanggungan), serta penyaluran uang/beras.
-- Grafik enam kategori memiliki filter media Uang/Beras dan status Tercatat/Terverifikasi/Tersalurkan; tidak ada lagi filter kategori dropdown.
+- Grafik enam kategori memiliki filter media Uang/Beras dan status Terverifikasi/Tersalurkan; tidak ada lagi filter kategori dropdown.
 - Grafik Terverifikasi menggunakan transaksi yang tertaut pada berita acara setoran dengan status `terverifikasi`. `Paid` tetap berarti pembayaran disahkan Amil dan belum otomatis terverifikasi Bendahara.
 - Grafik Tersalurkan menggunakan record distribusi yang berstatus `tersalurkan`. Kategori hanya dipakai jika rincian kategori eksplisit dan jumlah rinciannya cocok dengan total uang serta beras; data tanpa rincian atau rincian tidak lengkap ditampilkan pada `Belum dipetakan`.
 - Panel Status Distribusi dan Transaksi Terbaru tersedia kembali. Alur dashboard berubah sesuai role aktif.
@@ -158,8 +167,8 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Menambahkan rute formulir publik tanpa login, identitas (nama, HP, email opsional, alamat, domisili), checkbox persetujuan evaluasi, dan OTP demo 6 digit yang hanya ditampilkan di browser. Kode berlaku 5 menit, maksimal 5 percobaan, dan sesi verifikasi berlangsung 10 menit. Tidak ada OTP nyata yang dikirim.
 - Pencocokan identitas dibatasi pada tenant/periode dari link, menormalisasi nomor/email, mencocokkan nama, dan menghentikan kasus ambigu tanpa auto-merge. Sebelum verifikasi kontak, halaman tidak menampilkan catatan transaksi pribadi.
 - Formulir menggunakan kalkulator zakat tenant yang sama dan membuat transaksi `source=public-intake`, `status=pending`, lengkap dengan person/kartu Muzakki, nomor PU, notifikasi lokal, audit, dan QR/struk rencana.
-- Pending/tercatat menjadi kondisi unpaid yang memblokir transaksi ganda. Bukti transaksi dapat dibuka kembali. Pembatalan hanya tersedia untuk Pending mandiri yang belum diproses petugas/setoran, dengan alasan, konfirmasi, pencatatan audit, dan tanpa menghapus record. Paid/riwayat yang selesai tidak memblokir rencana baru.
-- Service worker tidak menyimpan URL yang berisi parameter token `portal` di cache shell. Cache dinaikkan ke `sizisnur-shell-v5-20261115-public-intake-v2`.
+- Pending menjadi kondisi unpaid yang memblokir transaksi ganda. Bukti transaksi dapat dibuka kembali. Pembatalan hanya tersedia untuk Pending mandiri yang belum diproses petugas/setoran, dengan alasan, konfirmasi, pencatatan audit, dan tanpa menghapus record. Paid/riwayat yang selesai tidak memblokir rencana baru.
+- Service worker tidak menyimpan URL yang berisi parameter token `portal` di cache shell. Cache dinaikkan ke `sizisnur-shell-v5-20261117-remove-legacy-tercatat-status`.
 - `node tests/public-intake.test.cjs` dan seluruh 18 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
 - Batasan: `localStorage` hanya pada browser saat ini. QR yang dibuka pada perangkat berbeda tidak dapat mengakses database demo petugas. OTP hanya tampilan simulasi, tidak dikirim ke provider. Jangan masukkan PII atau transaksi nyata. Dokumen lengkap tahap implementasi, batasan, dan checklist keamanan produksi tersedia pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`.
 

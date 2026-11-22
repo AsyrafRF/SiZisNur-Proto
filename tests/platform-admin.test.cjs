@@ -5,7 +5,7 @@ const vm = require('node:vm')
 const crypto = require('node:crypto')
 
 const root = path.resolve(__dirname, '..')
-let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8')
+let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace(/\r\n/g, '\n')
 source = source.replace('render();\n})();', 'window.__SiZisNurTest={html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\n})();')
 source += ';\n' + fs.readFileSync(path.join(root, 'js/revision-v5.js'), 'utf8')
 source += ';\n' + fs.readFileSync(path.join(root, 'js/platform-admin.js'), 'utf8')
@@ -71,17 +71,17 @@ assert.ok(app.html().includes('publicPortalEnabled'))
 const initialTenantCount = db.tenants.length
 const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
   name: 'Lembaga Uji Root', adminName: 'Admin Lembaga Uji', adminEmail: 'admin.lembaga-uji@example.invalid',
-  email: 'lembaga-uji@example.invalid', address: 'Alamat simulasi', daerah: 'Daerah Uji', status: 'aktif',
+  adminPhone: '081211111002', email: 'lembaga-uji@example.invalid', address: 'Alamat simulasi', daerah: 'Daerah Uji', status: 'aktif',
 })
 assert.equal(db.tenants.length, initialTenantCount + 1)
 assert.equal(db.users.filter((item) => item.tenantId === created.id && item.role === 'Admin').length, 1)
 assert.equal(created.publicPortalEnabled, true, 'active lembaga are publicly listed by default')
 assert.match(created.publicCode, /^LUR-\d{5}$/, 'new institutions receive an automatically generated public ID from their name initials')
 const masjidCode = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
-  name: 'Masjid An-Nur', adminName: 'Admin An-Nur', adminEmail: 'admin.annur.test@example.invalid', status: 'aktif',
+  name: 'Masjid An-Nur', adminName: 'Admin An-Nur', adminEmail: 'admin.annur.test@example.invalid', adminPhone: '081211111003', status: 'aktif',
 }).publicCode
 const alHikmahCode = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
-  name: 'Al-Hikmah', adminName: 'Admin Al-Hikmah', adminEmail: 'admin.alhikmah.test@example.invalid', status: 'aktif',
+  name: 'Al-Hikmah', adminName: 'Admin Al-Hikmah', adminEmail: 'admin.alhikmah.test@example.invalid', adminPhone: '081211111004', status: 'aktif',
 }).publicCode
 assert.match(masjidCode, /^MAN-\d{5}$/)
 assert.match(alHikmahCode, /^AH-\d{5}$/)

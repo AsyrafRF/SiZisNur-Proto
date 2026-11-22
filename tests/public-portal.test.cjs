@@ -5,7 +5,7 @@ const vm = require('node:vm')
 const crypto = require('node:crypto')
 
 const root = path.resolve(__dirname, '..')
-let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8')
+let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace(/\r\n/g, '\n')
 source = source.replace('render();\n})();', 'window.__SiZisNurTest={html:()=>elements.app.innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();')
 source += '\n' + fs.readFileSync(path.join(root, 'js/revision-v5.js'), 'utf8')
 source += ';\n' + fs.readFileSync(path.join(root, 'js/platform-admin.js'), 'utf8')
@@ -105,7 +105,7 @@ assert.match(publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-001|WRO
 // Platform Admin can control visibility per lembaga; new active tenants are listed by default.
 const created = window.__SIZISNUR_PLATFORM_ADMIN.makeTenant({
   name: 'UPZ Uji Transparansi', adminName: 'Admin Uji', adminEmail: 'admin.transparansi@example.invalid',
-  email: 'kontak@example.invalid', status: 'aktif', daerah: 'Kota Uji',
+  adminPhone: '081211111005', email: 'kontak@example.invalid', status: 'aktif', daerah: 'Kota Uji',
 })
 assert.equal(created.publicPortalEnabled, true)
 assert.ok(publicPortal.publicTenants().some((item) => item.id === created.id))

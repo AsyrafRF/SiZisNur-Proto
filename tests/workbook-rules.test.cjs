@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 
 const appPath = require('node:path').join(__dirname, '..', 'js', 'app.js');
 const revisionPath = require('node:path').join(__dirname, '..', 'js', 'revision-v5.js');
-let source = fs.readFileSync(appPath, 'utf8');
+let source = fs.readFileSync(appPath, 'utf8').replace(/\r\n/g, '\n');
 source = source.replace(
   'render();\n})();',
   'window.__SiZisNurTest={seed,scoreMustahik,classifyMustahik,allocationMoney,allocationRice,assertAllocationBudget,makeAllocItems,WORKBOOK_BASELINE,createWorkbookStage,workbookStageModal,mustahikModal,metrics,flexibleMustahiks,navigateRef:navigate,dbRef:()=>db,loginRef:login,html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\n})();'

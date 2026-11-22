@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const crypto = require('node:crypto');
 
 const root = path.join(__dirname, '..');
-let source = fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8');
+let source = fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8').replace(/\r\n/g, '\n');
 source = source.replace(
   'render();\n})();',
   'window.__SiZisNurTest={html:()=>elements.app.innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'

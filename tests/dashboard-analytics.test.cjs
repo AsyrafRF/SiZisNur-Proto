@@ -6,10 +6,16 @@ const crypto = require('node:crypto');
 
 const appPath = path.join(__dirname, '..', 'js', 'app.js');
 const revisionPath = path.join(__dirname, '..', 'js', 'revision-v5.js');
-let source = fs.readFileSync(appPath, 'utf8');
+let source = fs.readFileSync(appPath, 'utf8').replace(/\r\n/g, '\n');
 source = source.replace(
   'render();\n})();',
-  'window.__SiZisNurTest={navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML};\nrender();\n})();'
+  [
+    "window.__SiZisNurBridge.db.transactions.find((x) => x.id === 'TR-003').status = 'tercatat';",
+    "delete window.__SiZisNurBridge.db.transactions.find((x) => x.id === 'TR-003').expiresAt;",
+    'window.__SiZisNurTest={navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML};',
+    'render();',
+    '})();',
+  ].join('\n')
 );
 source += '\n' + fs.readFileSync(revisionPath, 'utf8');
 
@@ -64,9 +70,13 @@ assert.ok(html.includes('Status Distribusi'), 'distribution status panel should 
 assert.ok(html.includes('Transaksi Terbaru'), 'latest transactions panel should remain visible');
 assert.ok(!html.includes('dashboard-category-filter'), 'category dropdown should be removed');
 assert.ok(html.includes('dashboard-medium-filter') && html.includes('dashboard-status-filter'));
-assert.equal(rowValue(html, 'Zakat Fitrah'), 270000, 'recorded fitrah includes both verified and not-yet-reconciled records');
+assert.ok(!html.includes('<option value="tercatat">'), 'retired Tercatat option must not be available in the receipt-status filter');
+assert.ok(/<option value="terverifikasi"[^>]*selected/.test(html) && html.includes('<option value="tersalurkan"'), 'remaining receipt statuses must be preserved');
+assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').status, 'expired', 'legacy Tercatat records migrate to Pending and expire according to the original 24-hour QR lifetime');
+assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').expiresAt, '2026-03-11T09:00:00.000Z', 'legacy migration derives QR expiry from the original creation time');
+assert.equal(rowValue(html, 'Zakat Fitrah'), 180000, 'default chart shows only transactions reconciled by the Treasurer');
 assert.equal(rowValue(html, 'Infak/Sedekah'), 20000);
-assert.ok(html.includes('9 jiwa'), 'jiwa total includes Muzakki and dependants');
+assert.ok(html.includes('7 jiwa'), 'expired legacy transaction is excluded from active receipt totals');
 assert.ok(html.includes('Dana terverifikasi Bendahara'));
 assert.ok(html.includes('200.000'), 'verified deposit totals should be shown in distribution status');
 

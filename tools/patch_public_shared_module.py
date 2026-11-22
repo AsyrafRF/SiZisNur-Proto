@@ -43,7 +43,7 @@ payment = r'''  function paymentForm(ctx, session) {
       ${sharedFields}
       <div class="field"><label for="pi-note">Catatan untuk Amil (opsional)</label><textarea id="pi-note" name="note" rows="2"></textarea></div>
       <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami ini rencana pembayaran berstatus Pending. Pembayaran baru sah setelah diterima, diperiksa, dan disahkan Amil.</label>
-      <div class="form-actions"><button type="submit" class="btn primary">Simpan rencana & terbitkan QR</button></div>
+      <div class="form-actions"><button type="submit" class="btn primary">Konfirmasi Zakat</button></div>
     </form></section>`
   }
 '''

@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 
 const appPath = path.join(__dirname, '..', 'js', 'app.js');
 const revisionPath = path.join(__dirname, '..', 'js', 'revision-v5.js');
-let source = fs.readFileSync(appPath, 'utf8');
+let source = fs.readFileSync(appPath, 'utf8').replace(/\r\n/g, '\n');
 source = source.replace(
   'render();\n})();',
   'window.__SiZisNurTest={mustahikModal,muzakkiModal,navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'

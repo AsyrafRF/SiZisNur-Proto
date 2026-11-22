@@ -5,7 +5,7 @@ const vm = require('node:vm')
 const crypto = require('node:crypto')
 
 const root = path.resolve(__dirname, '..')
-let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8')
+let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace(/\r\n/g, '\n')
 source = source.replace(
   'render();\n})();',
   'window.__SiZisNurTest={html:()=>elements.app.innerHTML};\nrender();\n})();'
@@ -143,7 +143,10 @@ assert.equal(safeImported.platformAdmins[0].active, true, 'import normalization 
 assert.equal(safeImported.platformAdmins[0].scope, 'platform')
 assert.ok(!safeImported.users.some((item) => item.id === rootAccountId), 'root account must not be imported into tenant users')
 assert.equal(exported.data.transactions.length, oldTransactionCount + 1)
-const expectedImported = JSON.stringify(exported.data)
+const expectedNormalizedImport = settings.normalizeImportedDatabase(exported.data)
+assert.equal(expectedNormalizedImport.transactions.find((item) => item.id === 'TR-TEST-ONLY').status, 'pending', 'legacy Tercatat transaction statuses are migrated to the supported Pending state on import')
+assert.equal(expectedNormalizedImport.transactions.find((item) => item.id === 'TR-TEST-ONLY').expiresAt, '1970-01-01T00:00:00.000Z', 'legacy transaction without a timestamp expires immediately rather than remaining actionable indefinitely')
+const expectedImported = JSON.stringify(expectedNormalizedImport)
 settings.prepareImport(JSON.stringify(exported))
 assert.ok(window.__SiZisNurTest.html().includes('KONFIRMASI IMPOR'))
 settings.clearAllData({ reload: false })

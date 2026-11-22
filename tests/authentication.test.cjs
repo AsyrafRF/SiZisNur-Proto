@@ -67,6 +67,7 @@ function assertRejected(promise, pattern) { return assert.rejects(promise, patte
   const seedMuzakki = bridge.db.users.find((user) => user.email === 'muzakki01@demo.invalid')
   const seedAdmin = bridge.db.users.find((user) => user.email === 'admin.annur@demo.invalid')
   assert.equal(await auth.verifyPassword('Muzakki#2026', seedMuzakki.passwordAuth), true)
+  assert.ok(seedMuzakki.phone, 'seed accounts expose the required phone contact')
   assert.equal(await auth.verifyPassword('wrong-password', seedMuzakki.passwordAuth), false)
   assert.equal(await auth.verifyPassword('Admin#2026', seedAdmin.passwordAuth), true)
 
@@ -95,14 +96,14 @@ function assertRejected(promise, pattern) { return assert.rejects(promise, patte
   bridge.state.authView = 'login-muzakki'
   bridge.render()
   html = elements.app.innerHTML
-  assert.ok(html.includes('Username / Email'))
+  assert.ok(html.includes('Email atau Nomor HP'))
   assert.ok(html.includes('autocomplete="current-password"'))
   assert.ok(html.includes('Tidak punya akun?'))
   assert.ok(html.includes('data-auth-social="Google"'))
   assert.ok(html.includes('data-auth-social="Facebook"'))
   assert.ok(html.includes('data-auth-social="Apple"'))
-  await assertRejected(auth.authenticate('admin.annur@demo.invalid', 'Admin#2026', 'muzakki'), /bukan akun Muzakki/)
-  await assertRejected(auth.authenticate('muzakki01@demo.invalid', 'Muzakki#2026', 'panitia'), /bukan akun Panitia/)
+  await assertRejected(auth.authenticate('admin.annur@demo.invalid', 'Admin#2026', 'muzakki'), /tidak sesuai/)
+  await assertRejected(auth.authenticate('muzakki01@demo.invalid', 'Muzakki#2026', 'panitia'), /tidak sesuai/)
 
   bridge.state.authView = 'register-muzakki'
   bridge.render()
@@ -135,18 +136,33 @@ function assertRejected(promise, pattern) { return assert.rejects(promise, patte
   bridge.render()
   await auth.authenticate('muzakki.auth@example.invalid', 'MuzakkiTest#1', 'muzakki')
   assert.equal(bridge.session.userId, registered.id)
+  bridge.logout()
+  await auth.authenticate('081299991111', 'MuzakkiTest#1', 'muzakki')
+  assert.equal(bridge.session.userId, registered.id, 'Muzakki can sign in using the phone saved on the account identity')
 
   bridge.logout()
   bridge.state.page = 'login'
   bridge.state.authView = 'login-panitia'
   bridge.render()
   assert.ok(elements.app.innerHTML.includes('Akun Panitia tidak dapat dibuat sendiri'))
+  assert.ok(elements.app.innerHTML.includes('name="accountRole"'), 'Panitia login asks which role to enter')
   assert.ok(elements.app.innerHTML.includes('Daftarkan lembaga di sini'))
 
   bridge.login('US-ADM', false)
+  bridge.state.page = 'users'
+  bridge.render()
+  html = elements.app.innerHTML
+  assert.ok(html.includes('Nomor HP'), 'account management table includes phone')
+  assert.ok(html.includes('Kontak belum') || html.includes('nomor HP'), 'contact requirement is disclosed')
+  bridge.state.page = 'prototype'
+  bridge.render()
+  html = elements.app.innerHTML
+  assert.equal((html.match(/class="decision-card"/g) || []).length, 11, 'Evaluation Prototype has 11 distinct decision cards')
+  bridge.state.page = 'dashboard'
+  bridge.render()
   const userForm = {
     dataset: { id: '', form: 'user' },
-    data: { name: 'Petugas Login Test', email: 'petugas.auth@example.invalid', role: 'Operator', password: 'PetugasTest#1', passwordConfirm: 'PetugasTest#1' },
+    data: { name: 'Petugas Login Test', email: 'petugas.auth@example.invalid', phone: '081299998001', callName: '', role: 'Operator', password: 'PetugasTest#1', passwordConfirm: 'PetugasTest#1' },
     querySelector() { return { disabled: false } },
   }
   const userEvent = {
@@ -159,9 +175,67 @@ function assertRejected(promise, pattern) { return assert.rejects(promise, patte
   assert.ok(staff)
   assert.equal(staff.tenantId, 'TN-ANNUR')
   assert.equal(staff.role, 'Operator')
+  assert.equal(staff.phone, '081299998001')
   assert.equal(await auth.verifyPassword('PetugasTest#1', staff.passwordAuth), true)
-  await auth.authenticate('petugas.auth@example.invalid', 'PetugasTest#1', 'panitia')
+  await auth.authenticate('petugas.auth@example.invalid', 'PetugasTest#1', 'panitia', 'Operator')
   assert.equal(bridge.session.userId, staff.id)
+  await auth.authenticate('081299998001', 'PetugasTest#1', 'panitia', 'Operator')
+  assert.equal(bridge.session.userId, staff.id, 'Panitia can sign in using the normalized mobile number')
+
+  // The same person may hold another role with the same email and phone.
+  bridge.login('US-ADM', false)
+  const amilForm = {
+    dataset: { id: '', form: 'user' },
+    data: { name: 'Petugas Login Test', email: 'petugas.auth@example.invalid', phone: '081299998001', callName: '', role: 'Amil', password: 'PetugasTest#2', passwordConfirm: 'PetugasTest#2' },
+    querySelector() { return { disabled: false } },
+  }
+  const makeSubmitEvent = (form) => ({
+    target: { closest(selector) { return selector.includes('data-form="user"') ? form : null } },
+    preventDefault() {}, stopImmediatePropagation() {},
+  })
+  await authSubmit(makeSubmitEvent(amilForm))
+  const sameContactAmil = bridge.db.users.find((user) => user.email === 'petugas.auth@example.invalid' && user.role === 'Amil')
+  assert.ok(sameContactAmil, 'same contacts are allowed in a different role')
+  assert.equal(sameContactAmil.phone, staff.phone)
+  await auth.authenticate('petugas.auth@example.invalid', 'PetugasTest#2', 'panitia', 'Amil')
+  assert.equal(bridge.session.userId, sameContactAmil.id, 'role selection resolves the account with shared contacts')
+
+  // Email and mobile are each unique within one role and one institution.
+  bridge.login('US-ADM', false)
+  const beforeDuplicate = bridge.db.users.length
+  const duplicateEmailForm = {
+    dataset: { id: '', form: 'user' },
+    data: { name: 'Petugas Duplikat Email', email: 'petugas.auth@example.invalid', phone: '081299998099', callName: '', role: 'Operator', password: 'Duplicate#1', passwordConfirm: 'Duplicate#1' },
+    querySelector() { return { disabled: false } },
+  }
+  await authSubmit(makeSubmitEvent(duplicateEmailForm))
+  assert.equal(bridge.db.users.length, beforeDuplicate, 'duplicate email in the same role is rejected')
+  assert.ok(elements['toast-host'].innerHTML.includes('email tersebut sudah terdaftar'))
+
+  const duplicatePhoneForm = {
+    dataset: { id: '', form: 'user' },
+    data: { name: 'Petugas Duplikat HP', email: 'petugas.hp@example.invalid', phone: '+62 812-9999-8001', callName: '', role: 'Operator', password: 'Duplicate#2', passwordConfirm: 'Duplicate#2' },
+    querySelector() { return { disabled: false } },
+  }
+  await authSubmit(makeSubmitEvent(duplicatePhoneForm))
+  assert.equal(bridge.db.users.length, beforeDuplicate, 'duplicate normalized phone in the same role is rejected')
+  assert.ok(elements['toast-host'].innerHTML.includes('nomor HP tersebut sudah terdaftar'))
+
+  // A matching full name is not used as a uniqueness key, but a call-name is required for different people.
+  const sameNameNoCallName = {
+    dataset: { id: '', form: 'user' },
+    data: { name: 'Petugas Login Test', email: 'petugas.lain@example.invalid', phone: '081299998002', callName: '', role: 'Operator', password: 'Another#1', passwordConfirm: 'Another#1' },
+    querySelector() { return { disabled: false } },
+  }
+  await authSubmit(makeSubmitEvent(sameNameNoCallName))
+  assert.equal(bridge.db.users.length, beforeDuplicate, 'same name alone is not enough to create an indistinguishable contact record')
+  assert.ok(elements['toast-host'].innerHTML.includes('Nama panggilan / penanda'))
+
+  sameNameNoCallName.data.callName = 'Asyraf Kedua'
+  await authSubmit(makeSubmitEvent(sameNameNoCallName))
+  const sameNameDifferentPerson = bridge.db.users.find((user) => user.email === 'petugas.lain@example.invalid')
+  assert.ok(sameNameDifferentPerson, 'different people with the same full name can be saved with a call-name')
+  assert.equal(sameNameDifferentPerson.callName, 'Asyraf Kedua')
 
   bridge.logout()
   bridge.db.platformSettings.publicRegistrationOpen = true
@@ -183,18 +257,19 @@ function assertRejected(promise, pattern) { return assert.rejects(promise, patte
     makeTenant(data) {
       const tenant = { id: 'TN-AUTH-APPROVED', name: data.name, status: data.status || 'aktif' }
       bridge.db.tenants.push(tenant)
-      bridge.db.users.push({ id: 'US-AUTH-APPROVED-ADMIN', tenantId: tenant.id, name: data.adminName, email: data.adminEmail, role: 'Admin', active: true })
+      bridge.db.users.push({ id: 'US-AUTH-APPROVED-ADMIN', tenantId: tenant.id, name: data.adminName, email: data.adminEmail, phone: data.adminPhone, role: 'Admin', active: true })
       return tenant
     },
     writeRootAudit() {},
   }
   await submitAuthForm(null, {
     decision: 'disetujui', note: 'Data simulasi telah diperiksa.',
-    adminName: 'Admin Lembaga Uji', adminEmail: applicationEmail,
+    adminName: 'Admin Lembaga Uji', adminEmail: applicationEmail, adminPhone: '081200000099',
   }, { rootForm: 'application-review', id: application.id })
   const initialAdmin = bridge.db.users.find((user) => user.email === applicationEmail)
   assert.ok(initialAdmin)
   assert.equal(initialAdmin.role, 'Admin')
+  assert.equal(initialAdmin.phone, '081200000099')
   assert.equal(initialAdmin.mustChangePassword, true)
   assert.equal(application.status, 'disetujui')
   const initialAdminPassword = elements['modal-root'].innerHTML.match(/Password sementara<\/span><b class=\"mono\">([^<]+)<\/b>/)?.[1]
