@@ -42,6 +42,10 @@
   }
   function finalizePreset(fresh, profile) {
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(fresh[key])) fresh[key] = [] })
+    fresh.transactions.forEach((transaction) => {
+      if (String(transaction.status || '').trim().toLowerCase() === 'tercatat') transaction.status = 'pending'
+      if (transaction.status === 'pending') window.__SIZISNUR_TRANSACTION_POLICY?.normalizePendingExpiry?.(transaction)
+    })
     fresh.platformAdmins = [preservedRootAccount()]
     fresh.users = (fresh.users || []).filter((item) => item.id !== ROOT_ACCOUNT.id)
     fresh.platformAudit = []
@@ -105,14 +109,23 @@
     next.version = 5
     next.seedRevision ||= 2
     next.transactions.forEach((transaction) => {
-      if (String(transaction.status || '').trim().toLowerCase() !== 'tercatat') return
-      transaction.status = 'pending'
-      if (!transaction.expiresAt) {
-        const createdAtMs = Date.parse(transaction.createdAt || '')
-        transaction.expiresAt = Number.isFinite(createdAtMs)
-          ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
-          : new Date(0).toISOString()
+      if (String(transaction.status || '').trim().toLowerCase() === 'tercatat') transaction.status = 'pending'
+      if (transaction.status !== 'pending') return
+      const policy = window.__SIZISNUR_TRANSACTION_POLICY
+      if (policy?.normalizePendingExpiry) {
+        policy.normalizePendingExpiry(transaction)
+        return
       }
+      const createdAtMs = Date.parse(transaction.createdAt || '')
+      const oldExpiryMs = Date.parse(transaction.expiresAt || '')
+      const hasCreatedAt = Number.isFinite(createdAtMs)
+      if (!hasCreatedAt && transaction.expiryPolicy === 'amil-2h-v1') return
+      const hasLegacyExpiry = Number.isFinite(oldExpiryMs) && oldExpiryMs > 0
+      const originalCreatedAtMs = hasCreatedAt ? createdAtMs : hasLegacyExpiry ? oldExpiryMs - 24 * 60 * 60 * 1000 : 0
+      transaction.expiresAt = hasCreatedAt || hasLegacyExpiry
+        ? new Date(originalCreatedAtMs + 2 * 60 * 60 * 1000).toISOString()
+        : new Date(0).toISOString()
+      transaction.expiryPolicy = 'amil-2h-v1'
     })
     next.platformAdmins ||= []
     next.users = next.users.filter((item) => item.id !== ROOT_ACCOUNT.id)

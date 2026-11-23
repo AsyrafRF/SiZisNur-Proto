@@ -40,7 +40,6 @@ Jalankan pemeriksaan berikut dari direktori project:
 node --check js/revision-v5.js
 node tests/role-guides.test.cjs
 node tests/workbook-rules.test.cjs
-python tools/build-standalone.py
 ```
 
 Tes `role-guides.test.cjs` merender panduan untuk ketujuh role dan memeriksa kelengkapan modul, langkah bernomor, ilustrasi UI, FAQ, form feedback, serta tautan navigasi ke masing-masing modul.

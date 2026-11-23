@@ -1,13 +1,14 @@
-## Penyelarasan status transaksi — 17 November 2026
+## Kebijakan verifikasi transaksi — 23 November 2026
 
-- Filter status grafik dashboard hanya menyediakan **Terverifikasi** dan **Tersalurkan**; opsi **Tercatat** dihapus. Filter media Uang/Beras serta panel ringkasan, Status Distribusi, Transaksi Terbaru, dan alur role tidak diubah.
-- Workflow transaksi V5 tetap `Pending` → `Paid` (pengesahan Amil) → `Disetor` → `Terverifikasi` setelah rekonsiliasi Bendahara. Status terminal seperti `batal`, `expired`, dan `ditolak` tetap ada.
-- Status legacy `tercatat` pada database lokal dan backup lama dinormalisasi menjadi `pending`, menggunakan batas QR 24 jam dari waktu pembuatan; data yang sudah melewati masa tersebut menjadi `expired` sesuai mekanisme yang tersedia.
-- Validasi otomatis mencakup filter dashboard, migrasi data lokal, normalisasi backup impor, serta seluruh role. Build standalone diperbarui.
+- Masa berlaku seluruh transaksi zakat berstatus `pending` adalah maksimal 2 jam sejak `createdAt` atau sampai periode ditutup, mana yang lebih dahulu. Tenggat dan instruksi menuju meja Amil tampil pada formulir bersama, notifikasi, ringkasan transaksi publik, struk digital, struk thermal, dan hasil verifikasi QR publik.
+- Pemeriksaan kedaluwarsa dijalankan saat daftar transaksi dibuka, QR dipindai, struk dibuka, dan pengesahan dikirim. Tenggat yang sudah lewat mengubah status menjadi `expired`; Amil tidak dapat mengesahkan transaksi tersebut.
+- Data Pending lama pada database lokal, preset/reset, dan backup impor dinormalisasi berdasarkan waktu pembuatan asli. Backup lama yang hanya menyimpan tenggat 24 jam tetap dihitung dari waktu pembuatan lama, bukan dari waktu impor.
+- Distribusi HTML satu file dan skrip pembangunnya dihapus. Aplikasi web dan PWA tetap tersedia melalui folder project; `display: standalone` pada manifest tetap dipertahankan sebagai mode tampilan PWA, bukan build satu file.
+- Cache service worker dinaikkan ke `sizisnur-shell-v5-20261123-transaction-ttl-2h-no-standalone` agar browser mengambil source terbaru.
 
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 20 November 2026
+Tanggal pembaruan: 23 November 2026
 
 ## Pemeriksaan statis
 
@@ -34,7 +35,6 @@ Tanggal pembaruan: 20 November 2026
 | `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
 | `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
 | `node tests/transaction-line-adaptivity.test.cjs` | Lulus — visibilitas dan status aktif field per kategori, label Maal/Profesi, validasi input kondisional, dan normalisasi nilai yang tidak relevan |
-| `python tools/build-standalone.py` | Dijalankan setelah perubahan final dan menghasilkan file HTML mandiri |
 
 ## Cakupan yang diperiksa oleh test otomatis
 
@@ -131,7 +131,7 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Menu Layanan Mandiri menampilkan aksi Pilih lembaga. Saat pengguna memilih lembaga aktif, sistem meminta domisili, alamat untuk lembaga, serta persetujuan penggunaan data.
 - Person, kartu digital, dan membership dibuat pada tahap penghubungan. Kontak yang cocok tidak dipakai untuk mengklaim data walk-in yang belum diverifikasi.
 - `node tests/muzakki-registration.test.cjs` dan seluruh suite `node --test tests/*.test.cjs` lulus.
-- Build standalone diperbarui melalui `python tools/build-standalone.py`.
+- Catatan historis: pada rilis saat itu artefak HTML satu-file dibuat ulang; mekanisme distribusi tersebut sudah dihapus pada revisi 23 November 2026.
 
 
 ## Dashboard pribadi Muzakki — 13 November 2026

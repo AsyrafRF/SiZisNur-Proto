@@ -23,11 +23,14 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 9. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif lembaga.
 10. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Simpan dan terbitkan QR**; dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
 11. Uji pembayaran sama dengan dan di bawah kewajiban; tidak boleh muncul dialog kelebihan. Uji kelebihan Fidyah/Kafarat; tampilkan selisih, tetapi jangan otomatis mengalihkan kategori.
-12. Pastikan status transaksi `Pending`, QR tampil, dan masa berlakunya 24 jam.
-13. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
-14. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
-15. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
-16. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
+12. Pastikan status transaksi `Pending`, QR tampil, tenggat verifikasi tercantum jelas sebagai maksimal 2 jam sejak transaksi dibuat, dan instruksi meminta Muzakki segera menunjukkan QR ke meja Amil.
+13. Pastikan tenggat pada ringkasan, notifikasi, struk digital, dan struk thermal sama dengan waktu pembuatan + 2 jam. Penutupan periode harus mengakhiri transaksi lebih dahulu jika terjadi sebelum tenggat.
+14. Uji data Pending dengan waktu pembuatan lebih dari 2 jam sebelumnya: QR harus berstatus kedaluwarsa, tidak menampilkan QR aktif, dan tidak dapat disahkan Amil meskipun token dimasukkan manual.
+15. Impor backup lama yang masih memakai waktu 24 jam; pastikan tenggat dinormalisasi dari waktu pembuatan asli menjadi 2 jam, bukan dihitung ulang dari waktu impor.
+16. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
+17. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
+18. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
+19. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
 
 ## B. Jalur Operator dan verifikasi Amil
 

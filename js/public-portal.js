@@ -14,6 +14,14 @@
   const kilos = A.kg
   const VERIFIED_STATUSES = new Set(['paid', 'disetor', 'terverifikasi'])
   const INVALID_STATUSES = new Set(['batal', 'ditolak', 'expired', 'kedaluwarsa'])
+  const transactionPolicy = window.__SIZISNUR_TRANSACTION_POLICY
+  function transactionExpiryReached(tx) {
+    if (transactionPolicy?.isExpired && transactionPolicy.isExpired(tx)) return true
+    const expiryMs = Date.parse(tx?.expiresAt || '')
+    const period = db.periods.find((item) => item.id === tx?.periodId && item.tenantId === tx?.tenantId)
+    const periodClosed = period && ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())
+    return periodClosed || !Number.isFinite(expiryMs) || expiryMs <= Date.now()
+  }
 
   // Existing tenants are public by default in this prototype; Admin SiZisNur can hide them.
   let migrated = false
@@ -202,15 +210,22 @@
       validity = 'invalid'
       label = tx.status === 'batal' ? 'Dibatalkan' : 'Kedaluwarsa / ditolak'
       detail = 'Transaksi ini tidak berlaku sebagai bukti pembayaran.'
-    } else if (tx.status === 'pending' && tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now()) {
+    } else if (tx.status === 'pending' && transactionExpiryReached(tx)) {
+      tx.status = 'expired'
+      tx.expiredAt = new Date().toISOString()
+      tx.expiryReason = 'Batas waktu verifikasi Amil selama 2 jam telah berakhir.'
       validity = 'invalid'
       label = 'QR Kedaluwarsa'
-      detail = 'Masa berlaku QR telah berakhir dan pembayaran belum disahkan Amil.'
+      detail = 'Masa verifikasi Amil telah berakhir (maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu). QR tidak dapat digunakan; hubungi Amil untuk membuat rencana transaksi baru.'
+      A.persist()
+    } else if (tx.status === 'pending') {
+      label = 'Menunggu verifikasi Amil'
+      detail = `Segera bawa atau tunjukkan QR ini ke meja Amil. Verifikasi harus selesai maksimal 2 jam sejak transaksi dibuat, yaitu ${tx.expiresAt ? prettyDate(tx.expiresAt) : '—'}. Struk ini belum menjadi bukti pembayaran.`
     }
     const icon = validity === 'valid' ? '✓' : validity === 'invalid' ? '×' : '…'
     const alertClass = validity === 'valid' ? 'ok' : validity === 'invalid' ? 'danger' : 'warn'
     return `<div class="alert ${alertClass} public-receipt-status"><div class="public-receipt-status-title"><span aria-hidden="true">${icon}</span><b>${validity === 'valid' ? 'STRUK VALID' : validity === 'invalid' ? 'STRUK TIDAK VALID' : 'BELUM TERVAKLIDASI'}</b></div>
-      <p>${esc(detail)}</p><div class="public-receipt-facts"><div><small>Lembaga</small><b>${esc(tenant.name)}</b></div><div><small>Nomor seri</small><b class="mono">${esc(tx.serial)}</b></div><div><small>Tanggal tercatat</small><b>${esc(prettyDate(tx.createdAt))}</b></div><div><small>Status transaksi</small><b>${esc(label)}</b></div><div><small>Kategori</small><b>${esc(Array.from(new Set((tx.lines || []).map((line) => line.category)).values()).join(', ') || '—')}</b></div></div>
+      <p>${esc(detail)}</p><div class="public-receipt-facts"><div><small>Lembaga</small><b>${esc(tenant.name)}</b></div><div><small>Nomor seri</small><b class="mono">${esc(tx.serial)}</b></div><div><small>Tanggal tercatat</small><b>${esc(prettyDate(tx.createdAt))}</b></div><div><small>Status transaksi</small><b>${esc(label)}</b></div><div><small>Batas verifikasi Amil (2 jam)</small><b>${esc(tx.expiresAt ? prettyDate(tx.expiresAt) : '—')}</b></div><div><small>Kategori</small><b>${esc(Array.from(new Set((tx.lines || []).map((line) => line.category)).values()).join(', ') || '—')}</b></div></div>
       <small class="public-verification-privacy">Verifikasi publik tidak menampilkan nama pembayar, kontak, petugas, alamat, atau nilai pembayaran individual.</small></div>`
   }
 

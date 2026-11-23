@@ -100,7 +100,7 @@ Transaksi disimpan dengan:
 - `personId` hasil identitas atau person baru;
 - `status: pending`;
 - nomor transaksi dengan awalan `PU-`;
-- waktu kedaluwarsa demo 24 jam;
+- masa verifikasi transaksi maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu; warga wajib menunjukkan QR ke meja Amil sebelum tenggat;
 - kontak dan kanal OTP simulasi yang digunakan.
 
 Transaksi muncul pada daftar transaksi lembaga yang sama sehingga petugas dapat melanjutkan pemeriksaan QR, penerimaan fisik, akad, dan verifikasi memakai alur operasional yang sudah tersedia.

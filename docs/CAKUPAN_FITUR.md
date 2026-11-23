@@ -37,7 +37,7 @@ Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `loca
 
 1. Semua transaksi dari Muzakki dan Operator dimulai pada status `Pending`.
 2. Hanya Amil yang dapat memvalidasi transaksi setelah shift dibuka, QR sesuai lembaga, pembayaran fisik diterima, dan akad dikonfirmasi.
-3. Masa berlaku transaksi Pending adalah 24 jam atau sampai periode ditutup.
+3. Masa berlaku transaksi Pending maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Muzakki harus menunjukkan QR ke meja Amil sebelum tenggat; setelah itu transaksi dan QR kedaluwarsa.
 4. Satu akun Muzakki dapat terhubung dengan beberapa lembaga, namun hanya satu transaksi aktif per lembaga per periode.
 5. Lembaga hanya dapat memeriksa QR transaksi yang berasal dari lembaga itu sendiri.
 6. Operator tidak mempunyai wewenang menerima uang atau mengesahkan transaksi. Amil dapat melakukan input konter sebagai fungsi tambahan.
@@ -61,7 +61,6 @@ Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `loca
 
 - Apakah satu transaksi Muzakki per periode dapat berisi banyak kategori zakat atau perlu transaksi terpisah.
 - Bagaimana prosedur klaim transaksi Walk-in ke akun baru setelah nomor HP atau email berhasil diverifikasi. Prototype tidak menautkan histori secara otomatis karena OTP belum tersedia.
-- Apakah expiry Pending tetap 24 jam, mengikuti batas akhir periode, atau kebijakan lain.
 - Formula alokasi fleksibel, kriteria prioritas, dan distribusi tahap sebelum hari raya.
 - Perlakuan saldo agregat Tahap 2 workbook senilai Rp37.500 dan 13,04 paket.
 - Validasi formula mustahik dan perbedaan nilai cache/formula row 16 pada workbook sumber.

@@ -1,6 +1,6 @@
 # Panduan deploy prototype SiZisNur
 
-Panduan ini khusus untuk versi front-end statis. Deployment publik tidak mengubah prototype menjadi sistem transaksi produksi.
+Panduan ini khusus untuk aplikasi web front-end statis yang dijalankan dari folder project. Deployment publik tidak mengubah prototype menjadi sistem transaksi produksi; distribusi HTML satu file/standalone telah dihapus.
 
 ## Netlify
 
@@ -24,16 +24,6 @@ python -m http.server 8000
 ```
 
 Buka `http://localhost:8000/`. Untuk akses kamera dan pengujian PWA di perangkat lain, gunakan HTTPS atau localhost sesuai dukungan browser.
-
-## Versi mandiri satu file
-
-File `standalone/SiZisNur_Prototype_V5_Standalone.html` menggabungkan CSS, JavaScript, generator QR dan logo. File ini cocok untuk demo offline satu perangkat. File mandiri tidak membawa cache PWA, sinkronisasi server, autentikasi, atau isolasi data.
-
-Untuk membangunnya ulang setelah mengubah source:
-
-```bash
-python tools/build-standalone.py
-```
 
 ## Konfigurasi sinkronisasi API
 

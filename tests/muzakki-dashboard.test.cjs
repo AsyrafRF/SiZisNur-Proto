@@ -99,7 +99,7 @@ const pendingSelfTx = {
   source: 'self-service', jiwa: 2,
   lines: [{ category: 'Zakat Fitrah', type: 'uang', value: 90000 }],
   status: 'pending', createdAt: new Date().toISOString(),
-  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
   handledBy: null, operatorId: null, assignedAmilId: null,
 };
 bridge.db.transactions.push(pendingSelfTx);

@@ -62,7 +62,7 @@ const tx = {
   id: 'TR-THERMAL-80-TEST', tenantId: 'TN-ANNUR', periodId: 'PR-1447',
   serial: 'MS-THERMAL-800001', personId: person.id, jiwa: 2,
   source: 'operator', status: 'pending', createdAt: new Date().toISOString(),
-  expiresAt: new Date(Date.now() + 3600000).toISOString(),
+  expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
   lines: [
     { category: 'Zakat Fitrah', type: 'uang', value: 90000, quantity: 2, unitLabel: 'jiwa' },
     { category: 'Zakat Fitrah', type: 'beras', value: 2.5, quantity: 1, unitLabel: 'jiwa' },
@@ -91,6 +91,8 @@ async function clickAction(action, id) {
   assert.match(thermalHtml, /thermal-receipt/, 'thermal output must use the compact POS-style receipt renderer')
   assert.match(thermalHtml, /DejaVu Sans Mono/, 'thermal output must use a monospace receipt font')
   assert.match(thermalHtml, /thermal-kv/, 'thermal output must align transaction metadata in compact rows')
+  assert.match(thermalHtml, /BATAS VERIFIKASI AMIL \(2 JAM\)/, 'thermal output must print the explicit two-hour Amil verification deadline')
+  assert.match(thermalHtml, /TUNJUKKAN QR INI KE MEJA AMIL\. VERIFIKASI MAKSIMAL 2 JAM SEJAK DIBUAT/, 'thermal output must instruct Muzakki to present the QR at the Amil desk within two hours')
   assert.match(thermalHtml, /==========================================/, 'thermal output must use an ASCII section separator')
   assert.match(thermalHtml, /width:\s*28mm !important/, 'thermal QR should use a compact print size')
   assert.match(thermalHtml, /Zakat Fitrah \/ UANG/, 'thermal output must include the money line item')

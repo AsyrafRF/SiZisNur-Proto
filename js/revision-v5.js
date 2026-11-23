@@ -29,7 +29,45 @@
   const cardTitle = (title, note = '') => `<div class="card-top"><h3>${title}</h3><span class="caption">${note}</span></div>`
   const transactionToken = (tx) => `SIZISNUR|${tx.tenantId}|${tx.id}|${tx.serial}`
   const mustahikToken = (m) => `SIZISNUR|MUSTAHIK|${m.tenantId}|${m.id}`
+  const TRANSACTION_TTL_MS = 2 * 60 * 60 * 1000
+  const LEGACY_TRANSACTION_TTL_MS = 24 * 60 * 60 * 1000
   const statusActive = (s) => !['batal', 'expired', 'kedaluwarsa', 'ditolak'].includes(s)
+
+  function transactionExpiryFrom(createdAt) {
+    const createdAtMs = Date.parse(createdAt || '')
+    return new Date((Number.isFinite(createdAtMs) ? createdAtMs : 0) + TRANSACTION_TTL_MS).toISOString()
+  }
+  function normalizePendingTransactionExpiry(tx) {
+    if (!tx || tx.status !== 'pending') return false
+    const createdAtMs = Date.parse(tx.createdAt || '')
+    const oldExpiryMs = Date.parse(tx.expiresAt || '')
+    const hasCreatedAt = Number.isFinite(createdAtMs)
+    // Imported legacy records without createdAt are inferred from their old
+    // 24-hour expiry exactly once; the policy marker makes that migration idempotent.
+    if (!hasCreatedAt && tx.expiryPolicy === 'amil-2h-v1') return false
+    const hasLegacyExpiry = Number.isFinite(oldExpiryMs) && oldExpiryMs > 0
+    const originalCreatedAtMs = hasCreatedAt
+      ? createdAtMs
+      : hasLegacyExpiry ? oldExpiryMs - LEGACY_TRANSACTION_TTL_MS : 0
+    const nextExpiry = hasCreatedAt || hasLegacyExpiry
+      ? new Date(originalCreatedAtMs + TRANSACTION_TTL_MS).toISOString()
+      : new Date(0).toISOString()
+    if (tx.expiresAt === nextExpiry && tx.expiryPolicy === 'amil-2h-v1') return false
+    tx.expiresAt = nextExpiry
+    tx.expiryPolicy = 'amil-2h-v1'
+    return true
+  }
+  function transactionExpiryReached(tx, nowMs = Date.now()) {
+    const expiryMs = Date.parse(tx?.expiresAt || '')
+    return !Number.isFinite(expiryMs) || expiryMs <= nowMs
+  }
+  window.__SIZISNUR_TRANSACTION_POLICY = Object.freeze({
+    ttlMs: TRANSACTION_TTL_MS,
+    lifetimeLabel: '2 jam',
+    expiresAt: transactionExpiryFrom,
+    normalizePendingExpiry: normalizePendingTransactionExpiry,
+    isExpired: transactionExpiryReached,
+  })
 
   db.version = 5
   db.accounts ||= []
@@ -43,26 +81,20 @@
   db.syncQueue ||= []
   db.periodReports ||= []
   db.transactions ||= []
-  // The old `tercatat` transaction state has no transition in the V5 workflow.
-  // Preserve the transaction record, map it to Pending, and apply the existing
-  // 24-hour QR lifetime from its original creation time (or expire immediately
-  // when the legacy record has no usable timestamp).
-  let migratedLegacyTransactionStatuses = false
+  // Preserve legacy records while migrating every Pending transaction to the
+  // current two-hour verification window from its original creation time.
+  let migratedTransactions = false
   db.transactions.forEach((tx) => {
-    if (String(tx.status || '').trim().toLowerCase() !== 'tercatat') return
-    tx.status = 'pending'
-    if (!tx.expiresAt) {
-      const createdAtMs = Date.parse(tx.createdAt || '')
-      tx.expiresAt = Number.isFinite(createdAtMs)
-        ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
-        : new Date(0).toISOString()
+    if (String(tx.status || '').trim().toLowerCase() === 'tercatat') {
+      tx.status = 'pending'
+      migratedTransactions = true
     }
-    migratedLegacyTransactionStatuses = true
+    if (normalizePendingTransactionExpiry(tx)) migratedTransactions = true
   })
   db.audit ||= []
   db.tenants ||= []
   db.rules ||= []
-  if (migratedLegacyTransactionStatuses) A.persist()
+  if (migratedTransactions) A.persist()
 
   // Public institution codes are human-readable identifiers, separate from internal tenant IDs.
   function tenantCodePrefix(name) {
@@ -602,24 +634,36 @@
     const account = accountForUser(userId)
     return account ? db.households.filter((x) => x.accountId === account.id) : []
   }
+  function expireTransactionIfNeeded(tx, nowMs = Date.now()) {
+    if (!tx || tx.status !== 'pending') return false
+    const period = db.periods.find((x) => x.id === tx.periodId && x.tenantId === tx.tenantId)
+    const expiredByTime = transactionExpiryReached(tx, nowMs)
+    const expiredByPeriod = period && ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())
+    if (!expiredByTime && !expiredByPeriod) return false
+    tx.status = 'expired'
+    tx.expiredAt = timestamp()
+    tx.expiryReason = expiredByTime
+      ? 'Batas waktu verifikasi Amil selama 2 jam telah berakhir.'
+      : 'Periode zakat telah ditutup.'
+    A.aud('TRANSAKSI_KEDALUWARSA', `${tx.serial} kedaluwarsa otomatis: ${tx.expiryReason}`)
+    return true
+  }
   function expirePending() {
     const nowMs = Date.now()
     let changed = false
     db.transactions.forEach((tx) => {
       if (tx.tenantId !== currentTenantId() || tx.status !== 'pending') return
-      const period = db.periods.find((x) => x.id === tx.periodId && x.tenantId === tx.tenantId)
-      const expiredByTime = tx.expiresAt && new Date(tx.expiresAt).getTime() <= nowMs
-      const expiredByPeriod = period && ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())
-      if (expiredByTime || expiredByPeriod) {
-        tx.status = 'expired'
-        tx.expiredAt = timestamp()
-        changed = true
-        A.aud('TRANSAKSI_KEDALUWARSA', `${tx.serial} kedaluwarsa otomatis`)
-      }
+      if (expireTransactionIfNeeded(tx, nowMs)) changed = true
     })
     if (changed) { backfillAudit(); A.persist() }
   }
   function oneTxPerTenantPeriod(accountId, tenantId, periodId, personId = null) {
+    let expired = false
+    db.transactions.forEach((tx) => {
+      if (tx.tenantId !== tenantId || tx.periodId !== periodId || tx.status !== 'pending') return
+      if (expireTransactionIfNeeded(tx)) expired = true
+    })
+    if (expired) { backfillAudit(); A.persist() }
     return db.transactions.some((tx) => tx.tenantId === tenantId && tx.periodId === periodId && statusActive(tx.status) && (
       (accountId && tx.accountId === accountId) || (personId && tx.personId === personId)
     ))
@@ -698,11 +742,13 @@
     let shift = amilShift()
     const shiftBar = amil ? `<section class="card shift-status"><div><b>Shift Amil</b><p class="caption">Verifikasi transaksi hanya aktif saat Amil membuka shift.</p><div>${shift ? `<span class="tag ok">Shift dibuka ${esc(shift.openedAtLabel || '')}</span>` : '<span class="tag warn">Shift belum dibuka</span>'}</div></div><div>${shift ? action('Tutup shift', 'shift-close', 'danger') : action('Absensi buka shift', 'shift-open', 'primary')}</div></section>` : ''
     const scanner = amil ? `<section class="card scanner-card"><div class="card-top"><div><h3>Scan QR transaksi</h3><p class="caption">Pindai struk digital Muzakki atau Operator. Detail transaksi dan identitas Amil muncul sebelum akad dan pembayaran divalidasi.</p></div><span class="tag info">Khusus Amil</span></div><div class="scan-inline"><input id="amil-scan-token" type="text" placeholder="Tempel token QR atau nomor seri" autocomplete="off"><button class="btn primary" data-v5-action="amil-scan">Periksa QR</button><button class="btn" data-v5-action="camera-start" data-camera="amil">Buka kamera</button></div><video id="amil-camera" class="camera-preview" playsinline muted hidden></video><div id="amil-scan-result" class="section-gap"></div></section>` : ''
-    return `${A.boxhead('Penerimaan dan Verifikasi Amil', 'Satu alur untuk transaksi mandiri Muzakki dan input konter Operator. Semua transaksi dimulai sebagai Pending dan hanya Amil yang mengesahkan pembayaran.', canWalkIn ? action('Input transaksi konter', 'operator-new', 'primary') : '')}${shiftBar}${scanner}<div class="cards">${A.stat('Transaksi periode', txs.length, 'Semua sumber')}${A.stat('Menunggu Amil', txs.filter((x) => x.status === 'pending').length, 'Belum dibayar / diverifikasi')}${A.stat('Disahkan Amil (Paid)', txs.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status)).length, 'Belum berarti lulus rekonsiliasi Bendahara')}${A.stat('Kedaluwarsa', txs.filter((x) => x.status === 'expired').length, 'Pending lebih dari batas waktu')}</div><div class="card">${cardTitle('Daftar transaksi', 'Filter mengikuti periode aktif lembaga')}${A.table(['Nomor / ID', 'Muzakki', 'Amil', 'Sumber', 'Uang', 'Beras', 'Status', 'Aksi'], transactionTableRows(txs))}</div><div class="alert light">Kode QR terikat pada lembaga asal. Lembaga lain tidak dapat memverifikasi transaksi ini. QR Pending berlaku 24 jam atau sampai periode ditutup. Pemindaian kamera memerlukan HTTPS dan izin perangkat, sedangkan input token tetap tersedia.</div>`
+    return `${A.boxhead('Penerimaan dan Verifikasi Amil', 'Satu alur untuk transaksi mandiri Muzakki dan input konter Operator. Semua transaksi dimulai sebagai Pending dan hanya Amil yang mengesahkan pembayaran.', canWalkIn ? action('Input transaksi konter', 'operator-new', 'primary') : '')}${shiftBar}${scanner}<div class="cards">${A.stat('Transaksi periode', txs.length, 'Semua sumber')}${A.stat('Menunggu Amil', txs.filter((x) => x.status === 'pending').length, 'Belum dibayar / diverifikasi')}${A.stat('Disahkan Amil (Paid)', txs.filter((x) => ['paid', 'disetor', 'kas_diterima', 'terverifikasi'].includes(x.status)).length, 'Belum berarti lulus rekonsiliasi Bendahara')}${A.stat('Kedaluwarsa', txs.filter((x) => x.status === 'expired').length, 'Pending lebih dari batas waktu')}</div><div class="card">${cardTitle('Daftar transaksi', 'Filter mengikuti periode aktif lembaga')}${A.table(['Nomor / ID', 'Muzakki', 'Amil', 'Sumber', 'Uang', 'Beras', 'Status', 'Aksi'], transactionTableRows(txs))}</div><div class="alert light">Kode QR terikat pada lembaga asal. Lembaga lain tidak dapat memverifikasi transaksi ini. QR Pending berlaku maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Muzakki wajib membawa QR ke meja Amil sebelum batas tersebut. Pemindaian kamera memerlukan HTTPS dan izin perangkat, sedangkan input token tetap tersedia.</div>`
   }
   A.set('transactionsPage', transactionsPageV5)
 
   function receiptMarkupV5(tx) {
+    const justExpired = expireTransactionIfNeeded(tx)
+    if (justExpired) { backfillAudit(); A.persist() }
     const person = db.persons.find((x) => x.id === tx.personId && x.tenantId === tx.tenantId)
     const institution = db.tenants.find((x) => x.id === tx.tenantId)
     const totals = effectiveTotals(tx)
@@ -717,7 +763,7 @@
     }).join('')
     const token = transactionToken(tx)
     const qr = inactive ? '<div class="alert danger">QR tidak aktif dan tidak dapat dipindai untuk verifikasi transaksi.</div>' : `<div class="receipt-qr">${A.qr(token)}</div><div class="mono receipt-token">${esc(token)}</div>`
-    return `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(institution?.name || 'SiZisNur')}</b><small>${heading}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial || tx.id)}</b></div><div><span>ID transaksi</span><b class="mono">${esc(tx.id)}</b></div><div><span>Tanggal</span><b>${esc(tx.createdAt ? new Date(tx.createdAt).toLocaleString('id-ID') : '—')}</b></div><div><span>Nama Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah jiwa / unit</span><b>${Number(tx.jiwa || 1).toLocaleString('id-ID')}</b></div><div><span>Sumber input</span><b>${source}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas waktu QR</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-lines"><b>Rincian pembayaran</b><div class="mini-list">${itemRows || '<div class="mini-item"><span>Rincian tidak tersedia</span><b>—</b></div>'}</div></div><div class="receipt-totals"><div class="mini-item"><b>Total uang</b><b>${money(totals.money)}</b></div><div class="mini-item"><b>Total beras</b><b>${kilos(totals.rice)}</b></div></div>${qr}<p class="receipt-thanks">${inactive ? `Catatan arsip transaksi berstatus ${esc(tx.status)}. QR tidak berlaku.` : `Rencana pembayaran tercatat pada ${esc(institution?.name || 'lembaga')}. Tunjukkan QR ini kepada Amil untuk pemeriksaan, akad, dan pengesahan pembayaran.`}</p><small>Dokumen simulasi prototype. Struk rencana berstatus Pending bukan bukti pembayaran resmi.</small></div>`
+    return `<div class="receipt-preview"><div class="receipt-brand"><b>${esc(institution?.name || 'SiZisNur')}</b><small>${heading}</small></div><div class="receipt-data"><div><span>Nomor transaksi</span><b>${esc(tx.serial || tx.id)}</b></div><div><span>ID transaksi</span><b class="mono">${esc(tx.id)}</b></div><div><span>Tanggal</span><b>${esc(tx.createdAt ? new Date(tx.createdAt).toLocaleString('id-ID') : '—')}</b></div><div><span>Nama Muzakki</span><b>${esc(person?.name || 'Muzakki')}</b></div><div><span>Jumlah jiwa / unit</span><b>${Number(tx.jiwa || 1).toLocaleString('id-ID')}</b></div><div><span>Sumber input</span><b>${source}</b></div><div><span>Status</span>${statusPill(tx.status, 'transaction')}</div><div><span>Batas verifikasi Amil (2 jam)</span><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div><div class="receipt-lines"><b>Rincian pembayaran</b><div class="mini-list">${itemRows || '<div class="mini-item"><span>Rincian tidak tersedia</span><b>—</b></div>'}</div></div><div class="receipt-totals"><div class="mini-item"><b>Total uang</b><b>${money(totals.money)}</b></div><div class="mini-item"><b>Total beras</b><b>${kilos(totals.rice)}</b></div></div>${qr}<p class="receipt-thanks">${inactive ? `Catatan arsip transaksi berstatus ${esc(tx.status)}. QR tidak berlaku.` : paid ? `Pembayaran telah disahkan Amil pada ${esc(institution?.name || 'lembaga')}.` : `Rencana pembayaran tercatat pada ${esc(institution?.name || 'lembaga')}. Segera tunjukkan QR ini kepada Amil. Verifikasi harus selesai paling lambat 2 jam sejak transaksi dibuat, yaitu ${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}. Setelah itu QR tidak berlaku.`}</p><small>Dokumen simulasi prototype. Struk rencana berstatus Pending bukan bukti pembayaran resmi.</small></div>`
   }
   function receiptPrintHtmlV5(tx) {
     return `<style>.receipt{font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#182b25}.receipt-preview{border:1px solid #ccd9d3;border-radius:12px;padding:22px}.receipt-brand{text-align:center;border-bottom:1px solid #ccd9d3;padding-bottom:14px;margin-bottom:14px}.receipt-brand b{display:block;font-size:22px}.receipt-brand small{display:block;margin-top:6px;font-weight:700}.receipt-data>div,.receipt .mini-item{display:flex;justify-content:space-between;gap:20px;padding:7px 0;border-bottom:1px solid #e6ece9}.receipt-data span,.receipt .mini-item span{color:#52635c}.receipt-lines{margin-top:16px}.receipt-lines>.mini-list{margin-top:6px}.receipt-totals{border-top:2px solid #52635c;margin-top:14px;padding-top:8px}.receipt-qr{text-align:center;margin:18px auto 8px}.receipt-qr svg{width:180px;height:180px}.receipt-token{font-size:10px;overflow-wrap:anywhere;text-align:center}.receipt-thanks{text-align:center;margin-top:18px}.receipt-preview>small{display:block;text-align:center;color:#64746e;margin-top:12px}</style><div class="receipt">${receiptMarkupV5(tx)}</div>`
@@ -726,6 +772,8 @@
   // transaction data, totals, status rules and QR token as the digital/PDF receipt,
   // but uses a compact single-column monospace layout instead of the screen card.
   function receiptThermalMarkupV5(tx) {
+    const justExpired = expireTransactionIfNeeded(tx)
+    if (justExpired) { backfillAudit(); A.persist() }
     const person = db.persons.find((x) => x.id === tx.personId && x.tenantId === tx.tenantId)
     const institution = db.tenants.find((x) => x.id === tx.tenantId)
     const totals = effectiveTotals(tx)
@@ -744,7 +792,7 @@
     const meta = [
       ['NO. TRANSAKSI', tx.serial || tx.id], ['ID TRANSAKSI', tx.id], ['TANGGAL', dateText],
       ['NAMA MUZAKKI', person?.name || 'Muzakki'], ['JUMLAH JIWA / UNIT', Number(tx.jiwa || 1).toLocaleString('id-ID')],
-      ['SUMBER INPUT', source], ['STATUS', statusLabels[status] || status.toUpperCase() || '—'], ['BATAS WAKTU QR', expiryText],
+      ['SUMBER INPUT', source], ['STATUS', statusLabels[status] || status.toUpperCase() || '—'], ['BATAS VERIFIKASI AMIL (2 JAM)', expiryText],
     ].map(([label, value]) => `<div class="thermal-kv"><span>${esc(label)}</span><b>${esc(value)}</b></div>`).join('')
     const items = (tx.lines || []).map((line) => {
       const kind = line.type === 'beras' ? 'BERAS' : 'UANG'
@@ -761,7 +809,7 @@
       ? `ARSIP TRANSAKSI: ${statusLabels[status] || status.toUpperCase()}. QR SUDAH TIDAK BERLAKU.`
       : paid
         ? 'SIMPAN STRUK INI SEBAGAI CATATAN PEMBAYARAN SIMULASI.'
-        : 'TUNJUKKAN QR INI KEPADA AMIL UNTUK PEMERIKSAAN DAN PENGESAHAN PEMBAYARAN.'
+        : `TUNJUKKAN QR INI KE MEJA AMIL. VERIFIKASI MAKSIMAL 2 JAM SEJAK DIBUAT: ${expiryText}.`
     return `<main class="thermal-receipt">
       <header class="thermal-header"><b>${esc(institution?.name || 'SiZisNur')}</b><span>${heading}</span><small>DOKUMEN SIMULASI</small></header>
       <div class="thermal-rule">==========================================</div>
@@ -1307,6 +1355,7 @@
   function transactionCalculatorFields(prefix, units = 1, defaultValue = '45.000') {
     return `<div class="shared-transaction-form" data-shared-transaction="yes" data-transaction-prefix="${esc(prefix)}" data-default-fitrah-count="${Math.max(1, Number(units) || 1)}" data-next-line-index="1">
       <div class="alert light shared-transaction-intro"><b>Satu transaksi, beberapa jenis pembayaran.</b><br>Tambahkan beberapa baris untuk menggabungkan zakat fitrah, maal, profesi, fidyah, kafarat, atau infak/sedekah dalam satu nomor transaksi dan satu QR. Setiap baris memiliki jenis dan media sendiri. Sesuai aturan kalkulasi prototype saat ini, media beras hanya tersedia untuk zakat fitrah; kategori lainnya menggunakan uang.</div>
+      <div class="alert warn transaction-expiry-notice"><b>Batas verifikasi Amil: 2 jam sejak transaksi disimpan.</b><br>Segera bawa atau tunjukkan QR ini ke meja Amil agar rincian, akad, dan pembayaran dapat diperiksa sebelum batas waktunya. Setelah 2 jam, transaksi otomatis kedaluwarsa dan QR tidak dapat digunakan; Anda perlu membuat rencana transaksi baru.</div>
       <div class="shared-transaction-lines" data-transaction-lines>${transactionLineMarkup(prefix, 0, units, defaultValue)}</div>
       <div class="form-actions"><button type="button" class="btn" data-shared-transaction-action="add-line">＋ Tambah jenis zakat / media</button></div>
       <div class="alert light transaction-calculation-preview" data-transaction-summary aria-live="polite">Total kewajiban dan pembayaran akan dihitung otomatis.</div>
@@ -1712,16 +1761,17 @@
     const person = db.persons.find((x) => x.id === member.personId && x.tenantId === currentTenantId())
     if (!person) throw new Error('Lengkapi profil Muzakki pada lembaga ini terlebih dahulu')
     const seq = db.transactions.filter((x) => x.tenantId === currentTenantId()).length + 1
+    const createdAt = timestamp()
     const tx = {
       id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial: `MS-${String(seq).padStart(6, '0')}`,
       personId: person.id, accountId: account.id, accountUserId: activeUser().id, recordedBy: activeUser().id,
       handledBy: null, operatorId: null, assignedAmilId: null, source: 'self-service', jiwa,
       lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
-      createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      createdAt, expiresAt: transactionExpiryFrom(createdAt),
       status: 'pending', note: d.note || '',
     }
     db.transactions.push(tx)
-    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, accountId: account.id, channel: d.channel || 'app', status: 'lokal', date: dateToday(), subject: `Terima kasih ${person.name}`, message: `Terima kasih telah menunaikan ${payment.estimate.category} melalui ${A.tenant().name}. Total ${money(effectiveTotals(tx).money)} dan ${kilos(effectiveTotals(tx).rice)}. Tunjukkan QR kepada petugas Amil ${A.tenant().name}.` })
+    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, accountId: account.id, channel: d.channel || 'app', status: 'lokal', date: dateToday(), subject: `Terima kasih ${person.name}`, message: `Terima kasih telah menunaikan ${payment.estimate.category} melalui ${A.tenant().name}. Total ${money(effectiveTotals(tx).money)} dan ${kilos(effectiveTotals(tx).rice)}. Segera tunjukkan QR ke meja Amil; verifikasi harus selesai maksimal 2 jam sejak dibuat, yaitu ${new Date(tx.expiresAt).toLocaleString('id-ID')}.` })
     A.aud('TRANSAKSI_PENDING', `Muzakki membuat ${tx.serial} dari layanan mandiri${payment.excessAllocatedMoney || payment.excessAllocatedRice ? `; kelebihan dialihkan ke infak/sedekah: ${money(payment.excessAllocatedMoney)} dan ${kilos(payment.excessAllocatedRice)}` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
@@ -1731,6 +1781,7 @@
   }
 
   function verifyTransactionModal(tx) {
+    if (tx && expireTransactionIfNeeded(tx)) { backfillAudit(); A.persist() }
     if (activeUser()?.role !== 'Amil') throw new Error('Hanya Amil yang dapat memverifikasi pembayaran')
     if (!amilShift()) throw new Error('Buka shift Amil terlebih dahulu sebelum verifikasi')
     if (!tx || tx.tenantId !== currentTenantId()) throw new Error('Transaksi tidak berasal dari lembaga aktif')
@@ -1953,7 +2004,7 @@
           { menu: 'Layanan Mandiri · Profil dan Wilayah Alamat', goal: 'Memastikan identitas, kontak, Daerah, RT, dan alamat tidak salah.', steps: ['Buka menu Layanan Mandiri. Pada bagian Profil dan wilayah alamat, isi atau periksa Nama lengkap.', 'Periksa Nomor HP dan Email. Minimal satu kontak perlu tersedia agar lembaga dapat mengenali akun Anda.', 'Pilih Warga daerah atau Non-daerah. Bila warga daerah, pilih RW dan RT yang sesuai dari master wilayah lembaga. Bila Non-daerah, pilihan RW dan RT tidak diperlukan.', 'Isi Alamat lengkap dengan jelas, misalnya nama jalan, nomor rumah, blok, atau patokan yang membantu petugas.', 'Centang persetujuan penggunaan data, lalu tekan Simpan profil.'], preview: [['Nama lengkap', 'Nama sesuai identitas'], ['Nomor HP / Email', 'Minimal satu kontak'], ['Status domisili', 'Warga daerah / Non-daerah'], ['RW / RT', 'Dipilih dari master wilayah lembaga'], ['Tombol', 'Simpan profil']], result: 'Profil lembaga aktif tersimpan dan informasi wilayah bisa digunakan untuk rekap Muzakki.' },
           { menu: 'Layanan Mandiri · Data Keluarga Tanggungan', goal: 'Menyimpan nama orang yang menjadi tanggungan agar jumlah jiwa mudah digunakan kembali.', steps: ['Buka menu Layanan Mandiri, lalu cari bagian Data keluarga tanggungan.', 'Masukkan nama setiap anggota keluarga pada satu baris. Isi hubungan seperti Kepala keluarga, Pasangan, atau Anak.', 'Tekan Tambah anggota bila perlu menambahkan baris baru.', 'Bila ada baris yang salah, tekan Hapus pada baris tersebut.', 'Setelah daftar lengkap, tekan Simpan data keluarga. Periksa kembali jumlah anggota yang tampil pada ringkasan.'], preview: [['Baris anggota', 'Nama anggota keluarga'], ['Hubungan', 'Kepala keluarga / Pasangan / Anak'], ['Tombol tambah', 'Tambah anggota'], ['Tombol simpan', 'Simpan data keluarga']], result: 'Jumlah anggota keluarga tersimpan dan menjadi nilai awal jumlah jiwa pada perhitungan fitrah.', caution: 'Periksa data keluarga sebelum membuat transaksi. Satu transaksi yang sudah dibuat pada lembaga dan periode aktif akan membatasi pembuatan transaksi berikutnya.' },
           { menu: 'Layanan Mandiri · Kalkulator Zakat', goal: 'Menghitung perkiraan kewajiban sebelum menyimpan rencana transaksi.', steps: ['Buka menu Layanan Mandiri. Pada bagian Kalkulator zakat, pilih jenis perhitungan seperti Zakat fitrah, Zakat maal, Fidyah, Kafarat, atau Infak / sedekah.', 'Pilih media perhitungan Uang atau Beras sesuai ketentuan lembaga.', 'Isi Jumlah jiwa atau hari. Untuk zakat maal, isi Nilai harta. Harga emas dipakai sebagai parameter perhitungan yang ditampilkan.', 'Tekan Hitung estimasi dan baca hasil yang muncul di kotak hasil.', 'Bila ragu dengan tarif atau hasil, tanyakan kepada Amil atau pengelola lembaga sebelum membuat transaksi.'], preview: [['Jenis perhitungan', 'Zakat fitrah / maal / lainnya'], ['Media', 'Uang (Rp) atau Beras (kg)'], ['Jumlah', 'Jiwa / hari'], ['Hasil', 'Estimasi kalkulator'], ['Tombol', 'Hitung estimasi']], result: 'Estimasi nominal atau kilogram tampil untuk membantu Anda menyiapkan pembayaran.', caution: 'Kalkulator adalah alat bantu berdasarkan parameter lembaga. Hasilnya bukan fatwa dan tidak menggantikan konsultasi apabila jenis kewajiban atau dasar perhitungannya belum jelas.' },
-          { menu: 'Rencana Bayar Zakat', goal: 'Menyimpan rencana pembayaran mandiri agar Amil dapat memeriksanya melalui QR.', steps: ['Pastikan lembaga yang dipilih benar dan periode zakat sedang aktif.', 'Buka menu Rencana Bayar Zakat pada sidebar, lalu tekan Mulai rencana bayar zakat.', 'Pilih jenis zakat, media pembayaran, dan jumlah jiwa atau unit. Periksa nominal uang dalam rupiah atau berat dalam kilogram.', 'Pilih saluran notifikasi yang diinginkan. Pilihan email dan WhatsApp pada prototype masih berupa simulasi.', 'Baca catatan transaksi. Centang pernyataan bahwa status transaksi masih Pending sampai diperiksa Amil.', 'Tekan Simpan dan tampilkan QR. Simpan struk digital pada perangkat Anda.'], preview: [['Jenis zakat', 'Zakat Fitrah'], ['Media pembayaran', 'Uang (Rp) / Beras (kg)'], ['Jumlah jiwa / unit', 'Isi sesuai kewajiban'], ['Nominal', 'Contoh Rp 180.000'], ['Status setelah simpan', 'Pending'], ['Tombol', 'Simpan dan tampilkan QR']], result: 'Nomor transaksi dan QR tampil pada struk. Bawa QR tersebut ke meja Amil untuk pemeriksaan dan pembayaran.', caution: 'Satu akun hanya dapat membuat satu transaksi dalam satu lembaga pada satu periode. QR Pending berlaku 24 jam atau sampai periode ditutup. QR bukan bukti pembayaran lunas.' },
+          { menu: 'Rencana Bayar Zakat', goal: 'Menyimpan rencana pembayaran mandiri agar Amil dapat memeriksanya melalui QR.', steps: ['Pastikan lembaga yang dipilih benar dan periode zakat sedang aktif.', 'Buka menu Rencana Bayar Zakat pada sidebar, lalu tekan Mulai rencana bayar zakat.', 'Pilih jenis zakat, media pembayaran, dan jumlah jiwa atau unit. Periksa nominal uang dalam rupiah atau berat dalam kilogram.', 'Pilih saluran notifikasi yang diinginkan. Pilihan email dan WhatsApp pada prototype masih berupa simulasi.', 'Baca catatan transaksi. Centang pernyataan bahwa status transaksi masih Pending sampai diperiksa Amil.', 'Tekan Simpan dan tampilkan QR. Simpan struk digital pada perangkat Anda.'], preview: [['Jenis zakat', 'Zakat Fitrah'], ['Media pembayaran', 'Uang (Rp) / Beras (kg)'], ['Jumlah jiwa / unit', 'Isi sesuai kewajiban'], ['Nominal', 'Contoh Rp 180.000'], ['Status setelah simpan', 'Pending'], ['Tombol', 'Simpan dan tampilkan QR']], result: 'Nomor transaksi dan QR tampil pada struk. Bawa QR tersebut ke meja Amil untuk pemeriksaan dan pembayaran.', caution: 'Satu akun hanya dapat membuat satu transaksi dalam satu lembaga pada satu periode. QR Pending berlaku maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. QR bukan bukti pembayaran lunas.' },
           { menu: 'Riwayat dan Bukti Transaksi', goal: 'Melihat transaksi periode sebelumnya dan membuka bukti atau QR milik akun sendiri.', steps: ['Pada dashboard pribadi, buka tabel Riwayat zakat sebelumnya untuk periode yang telah berlalu atau lembaga lain yang terhubung.', 'Periksa tanggal, periode/lembaga, nomor transaksi, jenis zakat, nilai uang/beras, serta status.', 'Tekan Lihat bukti pada baris transaksi yang ingin diperiksa.', 'Pada struk, gunakan Unduh gambar PNG, Cetak / Simpan PDF, atau Cetak thermal bila diperlukan.', 'Status Terverifikasi hanya muncul bila berita acara Bendahara yang memuat transaksi tersebut sudah lulus rekonsiliasi.'], preview: [['Riwayat', 'Periode · Lembaga · Nomor'], ['Nilai', 'Uang (Rp) · Beras (kg)'], ['Status', 'Tahap Amil dan Bendahara'], ['Aksi bukti', 'Lihat bukti']], result: 'Anda dapat membuka kembali bukti transaksi dari periode sebelumnya yang terhubung dengan identitas pribadi.' },
         ],
         faqs: [['Apakah saya harus memilih lembaga saat daftar akun?', 'Tidak. Pendaftaran awal hanya meminta nama lengkap, nomor HP, email, dan alamat. Pilih lembaga setelah login melalui menu Layanan Mandiri.'], ['Apakah QR berarti saya sudah membayar?', 'Belum. QR hanya identitas rencana transaksi. Pembayaran dicatat setelah Amil memeriksa rincian, menerima pembayaran, dan mengesahkannya.'], ['Mengapa tombol Mulai rencana bayar zakat tidak tersedia?', 'Periksa apakah lembaga sudah dipilih, periode sudah aktif, dan Anda belum membuat transaksi untuk lembaga dan periode yang sama.'], ['Apakah akun dapat bergabung ke banyak lembaga?', 'Ya. Namun transaksi, QR, dan verifikasi tetap terpisah untuk setiap lembaga.'], ['Apakah email atau WhatsApp sudah pasti terkirim?', 'Belum. Pada prototype, kanal tersebut hanya pilihan simulasi dan belum terhubung ke layanan pengiriman.']]
@@ -2070,7 +2121,7 @@
     const items = [
       ['Konfirmasi satu transaksi per periode untuk Muzakki', 'Perlu keputusan stakeholder', 'Tentukan apakah satu transaksi aktif dapat memuat beberapa jenis zakat atau perlu transaksi terpisah per jenis.'],
       ['Klaim riwayat Walk-in oleh akun baru', 'Menunggu verifikasi kontak', 'Riwayat lama tidak ditautkan otomatis. Perlu OTP atau proses verifikasi kontak dan persetujuan sebelum histori lintas lembaga diklaim.'],
-      ['Masa berlaku QR Pending', 'Usulan 24 jam', 'Konfirmasi apakah batas akhir mengikuti 24 jam atau penutupan periode lebih dahulu.'],
+      ['Masa berlaku QR Pending', '2 jam sejak transaksi dibuat', 'Kebijakan diterapkan pada semua kanal transaksi; periode yang ditutup lebih dahulu tetap mengakhiri QR.'],
       ['Koreksi setelah setoran dan pelaporan rekening', 'Perlu SOP', 'Tetapkan batas waktu koreksi, pejabat penyetuju kedua, dan perlakuan akuntansi.'],
       ['Metode distribusi batch dan prioritas hari raya', 'Perlu keputusan', 'Tetapkan urutan mustahik, batas paket per batch, dan bukti serah terima.'],
       ['Formula skor kelayakan mustahik', 'Perlu validasi', 'Ikuti temuan workbook 1447H. Anomali formula dan cache tidak diperbaiki otomatis.'],
@@ -2219,15 +2270,16 @@
     }
     const owner = activeUser(), seq = db.transactions.filter((x) => x.tenantId === currentTenantId()).length + 1
     const serial = `${owner.role === 'Amil' ? 'AM' : 'OP'}-${String(seq).padStart(6, '0')}`
+    const createdAt = timestamp()
     const tx = {
       id: newId('TR'), tenantId: currentTenantId(), periodId: period.id, serial, personId: person.id,
       recordedBy: owner.id, handledBy: null, operatorId: owner.id, assignedAmilId: null, jiwa,
       lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
-      source: 'counter', createdAt: timestamp(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      source: 'counter', createdAt, expiresAt: transactionExpiryFrom(createdAt),
       status: 'pending', note: d.note || '',
     }
     db.transactions.push(tx)
-    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, channel: 'app', status: 'lokal', date: dateToday(), subject: `Konfirmasi rencana zakat ${serial}`, message: `${person.name}, terima kasih telah mendaftar di ${A.tenant().name}. Tunjukkan QR ini kepada Amil.` })
+    db.notifications.push({ id: newId('NT'), tenantId: currentTenantId(), personId: person.id, channel: 'app', status: 'lokal', date: dateToday(), subject: `Konfirmasi rencana zakat ${serial}`, message: `${person.name}, terima kasih telah mendaftar di ${A.tenant().name}. Segera tunjukkan QR ke meja Amil; verifikasi harus selesai maksimal 2 jam sejak dibuat, yaitu ${new Date(tx.expiresAt).toLocaleString('id-ID')}.` })
     A.aud('TRANSAKSI_PENDING', `${owner.role} membuat transaksi konter ${serial} sebagai Pending${payment.excessAllocatedMoney || payment.excessAllocatedRice ? `; kelebihan dialihkan ke infak/sedekah: ${money(payment.excessAllocatedMoney)} dan ${kilos(payment.excessAllocatedRice)}` : ''}`)
     enqueueSync('transaction.pending', { transactionId: tx.id, tenantId: tx.tenantId })
     state.modal = null
@@ -2744,8 +2796,10 @@
   function scanAmil() {
     const result = $('amil-scan-result')
     try {
+      expirePending()
       const tx = parseTransactionToken($('amil-scan-token')?.value)
       if (!tx) throw new Error('QR atau nomor transaksi tidak ditemukan pada lembaga aktif')
+      if (tx.status === 'expired') throw new Error('QR transaksi telah kedaluwarsa. Batas verifikasi 2 jam telah lewat; minta Muzakki membuat rencana transaksi baru.')
       if (tx.status !== 'pending') throw new Error(`Transaksi berstatus ${tx.status}, bukan Pending`)
       result.innerHTML = `<div class="alert ok">Transaksi ditemukan. Lembaga cocok.</div><div class="card scan-result-card"><b>${esc(A.person(tx.personId)?.name || 'Muzakki')}</b><p>${esc(tx.serial)} · ${tx.jiwa} jiwa · ${money(effectiveTotals(tx).money)} · ${kilos(effectiveTotals(tx).rice)}</p>${actionFor('Lanjutkan verifikasi dan akad', 'amil-verify-open', tx.id, 'primary')}</div>`
     } catch (error) { if (result) result.innerHTML = `<div class="alert danger">${esc(error.message)}</div>` }
@@ -3074,6 +3128,7 @@
         case 'allocation-flexible-create': createFlexibleAllocation(d); break
         case 'operator-transaction': submitOperatorTransaction(d); return
         case 'amil-verify': {
+          expirePending()
           if (activeUser()?.role !== 'Amil') throw new Error('Hanya Amil yang dapat mengesahkan transaksi')
           if (d.paymentReceived !== 'yes' || d.akadDone !== 'yes') throw new Error('Penerimaan fisik dan akad harus dikonfirmasi')
           const tx = A.scoped('transactions').find((x) => x.id === id)

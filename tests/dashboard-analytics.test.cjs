@@ -72,8 +72,8 @@ assert.ok(!html.includes('dashboard-category-filter'), 'category dropdown should
 assert.ok(html.includes('dashboard-medium-filter') && html.includes('dashboard-status-filter'));
 assert.ok(!html.includes('<option value="tercatat">'), 'retired Tercatat option must not be available in the receipt-status filter');
 assert.ok(/<option value="terverifikasi"[^>]*selected/.test(html) && html.includes('<option value="tersalurkan"'), 'remaining receipt statuses must be preserved');
-assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').status, 'expired', 'legacy Tercatat records migrate to Pending and expire according to the original 24-hour QR lifetime');
-assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').expiresAt, '2026-03-11T09:00:00.000Z', 'legacy migration derives QR expiry from the original creation time');
+assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').status, 'expired', 'legacy Tercatat records migrate to Pending and expire according to the original creation time plus the 2-hour verification window');
+assert.equal(bridge.db.transactions.find((x) => x.id === 'TR-003').expiresAt, '2026-03-10T11:00:00.000Z', 'legacy migration derives the 2-hour QR expiry from the original creation time');
 assert.equal(rowValue(html, 'Zakat Fitrah'), 180000, 'default chart shows only transactions reconciled by the Treasurer');
 assert.equal(rowValue(html, 'Infak/Sedekah'), 20000);
 assert.ok(html.includes('7 jiwa'), 'expired legacy transaction is excluded from active receipt totals');

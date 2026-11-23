@@ -67,7 +67,7 @@ Profil lembaga untuk pemilihan Muzakki menampilkan ID publik unik, alamat dan wi
 
 Navigasi akun Muzakki dipisahkan menjadi tiga halaman: **Dashboard Zakat Saya** untuk ringkasan dan riwayat pribadi, **Layanan Mandiri** untuk profil/keluarga/kalkulator zakat, serta **Rencana Bayar Zakat** untuk memulai perencanaan pembayaran dan memperoleh QR transaksi Pending. Dashboard tidak lagi menampung panel layanan mandiri berbentuk dropdown.
 
-File mandiri yang memuat HTML, CSS, JavaScript, autentikasi simulasi, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md` dan `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`. Petunjuk detail penyatuan form dan format transaksi ada pada `docs/INPUT_TRANSAKSI_TERPADU.md`.
+Petunjuk pengaturan dan autentikasi simulasi tersedia pada `docs/PENGATURAN_PROTOTYPE.md` dan `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`. Petunjuk detail penyatuan form dan format transaksi ada pada `docs/INPUT_TRANSAKSI_TERPADU.md`. Project dijalankan sebagai aplikasi web dari folder project melalui HTTPS atau server lokal; distribusi HTML satu file tidak lagi disediakan.
 
 ## 6. Pengaturan Prototype
 
@@ -136,7 +136,7 @@ Pada jalur mandiri, Muzakki membuat akun lebih dahulu dengan nama lengkap, nomor
 
 Amil wajib membuka shift. Setelah scan QR, layar verifikasi menampilkan identitas Muzakki, rincian uang/beras, identitas Amil, dan pengingat akad. Amil baru dapat mengesahkan setelah mengonfirmasi penerimaan fisik dan akad. Struk dapat diunduh sebagai PNG, dicetak atau disimpan sebagai PDF melalui browser, dan dicetak dengan layout thermal 80 mm.
 
-QR `Pending` berakhir setelah 24 jam atau saat periode ditutup, mana yang lebih dahulu. Email dan WhatsApp dicatat sebagai kanal simulasi, bukan pengiriman eksternal aktif.
+QR `Pending` berlaku maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Muzakki wajib membawa atau menunjukkan QR ke meja Amil agar rincian, akad, dan pembayaran diverifikasi sebelum tenggat. Setelah batas lewat, QR tidak berlaku dan rencana baru perlu dibuat. Email dan WhatsApp dicatat sebagai kanal simulasi, bukan pengiriman eksternal aktif.
 
 ### C. Rekonsiliasi Bendahara
 
@@ -157,7 +157,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 - **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Dataset default hanya memuat Masjid An-Nur / Perumahan Villa Pesona Asri, RW 11 dengan RT 01–06. Preset Multi-Lembaga juga memuat Masjid Al-Hikmah / Kompleks Buana Citra, RW 1 (RT 01–10) dan RW 2 (RT 01–05). Tenant baru mendapat Daerah induk otomatis; Admin-nya mengatur RW/RT sendiri. Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
 - **Preset dataset prototype:** Dataset Masjid An-Nur adalah default dan memuat satu lembaga beserta operasional dan acuan workbook 1447H. Dataset Multi-Lembaga dapat dipilih terpisah di Pengaturan Prototype dan memuat An-Nur, Al-Hikmah, serta pengajuan Al-Falah menunggu. Hapus semua data menyisakan hanya akun Admin SiZisNur (Root), tanpa membuat ulang akun tenant yatim pada reload. Jika belum ada lembaga, halaman Muzakki menjelaskan kondisi tersebut; aplikasi dan Master Wilayah tetap tersedia untuk lembaga baru. Hak akses menu mengikuti matriks role V5.
 - **Modul Input Transaksi Terpadu:** satu komponen input, kalkulasi, konfirmasi kelebihan, validasi, dan struk digunakan oleh Operator/Amil, Muzakki, serta Formulir Publik. Mendukung beberapa rincian jenis/media dalam satu transaksi (maksimal 12 baris), total uang dan beras terpisah, RW/RT sesuai Master Wilayah untuk warga daerah, format Rupiah bertitik, dan struk yang seragam. Lihat `docs/INPUT_TRANSAKSI_TERPADU.md`.
-- **Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi):** Admin, Amil, dan Operator dapat menerbitkan tautan/QR per lembaga dan periode, membagikan tautan melalui WhatsApp, serta mencetak banner. Warga dapat mengisi identitas dan rencana zakat tanpa akun; OTP hanya ditampilkan pada browser, pencarian transaksi dibatasi tenant/periode, transaksi Pending dapat dibuka buktinya dan dibatalkan bila belum diproses. Fitur ini berjalan pada localStorage satu browser, tidak mengirim OTP dan tidak menyinkronkan perangkat. Jangan gunakan data nyata; lihat `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk alur, batas simulasi, dan checklist keamanan produksi.
+- **Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi):** Admin, Amil, dan Operator dapat menerbitkan tautan/QR per lembaga dan periode, membagikan tautan melalui WhatsApp, serta mencetak banner. Warga dapat mengisi identitas dan rencana zakat tanpa akun; OTP hanya ditampilkan pada browser, pencarian transaksi dibatasi tenant/periode, dan transaksi Pending wajib diverifikasi di meja Amil maksimal 2 jam sejak dibuat (atau sampai periode ditutup, mana yang lebih dahulu). QR kedaluwarsa tidak dapat digunakan dan rencana transaksi perlu dibuat ulang. Transaksi Pending juga dapat dibuka buktinya dan dibatalkan bila belum diproses. Fitur ini berjalan pada localStorage satu browser, tidak mengirim OTP dan tidak menyinkronkan perangkat. Jangan gunakan data nyata; lihat `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk alur, batas simulasi, dan checklist keamanan produksi.
 - **Panduan role:** halaman Panduan & Bantuan menampilkan langkah dan diagram alur sesuai peran. Amil juga memiliki halaman ketentuan, dalil, niat, doa, dan pengingat akad.
 - **Support & feedback:** laporan bantuan, saran, bug, dan dugaan masalah keamanan tersimpan di database browser lokal. Pengiriman ke sistem monitoring eksternal memerlukan endpoint.
 - **Offline-first prototype:** service worker menyimpan shell aplikasi. Perubahan data masuk antrean sinkronisasi lokal. Pengiriman baru dicoba jika `window.SIZISNUR_API_BASE` disediakan. Tanpa backend yang sesuai, tidak ada sinkronisasi cloud.
@@ -180,7 +180,7 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 
 Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk Portal Zakat Publik dan standar keamanan produksi, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
 
-Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
+Kebijakan prototype saat ini menetapkan batas verifikasi transaksi Pending maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Keputusan lain yang masih perlu ditetapkan antara lain apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
 
 ## 13. Build dan pengujian
 
@@ -206,7 +206,6 @@ node tests/dashboard-analytics.test.cjs
 node tests/dashboard-status.test.cjs
 node tests/public-portal.test.cjs
 node tests/public-intake.test.cjs
-python tools/build-standalone.py
 ```
 
 Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, preset Dataset Masjid An-Nur dan Multi-Lembaga, hapus semua data yang hanya menyisakan Root, larangan pembuatan ulang akun tenant yatim, alert Muzakki saat belum ada lembaga, master Daerah/RW/RT untuk tenant baru, matriks menu seluruh role, autentikasi simulasi, hash audit, alokasi, validasi relasi lintas lembaga, pemisahan domisili administratif dari kolom H penilaian, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
@@ -234,7 +233,6 @@ docs/
   THIRD_PARTY.md
 manifest.webmanifest
 service-worker.js
-standalone/SiZisNur_Prototype_V5_Standalone.html
 tests/workbook-rules.test.cjs
 tests/public-intake.test.cjs
 tests/dataset-role-reset.test.cjs
@@ -242,7 +240,6 @@ tests/prototype-settings.test.cjs
 tests/authentication.test.cjs
 tests/transaction-calculator.test.cjs
 tests/tenant-territories.test.cjs
-tools/build-standalone.py
 CHANGELOG_V3.md
 README.md
 ```

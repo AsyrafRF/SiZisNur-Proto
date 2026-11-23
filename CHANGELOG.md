@@ -1,5 +1,14 @@
 # Changelog SiZisNur Prototype
 
+## Kebijakan verifikasi transaksi 2 jam dan penghapusan build standalone — 23 November 2026
+
+- Menetapkan satu masa berlaku untuk semua transaksi zakat `Pending`: maksimal 2 jam sejak waktu pembuatan atau sampai periode ditutup, mana yang lebih dahulu.
+- Menyamakan pembuatan tenggat pada Layanan Mandiri Muzakki, input konter Operator/Amil, dan Formulir Publik; keterangan tenggat serta instruksi menunjukkan QR ke meja Amil ditampilkan pada form, notifikasi, ringkasan dan struk.
+- Memastikan QR kedaluwarsa ditolak pada pemindaian dan pengesahan Amil, serta mengubah transaksi Pending kedaluwarsa menjadi `expired` ketika diperiksa.
+- Memigrasikan tenggat Pending lama pada data lokal, reset/preset dan backup impor dari waktu pembuatan asli menjadi 2 jam. Status dan audit transaksi yang sudah diproses tidak diubah.
+- Menghapus file HTML standalone dan skrip pembangunnya serta membersihkan dokumentasi distribusinya. Aplikasi web dan PWA tetap berjalan dari source project; mode `display: standalone` pada manifest tetap dipertahankan sebagai mode PWA.
+- Memperbarui cache service worker, dokumentasi, UAT, dan tes otomatis.
+
 ## Pembaruan Evaluasi Prototype dan Manajemen Akun — 22 November 2026
 
 - Sebelas keputusan pada **Evaluasi Prototype** ditampilkan sebagai kartu terpisah yang responsif, dengan nomor, judul, status, dan uraian yang mudah dipindai; isi dan urutan keputusan tidak diubah.

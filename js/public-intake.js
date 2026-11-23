@@ -14,6 +14,18 @@
   // Status Paid/disetor/terverifikasi tetap dapat dilihat pada riwayat, tetapi bukan unpaid.
   const UNPAID_STATUSES = new Set(['pending'])
   const CANCELABLE_SOURCES = new Set(['public-intake', 'self-service'])
+  const transactionPolicy = window.__SIZISNUR_TRANSACTION_POLICY
+  const TRANSACTION_TTL_MS = transactionPolicy?.ttlMs || 2 * 60 * 60 * 1000
+  function transactionExpiresAt(createdAt) {
+    if (transactionPolicy?.expiresAt) return transactionPolicy.expiresAt(createdAt)
+    const createdAtMs = Date.parse(createdAt || '')
+    return new Date((Number.isFinite(createdAtMs) ? createdAtMs : 0) + TRANSACTION_TTL_MS).toISOString()
+  }
+  function transactionExpiryReached(tx) {
+    if (transactionPolicy?.isExpired) return transactionPolicy.isExpired(tx)
+    const expiryMs = Date.parse(tx?.expiresAt || '')
+    return !Number.isFinite(expiryMs) || expiryMs <= Date.now()
+  }
   const DEMO_NOTICE = 'TAHAP EVALUASI SIMULASI — Portal ini belum menggunakan backend standar aman untuk produksi. OTP hanya dibuat dan ditampilkan di browser; tidak ada WhatsApp, SMS, atau email sungguhan. Data tersimpan lokal pada browser ini. Jangan gunakan data pribadi atau transaksi nyata.'
   let intakeSession = null
   let selectedManagerLinkId = null
@@ -236,15 +248,19 @@
   function terminal(tx) { return TERMINAL.has(String(tx.status || '').toLowerCase()) }
   function unpaid(tx) { return UNPAID_STATUSES.has(String(tx.status || '').toLowerCase()) }
   function expireIfNeeded(tx) {
-    if (tx.status === 'pending' && tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now()) {
-      tx.status = 'expired'
-      tx.expiredAt = A.now()
-      tx.expiryReason = 'Batas waktu transaksi 24 jam telah berakhir.'
-      audit(tx.tenantId, 'PUBLIC_INTAKE_TRANSACTION_EXPIRED', `Transaksi ${tx.serial} kedaluwarsa otomatis`)
-      A.persist()
-      return true
-    }
-    return false
+    if (!tx || tx.status !== 'pending') return false
+    const period = db().periods.find((item) => item.id === tx.periodId && item.tenantId === tx.tenantId)
+    const expiredByTime = transactionExpiryReached(tx)
+    const expiredByPeriod = period && ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase())
+    if (!expiredByTime && !expiredByPeriod) return false
+    tx.status = 'expired'
+    tx.expiredAt = A.now()
+    tx.expiryReason = expiredByTime
+      ? 'Batas waktu verifikasi Amil selama 2 jam telah berakhir.'
+      : 'Periode zakat telah ditutup.'
+    audit(tx.tenantId, 'PUBLIC_INTAKE_TRANSACTION_EXPIRED', `Transaksi ${tx.serial} kedaluwarsa otomatis: ${tx.expiryReason}`)
+    A.persist()
+    return true
   }
   function activeTransactionsFor(ctx, personId) {
     if (!personId || !ctx?.link) return []
@@ -258,7 +274,7 @@
   }
   function canCancelPublic(tx, personId, tenantId) {
     return Boolean(tx && tx.tenantId === tenantId && tx.personId === personId && CANCELABLE_SOURCES.has(tx.source)
-      && tx.status === 'pending' && !hasCommitteeProgress(tx) && !(tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now()))
+      && tx.status === 'pending' && !hasCommitteeProgress(tx) && !transactionExpiryReached(tx))
   }
   function money(value) { return `Rp ${Math.round(Number(value || 0)).toLocaleString('id-ID')}` }
   function kilos(value) { return `${Number(value || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg` }
@@ -269,7 +285,7 @@
     const totalRice = (tx.lines || []).filter((line) => line.type === 'beras').reduce((sum, line) => sum + Number(line.value || 0), 0)
     const canCancel = canCancelPublic(tx, person?.id, tx.tenantId)
     const stateLabel = ({ pending: 'Menunggu verifikasi Amil', paid: 'Disahkan Amil · menunggu proses Bendahara', disetor: 'Diserahkan ke Bendahara', terverifikasi: 'Terverifikasi Bendahara', expired: 'Kedaluwarsa', batal: 'Dibatalkan' })[tx.status] || String(tx.status || '—')
-    return `<article class="card pi-transaction-card"><div class="pi-card-heading"><div><small>TRANSAKSI ${esc(tenant?.publicCode || tenant?.id || '')}</small><h3 class="mono">${esc(tx.serial || tx.id)}</h3></div><span class="tag ${tx.status === 'pending' ? 'warn' : ['paid', 'disetor', 'terverifikasi'].includes(tx.status) ? 'ok' : 'bad'}">${esc(stateLabel)}</span></div><div class="pi-tx-facts"><div><small>Nama</small><b>${esc(person?.name || 'Muzakki')}</b></div><div><small>Tanggal</small><b>${esc(new Date(tx.createdAt).toLocaleString('id-ID'))}</b></div><div><small>Jenis</small><b>${esc((tx.lines || []).map((line) => line.category).join(', '))}</b></div><div><small>Jumlah</small><b>${tx.jiwa || 1} orang / unit</b></div><div><small>Total uang</small><b>${money(totalMoney)}</b></div><div><small>Total beras</small><b>${kilos(totalRice)}</b></div></div><div class="actions"><button type="button" class="btn sm primary" data-public-intake-action="view-receipt" data-id="${esc(tx.id)}">Lihat / unduh bukti dan QR</button>${canCancel ? `<button type="button" class="btn sm danger" data-public-intake-action="start-cancel" data-id="${esc(tx.id)}">Batalkan rencana</button>` : ''}</div>${canCancel ? '<p class="caption">Rencana ini masih Pending dan belum diproses petugas. Pembatalan tersedia setelah konfirmasi dan alasan.</p>' : '<p class="caption">Pembatalan tidak tersedia untuk transaksi yang sudah diproses Amil/panitia, berstatus Paid, atau bukan transaksi mandiri.</p>'}</article>`
+    return `<article class="card pi-transaction-card"><div class="pi-card-heading"><div><small>TRANSAKSI ${esc(tenant?.publicCode || tenant?.id || '')}</small><h3 class="mono">${esc(tx.serial || tx.id)}</h3></div><span class="tag ${tx.status === 'pending' ? 'warn' : ['paid', 'disetor', 'terverifikasi'].includes(tx.status) ? 'ok' : 'bad'}">${esc(stateLabel)}</span></div><div class="pi-tx-facts"><div><small>Nama</small><b>${esc(person?.name || 'Muzakki')}</b></div><div><small>Tanggal</small><b>${esc(new Date(tx.createdAt).toLocaleString('id-ID'))}</b></div><div><small>Jenis</small><b>${esc((tx.lines || []).map((line) => line.category).join(', '))}</b></div><div><small>Jumlah</small><b>${tx.jiwa || 1} orang / unit</b></div><div><small>Total uang</small><b>${money(totalMoney)}</b></div><div><small>Total beras</small><b>${kilos(totalRice)}</b></div><div><small>Batas verifikasi Amil (2 jam)</small><b>${tx.expiresAt ? esc(new Date(tx.expiresAt).toLocaleString('id-ID')) : '—'}</b></div></div>${tx.status === 'pending' ? '<p class="caption">Segera tunjukkan QR ke meja Amil. Verifikasi harus selesai maksimal 2 jam sejak transaksi dibuat; setelah itu transaksi kedaluwarsa dan QR tidak berlaku.</p>' : ''}<div class="actions"><button type="button" class="btn sm primary" data-public-intake-action="view-receipt" data-id="${esc(tx.id)}">Lihat / unduh bukti dan QR</button>${canCancel ? `<button type="button" class="btn sm danger" data-public-intake-action="start-cancel" data-id="${esc(tx.id)}">Batalkan rencana</button>` : ''}</div>${canCancel ? '<p class="caption">Rencana ini masih Pending dan belum diproses petugas. Pembatalan tersedia setelah konfirmasi dan alasan.</p>' : '<p class="caption">Pembatalan tidak tersedia untuk transaksi yang sudah diproses Amil/panitia, berstatus Paid, atau bukan transaksi mandiri.</p>'}</article>`
   }
   function paymentForm(ctx, session) {
     const rules = db().rules.find((item) => item.tenantId === ctx.link.tenantId) || { moneyRate: 45000, riceRate: 2.5 }
@@ -311,7 +327,9 @@
     return `<div class="pi-public-shell"><main class="pi-public-card">${simulationBanner()}${publicHeader(ctx.tenant, ctx.period)}<section class="pi-welcome"><span class="eyebrow">LAYANAN PENDATAAN MANDIRI</span><h1>Assalamu'alaikum!</h1><p>Silakan isi data dan rencana zakat untuk <b>${esc(ctx.tenant.name)}</b>. Anda tidak perlu mempunyai akun atau login SiZisNur.</p><div class="pi-mini-facts"><span>${esc(ctx.tenant.daerah || 'Wilayah lembaga')}</span><span>${esc(ctx.period.name || 'Periode aktif')}</span></div></section>${session.stage === 'identity' ? identityForm(ctx, session) : session.stage === 'otp' ? otpForm(ctx, session) : session.stage === 'match' ? `<section class="pi-verified-banner"><span>✓</span><div><b>Kontak terverifikasi (simulasi)</b><small>Hasil pencarian dibatasi pada lembaga dan periode ini.</small></div></section>${Date.now() > session.verifiedUntil ? `<div class="alert warn">Sesi verifikasi telah berakhir. Ulangi verifikasi kontak sebelum melihat atau mengubah transaksi.</div><button type="button" class="btn primary" data-public-intake-action="back-identity">Verifikasi ulang</button>` : session.lookupError ? `<div class="alert warn"><b>Perlu pemeriksaan petugas</b><br>${esc(session.lookupError)}<p>Untuk mencegah data warga tertukar, formulir transaksi baru dan akses transaksi lama dinonaktifkan sampai identitas diperiksa.</p></div><button type="button" class="btn" data-public-intake-action="back-identity">Periksa kembali data</button>` : renderExistingTransactions(ctx, session)}` : `<section class="card pi-form-card"><h2>Rencana zakat berhasil dicatat</h2><div class="alert ok">Rencana transaksi disimpan dengan status Pending. Ini belum menjadi bukti pembayaran resmi.</div>${session.createdTransactionId ? `<button type="button" class="btn primary" data-public-intake-action="view-receipt" data-id="${esc(session.createdTransactionId)}">Lihat / unduh bukti dan QR</button>` : ''}<button type="button" class="btn" data-public-intake-action="restart">Kembali ke awal formulir</button></section>`}<footer class="pi-public-footer">SiZisNur · Formulir publik lembaga · Evaluasi simulasi, bukan layanan transaksi nyata.</footer><button type="button" class="btn ghost" data-public-intake-action="back-home">Keluar dari formulir</button></main><div id="modal-root"></div></div>`
   }
   function renderReceipt(tx) {
-    const inactive = terminal(tx) || (tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now())
+    if (expireIfNeeded(tx)) A.persist()
+    const period = db().periods.find((item) => item.id === tx.periodId && item.tenantId === tx.tenantId)
+    const inactive = terminal(tx) || transactionExpiryReached(tx) || (period && ['ditutup', 'closed', 'selesai'].includes(String(period.status || '').toLowerCase()))
     const sharedMarkup = window.__SIZISNUR_RECEIPT_MARKUP?.(tx)
     const fallback = `<div class="alert warn">Struk standar belum tersedia. Muat ulang prototype untuk memuat modul transaksi bersama.</div>`
     const actions = `${!inactive ? `<div class="form-actions"><button type="button" class="btn primary" data-public-intake-action="print-receipt" data-id="${esc(tx.id)}">Cetak / Simpan PDF</button><button type="button" class="btn" data-public-intake-action="download-receipt-png" data-id="${esc(tx.id)}">Unduh gambar PNG</button></div>` : ''}<div class="form-actions"><button type="button" class="btn" data-modal-close>Tutup</button></div>`
@@ -334,7 +352,7 @@
     ctx.textAlign = 'left'; ctx.fillStyle = '#222'; ctx.font = '24px Arial'
     let y = 190
     rows.forEach(([label, value]) => { ctx.fillText(label, 70, y); ctx.textAlign = 'right'; ctx.fillText(String(value), 830, y); ctx.textAlign = 'left'; y += 62 })
-    if (!terminal(tx) && !(tx.expiresAt && new Date(tx.expiresAt).getTime() <= Date.now())) {
+    if (!terminal(tx) && !transactionExpiryReached(tx)) {
       const token = `SIZISNUR|${tx.tenantId}|${tx.id}|${tx.serial}`
       const svg = A.qr(token).match(/<svg[\s\S]*?<\/svg>/i)?.[0]
       if (svg) {
@@ -402,6 +420,7 @@
     if (!period || period.id !== ctx.link.periodId) throw new Error('Periode sudah tidak aktif. Minta tautan terbaru kepada petugas.')
     let person = session.personId ? db().persons.find((item) => item.id === session.personId && item.tenantId === ctx.link.tenantId) : null
     if (session.personId && !person) throw new Error('Data identitas tidak ditemukan. Hubungi petugas lembaga.')
+    if (person) db().transactions.filter((tx) => tx.tenantId === ctx.link.tenantId && tx.periodId === period.id && tx.personId === person.id).forEach(expireIfNeeded)
     const duplicate = person ? db().transactions.find((tx) => tx.tenantId === ctx.link.tenantId && tx.periodId === period.id && tx.personId === person.id && unpaid(tx)) : null
     if (duplicate) throw new Error(`Transaksi aktif ${duplicate.serial} sudah ditemukan. Buka bukti transaksi sebelumnya.`)
     const rules = db().rules.find((item) => item.tenantId === ctx.link.tenantId)
@@ -420,16 +439,17 @@
     }
     const sequence = dataStore.transactions.filter((item) => item.tenantId === ctx.link.tenantId).length + 1
     const serial = `PU-${String(sequence).padStart(6, '0')}`
+    const createdAt = A.now()
     const tx = {
       id: A.id('TR'), tenantId: ctx.link.tenantId, periodId: period.id, serial, personId: person.id,
       recordedBy: null, handledBy: null, operatorId: null, assignedAmilId: null, jiwa: units,
       lines: payment.lines, paymentEstimate: { due: payment.estimate.dueMoney, dueRice: payment.estimate.dueRice, paid: payment.paidMoney, paidRice: payment.paidRice, excessAllocated: payment.excessAllocatedMoney, excessAllocatedRice: payment.excessAllocatedRice, method: 'shared-multi-line-calculator', breakdown: payment.breakdown },
       source: 'public-intake', publicIntakeLinkId: ctx.link.id, contactVerifiedChannel: session.identity.otpChannel,
-      contactVerifiedAt: A.now(), createdAt: A.now(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      contactVerifiedAt: createdAt, createdAt, expiresAt: transactionExpiresAt(createdAt),
       status: 'pending', note: String(data.note || '').trim(),
     }
     dataStore.transactions.push(tx)
-    dataStore.notifications.push?.({ id: A.id('NT'), tenantId: ctx.link.tenantId, personId: person.id, channel: 'prototype-local', status: 'lokal', date: A.today(), subject: `Rencana zakat ${serial}`, message: `Rencana zakat tersimpan melalui formulir publik ${tenantById(ctx.link.tenantId)?.name || ''}. Tunjukkan QR kepada Amil.` })
+    dataStore.notifications.push?.({ id: A.id('NT'), tenantId: ctx.link.tenantId, personId: person.id, channel: 'prototype-local', status: 'lokal', date: A.today(), subject: `Rencana zakat ${serial}`, message: `Rencana zakat tersimpan melalui formulir publik ${tenantById(ctx.link.tenantId)?.name || ''}. Segera tunjukkan QR ke meja Amil; verifikasi harus selesai maksimal 2 jam sejak dibuat, yaitu ${new Date(tx.expiresAt).toLocaleString('id-ID')}.`  })
     audit(ctx.link.tenantId, 'PUBLIC_INTAKE_TRANSACTION_CREATED', `Rencana transaksi publik ${serial} dibuat; status Pending`)
     A.persist()
     session.personId = person.id

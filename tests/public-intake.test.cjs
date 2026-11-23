@@ -117,6 +117,8 @@ session = portal.getSession()
 assert.equal(session.stage, 'match')
 assert.equal(session.personId, null, 'new verified identity should not be merged to an unrelated person')
 assert.ok(elements.app.innerHTML.includes('Rencana pembayaran zakat'))
+assert.ok(elements.app.innerHTML.includes('Batas verifikasi Amil: 2 jam'), 'public transaction form must clearly show the two-hour Amil deadline')
+assert.ok(elements.app.innerHTML.includes('meja Amil'), 'public transaction form must instruct the Muzakki to present the QR at the Amil desk')
 assert.ok(elements.app.innerHTML.includes('lines[0][category]'), 'public form uses the same indexed multi-line calculator as other channels')
 assert.ok(elements.app.innerHTML.includes('Tambah jenis zakat / media'), 'public form supports additional payment lines')
 
@@ -134,6 +136,8 @@ assert.equal(tx.periodId, 'PR-1447')
 assert.equal(tx.status, 'pending')
 assert.match(tx.serial, /^PU-\d{6}$/)
 assert.ok(tx.expiresAt)
+assert.equal(Date.parse(tx.expiresAt) - Date.parse(tx.createdAt), 2 * 60 * 60 * 1000, 'public intake transaction must expire exactly two hours after it was created')
+assert.ok(A.db.notifications.some((item) => item.subject === `Rencana zakat ${tx.serial}` && item.message.includes('maksimal 2 jam') && item.message.includes('meja Amil')), 'public transaction notification must state the deadline and Amil desk instruction')
 assert.equal(A.db.persons.find((person) => person.id === tx.personId).phone, '081299998877')
 assert.equal(A.db.persons.find((person) => person.id === tx.personId).rwId, annurRw.id, 'public form stores RW from the institution master')
 assert.equal(A.db.persons.find((person) => person.id === tx.personId).rtId, annurRt.id, 'public form stores RT from the institution master')
@@ -193,7 +197,8 @@ assert.equal(portal.canCancelPublic(tx, session.personId, 'TN-ANNUR'), false)
 
 // Transactions that have been accepted/processed by staff cannot be cancelled. Paid/history does not block a new plan.
 const paidTx = { id: 'TR-PAID-PI', tenantId: 'TN-ANNUR', periodId: 'PR-1447', personId: session.personId, source: 'public-intake', status: 'paid', serial: 'PU-PAID', lines: [], createdAt: A.now() }
-const processingTx = { id: 'TR-PROC-PI', tenantId: 'TN-ANNUR', periodId: 'PR-1447', personId: session.personId, source: 'public-intake', status: 'pending', operatorId: 'US-OPR', serial: 'PU-PROC', lines: [], createdAt: A.now() }
+const processingCreatedAt = A.now()
+const processingTx = { id: 'TR-PROC-PI', tenantId: 'TN-ANNUR', periodId: 'PR-1447', personId: session.personId, source: 'public-intake', status: 'pending', operatorId: 'US-OPR', serial: 'PU-PROC', lines: [], createdAt: processingCreatedAt, expiresAt: new Date(Date.parse(processingCreatedAt) + 2 * 60 * 60 * 1000).toISOString() }
 A.db.transactions.push(paidTx, processingTx)
 assert.equal(portal.canCancelPublic(paidTx, session.personId, 'TN-ANNUR'), false)
 assert.equal(portal.canCancelPublic(processingTx, session.personId, 'TN-ANNUR'), false)
