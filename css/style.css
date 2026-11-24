@@ -965,3 +965,6 @@ body.dark .decision-no {
     padding: 16px;
   }
 }
+
+/* Keep conditionally hidden form fields out of layout, including wrappers styled as flex. */
+.field[hidden]{display:none!important}

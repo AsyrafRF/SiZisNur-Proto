@@ -238,7 +238,7 @@
     root.innerHTML = `<div class="root-shell"><aside class="root-side"><div class="root-brand"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><div><b>SiZisNur</b><small>Platform Control Plane</small></div></div><div class="root-side-label">ADMINISTRASI GLOBAL</div><nav class="root-nav">${tabs.map(([key,label,icon]) => `<button type="button" class="root-nav-btn ${state.platformTab === key ? 'active' : ''}" data-root-tab="${key}"><span>${icon}</span>${label}${key === 'applications' && counts ? `<i>${counts}</i>` : ''}</button>`).join('')}</nav><div class="root-side-foot"><span class="status-dot"></span> Root scope · browser demo<br>Terpisah dari lembaga<br><small>© SiZisNur</small></div></aside><section class="root-workspace"><header class="root-topbar"><div><span class="root-eyebrow">KONSOL PLATFORM / ROOT</span><h1>${esc(tabs.find(([key]) => key === (state.platformTab || 'overview'))?.[1] || 'Ringkasan')}</h1></div><div class="root-top-actions"><span class="root-user-pill"><b>${esc(rootUser()?.name || 'Admin SiZisNur')}</b><small>${ROOT_ROLE}</small></span><button type="button" class="btn sm" data-root-action="theme">◐ Tema</button><button type="button" class="btn sm danger" data-root-action="logout">Keluar</button></div></header><main class="root-content">${rootContent()}</main><footer class="root-footer">SIMULASI LOKAL — data platform tersimpan pada browser ini. Belum ada autentikasi backend atau kontrol akses server.</footer></section></div><div id="modal-root"></div>`
     if (state.modal) {
       const modalRoot = $('modal-root')
-      if (modalRoot) modalRoot.innerHTML = `<div class="modal-backdrop" data-action="close-modal-bg"><section role="dialog" aria-modal="true" class="modal ${state.modal.large ? 'large' : ''}"><div class="modal-head"><h3>${esc(state.modal.title)}</h3><button type="button" class="close" data-action="close-modal">×</button></div>${state.modal.body}</section></div>`
+      if (modalRoot) { modalRoot.innerHTML = `<div class="modal-backdrop" data-action="close-modal-bg"><section role="dialog" aria-modal="true" class="modal ${state.modal.large ? 'large' : ''}"><div class="modal-head"><h3>${esc(state.modal.title)}</h3><button type="button" class="close" data-action="close-modal">×</button></div>${state.modal.body}</section></div>`; A.restoreModalDrafts?.(modalRoot) }
     }
   }
 
@@ -435,6 +435,7 @@
         }
         default: throw new Error('Form platform tidak dikenal.')
       }
+      A.clearModalDraft?.(form)
       A.persist()
       renderRoot()
     } catch (error) { A.toast(error.message || String(error), 'error') }

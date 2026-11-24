@@ -2,6 +2,8 @@
 
 ## Prinsip implementasi
 
+Catatan ketersediaan sumber: arsip project yang diperiksa tidak menyertakan file workbook `.xlsx` asli. Angka dan rumus di bawah mengikuti dokumentasi implementasi dan baseline yang sudah tertanam pada project; karena itu, revisi ini tidak mengklaim melakukan rekonsiliasi ulang terhadap file Excel sumber.
+
 V3 mengambil aturan dan angka agregat dari workbook **01. REKAPITULASI DATA ZAKAT 1447H_2026M R1 (Resmi - Tervalidasi)**. Identitas pribadi warga, nomor kontak, NIK, alamat, dan nama amil dari workbook tidak disalin ke prototype. Dataset uji mustahik dibuat sintetis dengan komposisi agregat yang sama.
 
 Rumus atau saldo yang tidak jelas tidak dibetulkan secara otomatis. Hal yang belum disahkan ditampilkan sebagai temuan/konfirmasi. Menu acuan workbook dibatasi ke lembaga Masjid An-Nur; akun lembaga demo lain tidak dapat melihat ringkasan workbook tersebut.
@@ -39,12 +41,14 @@ Master sheet `LIST MUSTAHIK 2026` memakai kolom H–M sebagai lima faktor skor. 
 | Faktor | Nilai input | Skor |
 |---|---|---:|
 | Wilayah (H) | Kosong | 0 |
-| Wilayah (H) | NON RW 10 | 50 |
-| Wilayah (H) | Nilai lain | 100 |
+| Wilayah (H) | NON RW 10 (aturan sumber awal) | 50 |
+| Wilayah (H) | Nilai lain (aturan sumber awal) | 100 |
 | Tempat tinggal (I) | Milik sendiri / Menumpang / Kontrakan / Kost | 25 / 50 / 75 / 100 |
 | Status pernikahan (J) | Menikah / Tidak menikah / Cerai hidup / Cerai mati | 25 / 50 / 75 / 100* |
 | Penghasilan (L) | NOL / <1 juta / 1–2 juta / 2–3 juta / 3–4 juta / 4–5 juta / >5 juta | 100 / 80 / 60 / 40 / 20 / 0 / 0 |
 | Tanggungan (M) | 1 / 2 / 3 / teks `4 ATAU LEBIH` | 25 / 50 / 75 / 100 |
+
+**Pemetaan input aplikasi saat ini (perubahan tenant):** kolom H tidak lagi memakai teks statis `NON RW 10`. Pilihan dibentuk dari Master Wilayah tenant aktif. Kosong tetap 0; pilihan `Non-[Daerah]` tenant aktif bernilai 50; pilihan `[Daerah] · [RW] · [RT]` yang valid pada tenant aktif bernilai 100. Nilai disimpan sebagai ID area atau ID RT dengan validasi relasi tenant, sehingga RT tenant lain tidak dapat dipakai. Domisili administratif (`domicileStatus`, `areaId`, `rwId`, `rtId`) tetap merupakan field terpisah dan tidak otomatis berubah ketika kolom H dipilih. Data H lama dimigrasikan ke ID RT/area jika pemetaan pada tenant dapat ditentukan secara unik; nilai legacy yang ambigu dipertahankan untuk pemeriksaan manual.
 
 `P` (jalur Fakir/Miskin): skor 0 = kosong; skor >360 = FAKIR; skor >240 = MISKIN; selain itu = CUKUP LAYAK.
 
@@ -52,8 +56,8 @@ Master sheet `LIST MUSTAHIK 2026` memakai kolom H–M sebagai lima faktor skor. 
 
 - Q kosong + P FAKIR → FAKIR.
 - Q kosong + P MISKIN → MISKIN.
-- Q MUALAF + P MISKIN → MISKIN.
-- Q MUALAF + P CUKUP LAYAK → MUALAF.
+- Q terisi + P MISKIN → MISKIN.
+- Q terisi + P CUKUP LAYAK → nilai jalur Q yang dipilih (pada workbook sumber, jalur yang tersedia adalah MUALAF).
 - Q kosong + P kosong → kosong.
 - Kondisi lain → CUKUP LAYAK.
 
@@ -69,7 +73,12 @@ Master sheet `LIST MUSTAHIK 2026` memakai kolom H–M sebagai lima faktor skor. 
 
 V3 menyediakan 129 penerima sintetis untuk menguji komposisi rekap Summary1: 21 Fakir, 103 Miskin, 5 Mualaf, 0 Cukup Layak. Tidak ada identitas warga dari workbook yang digunakan. Ini adalah komposisi yang dilaporkan/cached oleh workbook, bukan hasil hitung ulang seluruh formula.
 
-Form V3 juga menampung No. HP dan Awal Mualaf dari `FORM SURVEY R1`; keduanya disimpan sebagai metadata form karena padanan kolom master tidak ditemukan. Master juga memuat field NIK, tempat/tanggal lahir, alamat, pekerjaan, dan catatan.
+Form V3 juga menampung No. HP dan Awal Mualaf dari `FORM SURVEY R1`; keduanya disimpan sebagai metadata form karena padanan kolom master tidak ditemukan. Pada revisi ini, kolom Q pada antarmuka diubah menjadi **Jalur Asnaf lain** dengan opsi Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil. Setiap opsi memakai posisi cabang Q yang sebelumnya dipakai Mualaf; artinya, pilihan Q bukan berarti status akhir otomatis pada semua kondisi P. Field Awal Mualaf hanya ditampilkan ketika Q=MUALAF. Master juga memuat field NIK, tempat/tanggal lahir, alamat, pekerjaan, dan catatan.
+
+
+### Batas perluasan asnaf dan alokasi
+
+Perluasan Q ke Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil hanya memperluas klasifikasi survei/final status dengan pola rumus Mualaf yang sama. Baseline workbook yang terdokumentasi hanya memiliki kuantitas, nominal, dan bobot alokasi Fakir, Miskin, serta Mualaf. Karena itu, revisi ini **tidak** menambahkan jumlah penerima, bobot persentase, nominal bantuan, atau aturan pembagian otomatis untuk lima asnaf tambahan. Parameter tersebut perlu ditetapkan dan disahkan pengelola sebelum asnaf tambahan dimasukkan ke tahap alokasi/distribusi.
 
 ## Alokasi uang
 

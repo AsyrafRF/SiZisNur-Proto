@@ -212,6 +212,101 @@
   }
   function rwsFor(tenantId = currentTenantId(), areaId = areaFor(tenantId)?.id) { return db.rws.filter((x) => x.tenantId === tenantId && x.areaId === areaId && x.active !== false) }
   function rtsFor(tenantId = currentTenantId(), rwId) { return db.rts.filter((x) => x.tenantId === tenantId && x.rwId === rwId && x.active !== false) }
+
+  // H (wilayah penilaian) uses IDs from the currently selected tenant's territory master.
+  // Separate prefixes prevent a name from another tenant being accepted by accident.
+  const MUSTAHIK_NON_AREA_PREFIX = 'NON_AREA|'
+  const MUSTAHIK_AREA_RT_PREFIX = 'AREA_RT|'
+  function tenantAreaRt(tenantId, rtId) {
+    const rt = db.rts.find((item) => item.id === rtId && item.tenantId === tenantId && item.active !== false)
+    if (!rt) return null
+    const rw = db.rws.find((item) => item.id === rt.rwId && item.tenantId === tenantId && item.active !== false)
+    const area = rw && db.areas.find((item) => item.id === rw.areaId && item.tenantId === tenantId && item.active !== false)
+    const tenant = db.tenants.find((item) => item.id === tenantId)
+    if (!rw || !area || !tenant || (tenant.areaId && tenant.areaId !== area.id)) return null
+    return { area, rw, rt }
+  }
+  function mustahikRegionScore(value, tenantId = currentTenantId()) {
+    const region = String(value ?? '').trim()
+    if (!region) return 0
+    if (region.startsWith(MUSTAHIK_NON_AREA_PREFIX)) {
+      const areaId = region.slice(MUSTAHIK_NON_AREA_PREFIX.length)
+      const area = db.areas.find((item) => item.id === areaId && item.tenantId === tenantId && item.active !== false)
+      return area && areaFor(tenantId)?.id === area.id ? 50 : 0
+    }
+    if (region.startsWith(MUSTAHIK_AREA_RT_PREFIX)) {
+      const reference = tenantAreaRt(tenantId, region.slice(MUSTAHIK_AREA_RT_PREFIX.length))
+      return reference && reference.area.id === areaFor(tenantId)?.id ? 100 : 0
+    }
+    // Imported legacy values are retained during migration when they cannot be mapped
+    // uniquely. New and edited records should use the tenant-scoped options below.
+    return /^non\s+rw\s*10$/i.test(region) ? 50 : 100
+  }
+  function mustahikRegionLabel(value, tenantId = currentTenantId()) {
+    const region = String(value ?? '').trim()
+    if (!region) return 'Kosong'
+    if (region.startsWith(MUSTAHIK_NON_AREA_PREFIX)) {
+      const area = db.areas.find((item) => item.id === region.slice(MUSTAHIK_NON_AREA_PREFIX.length) && item.tenantId === tenantId && item.active !== false)
+      return area ? `Non-${area.name}` : 'Wilayah non-daerah tidak aktif / tidak valid'
+    }
+    if (region.startsWith(MUSTAHIK_AREA_RT_PREFIX)) {
+      const reference = tenantAreaRt(tenantId, region.slice(MUSTAHIK_AREA_RT_PREFIX.length))
+      return reference ? `${reference.area.name} · ${reference.rw.name} · ${reference.rt.name}` : 'RT tidak aktif / tidak valid untuk lembaga ini'
+    }
+    return `${region} (nilai lama; pilih ulang bila wilayah sudah tersedia)`
+  }
+  function mustahikRegionField(mustahik, tenantId = currentTenantId()) {
+    const area = areaFor(tenantId)
+    const options = [['', 'Kosong (skor 0)']]
+    if (area) {
+      options.push([`${MUSTAHIK_NON_AREA_PREFIX}${area.id}`, `Non-${area.name} (skor 50)`])
+      rwsFor(tenantId, area.id).forEach((rw) => {
+        rtsFor(tenantId, rw.id).forEach((rt) => options.push([`${MUSTAHIK_AREA_RT_PREFIX}${rt.id}`, `${area.name} · ${rw.name} · ${rt.name} (skor 100)`]))
+      })
+    }
+    const selected = String(mustahik?.region || '')
+    if (selected && !options.some((option) => option[0] === selected)) options.push([selected, `${mustahikRegionLabel(selected, tenantId)} (kompatibilitas data lama)`])
+    return A.sel('Wilayah penilaian (kolom H)', 'region', options, selected)
+  }
+  function migrateMustahikRegions() {
+    let changed = false
+    db.mustahiks.forEach((mustahik) => {
+      const raw = String(mustahik.region ?? '').trim()
+      if (!raw || raw.startsWith(MUSTAHIK_NON_AREA_PREFIX) || raw.startsWith(MUSTAHIK_AREA_RT_PREFIX)) return
+      const tenantId = mustahik.tenantId
+      const area = areaFor(tenantId)
+      if (!area) return
+      if (/^non\s+rw\s*10$/i.test(raw) || /^non\s*[-/]/i.test(raw)) {
+        mustahik.region = `${MUSTAHIK_NON_AREA_PREFIX}${area.id}`
+        changed = true
+        return
+      }
+      const rtMatch = raw.match(/\bRT\s*0*(\d+)\b/i)
+      if (!rtMatch) return
+      const rtNumber = Number(rtMatch[1])
+      const rwMatch = raw.match(/\bRW\s*0*(\d+)\b/i)
+      let candidateRws = rwsFor(tenantId, area.id)
+      if (rwMatch) candidateRws = candidateRws.filter((rw) => {
+        const match = String(rw.name).match(/\d+/)
+        return match && Number(match[0]) === Number(rwMatch[1])
+      })
+      const matches = candidateRws.flatMap((rw) => rtsFor(tenantId, rw.id).filter((rt) => {
+        const match = String(rt.name).match(/\bRT\s*0*(\d+)\b/i) || String(rt.name).match(/\d+/)
+        return match && Number(match[1] || match[0]) === rtNumber
+      }))
+      if (matches.length === 1) {
+        mustahik.region = `${MUSTAHIK_AREA_RT_PREFIX}${matches[0].id}`
+        changed = true
+      }
+    })
+    if (changed) A.persist()
+    return changed
+  }
+  window.__SIZISNUR_SCORE_MUSTAHIK_REGION = mustahikRegionScore
+  window.__SIZISNUR_MUSTAHIK_REGION_LABEL = mustahikRegionLabel
+  window.__SIZISNUR_MUSTAHIK_REGION_FIELD = mustahikRegionField
+  window.__SIZISNUR_MIGRATE_MUSTAHIK_REGIONS = migrateMustahikRegions
+  migrateMustahikRegions()
   function domicileParts(person, tenantId = currentTenantId()) {
     const area = areaFor(tenantId)
     const rw = db.rws.find((x) => x.id === person?.rwId && x.tenantId === tenantId)
@@ -1584,6 +1679,7 @@
       try {
         if (actionButton.dataset.sharedTransactionAction === 'add-line') addSharedTransactionLine(form)
         else if (actionButton.dataset.sharedTransactionAction === 'remove-line') removeSharedTransactionLine(actionButton)
+        A.saveModalDrafts?.()
       } catch (error) { A.toast(error.message || String(error), 'error') }
       return
     }
@@ -1987,7 +2083,7 @@
           { menu: 'Periode Zakat', goal: 'Membuka periode kerja baru dan mengarsipkan periode yang sudah selesai.', steps: ['Buka Periode Zakat pada sidebar.', 'Tekan Buat periode baru dan tulis nama periode secara jelas, misalnya Ramadan 1448 H / 2027 M.', 'Simpan periode. Periode baru akan berstatus Draf dan belum dipakai untuk transaksi.', 'Pada baris periode yang benar, tekan Aktifkan. Pastikan hanya periode yang dimaksud yang berstatus Aktif.', 'Setelah seluruh penerimaan, rekonsiliasi, dan penyaluran selesai, gunakan Tutup & arsipkan untuk menutup periode. Baca pesan sistem sebelum melanjutkan.'], preview: [['Nama periode', 'Ramadan 1448 H / 2027 M'], ['Status awal', 'Draf'], ['Aksi pada draf', 'Aktifkan'], ['Aksi periode aktif', 'Tutup & arsipkan'], ['Aturan', 'Satu periode aktif per lembaga']], result: 'Periode yang benar tampil sebagai Aktif dan transaksi baru mengikuti periode tersebut.', caution: 'Jangan menutup periode ketika masih ada serah terima kas yang belum diverifikasi atau rencana alokasi yang menunggu keputusan. Sistem akan menolak penutupan tersebut.' },
           { menu: 'Jadwal & Kehadiran', goal: 'Menyusun jadwal tugas Amil dan memantau catatan kehadiran sebelum operasional berlangsung.', steps: ['Buka Jadwal & Kehadiran dari kelompok Manajemen & Sistem.', 'Periksa tanggal, rentang jam shift, Amil yang ditugaskan, petugas pengganti, serta status kehadiran yang tercatat.', 'Tekan Tambah jadwal untuk membuat penugasan baru. Pilih Amil aktif, tanggal, shift, dan pengganti bila diperlukan.', 'Simpan jadwal, lalu pastikan nama petugas dan tanggal tampil pada tabel.', 'Minta Amil memeriksa jadwalnya sebelum hari tugas. Pembukaan dan penutupan shift operasional tetap dilakukan oleh Amil melalui Penerimaan & Verifikasi.'], preview: [['Penanggung jawab jadwal', 'Admin lembaga'], ['Petugas', 'Amil yang ditugaskan'], ['Data', 'Tanggal · Jam · Pengganti · Kehadiran'], ['Aksi Admin', 'Tambah / ubah jadwal'], ['Aksi Amil', 'Melihat jadwal dan menjalankan shift']], result: 'Jadwal Amil tersusun dan dapat diperiksa petugas sebelum melakukan verifikasi transaksi.', caution: 'Admin mengelola penugasan jadwal. Amil menjalankan shift dan verifikasi; Bendahara tetap mengelola serah terima dan rekonsiliasi kas.' },
           { menu: 'Tarif & Rumus', goal: 'Mengatur parameter nominal yang dipakai sebagai acuan kalkulator dan perencanaan.', steps: ['Buka Tarif & Rumus dan baca catatan aturan bisnis terlebih dahulu.', 'Isi Tarif zakat fitrah per jiwa dalam rupiah dan Beras zakat fitrah per jiwa dalam kilogram.', 'Pilih kelipatan pembulatan alokasi yang telah disepakati. Isi bobot Fakir, Miskin, dan Mualaf sesuai keputusan yang berlaku.', 'Periksa total bobot dan catatan sumber atau keputusan aturan. Jangan mengubah parameter hanya untuk membuat hasil terlihat sesuai harapan.', 'Tekan Simpan parameter demo. Catat bahwa perubahan aturan tidak otomatis menghitung ulang alokasi yang sudah disetujui.'], preview: [['Tarif fitrah', 'Rp 45.000 / jiwa · contoh'], ['Beras fitrah', '2,5 kg / jiwa · contoh'], ['Pembulatan', 'Rp 1.000 / Rp 10.000 / pilihan lain'], ['Bobot asnaf', 'Fakir · Miskin · Mualaf'], ['Tombol', 'Simpan parameter demo']], result: 'Parameter baru digunakan pada perhitungan berikutnya dan tetap dapat diperiksa kembali pada halaman yang sama.', caution: 'Tarif, nisab, harga emas, bobot, serta formula yang belum tersedia di form ini harus ditetapkan melalui keputusan terpisah. Halaman prototype belum menjadi penetapan hukum atau ketentuan syariah.' },
-          { menu: 'Mustahik & Kelayakan', goal: 'Mencatat calon penerima, mengisi hasil survei, meninjau skor, lalu memverifikasi data yang layak.', steps: ['Buka Mustahik & Kelayakan dan tekan Tambah survei mustahik.', 'Isi identitas calon penerima seperti nama, alamat, wilayah, RT, dan informasi kontak yang diperlukan. Gunakan data sintetis saat demonstrasi.', 'Lengkapi faktor survei yang tersedia, antara lain pekerjaan, kisaran penghasilan, jumlah tanggungan, tempat tinggal, status pernikahan, dan jalur Mualaf bila sesuai.', 'Baca kotak Skor sementara. Periksa Jalur F/M, Jalur Mualaf, dan status akhir yang dihitung sistem.', 'Simpan hasil survei. Kembali ke daftar, cocokkan identitas dan hasilnya, lalu tekan Verifikasi hanya setelah data dan kelayakan diperiksa.', 'Bila ada kekeliruan sebelum verifikasi, gunakan Edit survei untuk memperbaiki data. Setelah status terverifikasi, lakukan perubahan sesuai prosedur koreksi data yang disetujui lembaga.'], preview: [['Identitas', 'Nama · Alamat · RT'], ['Faktor survei', 'Wilayah · Penghasilan · Tanggungan'], ['Klasifikasi', 'Fakir · Miskin · Mualaf'], ['Skor sementara', 'Ditampilkan sebelum simpan'], ['Tombol', 'Simpan hasil survei · Verifikasi']], result: 'Data calon penerima tampil dalam daftar dan statusnya berubah menjadi terverifikasi setelah pemeriksaan.', caution: 'Hasil skor prototype mengikuti formula acuan workbook yang masih memiliki catatan pengecualian. Periksa menu Acuan Workbook 1447H dan minta validasi stakeholder sebelum memakai klasifikasi untuk penyaluran nyata.' },
+          { menu: 'Mustahik & Kelayakan', goal: 'Mencatat calon penerima, mengisi hasil survei, meninjau skor, lalu memverifikasi data yang layak.', steps: ['Buka Mustahik & Kelayakan dan tekan Tambah survei mustahik.', 'Isi identitas calon penerima seperti nama, alamat, wilayah, RT, dan informasi kontak yang diperlukan. Gunakan data sintetis saat demonstrasi.', 'Lengkapi faktor survei yang tersedia, antara lain pekerjaan, kisaran penghasilan, jumlah tanggungan, tempat tinggal, status pernikahan, dan Jalur Asnaf lain bila sesuai (Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, atau Amil).', 'Baca kotak Skor sementara. Periksa Jalur F/M, Jalur Asnaf lain (Q), dan status akhir yang dihitung sistem sesuai cabang Q/P.', 'Simpan hasil survei. Kembali ke daftar, cocokkan identitas dan hasilnya, lalu tekan Verifikasi hanya setelah data dan kelayakan diperiksa.', 'Bila ada kekeliruan sebelum verifikasi, gunakan Edit survei untuk memperbaiki data. Setelah status terverifikasi, lakukan perubahan sesuai prosedur koreksi data yang disetujui lembaga.'], preview: [['Identitas', 'Nama · Alamat · RT'], ['Faktor survei', 'Wilayah · Penghasilan · Tanggungan'], ['Klasifikasi', 'Fakir · Miskin · Asnaf lain'], ['Skor sementara', 'Ditampilkan sebelum simpan'], ['Tombol', 'Simpan hasil survei · Verifikasi']], result: 'Data calon penerima tampil dalam daftar dan statusnya berubah menjadi terverifikasi setelah pemeriksaan.', caution: 'Hasil skor prototype mengikuti formula acuan workbook yang masih memiliki catatan pengecualian. Periksa menu Acuan Workbook 1447H dan minta validasi stakeholder sebelum memakai klasifikasi untuk penyaluran nyata.' },
           { menu: 'Notifikasi', goal: 'Melihat dan mengelola contoh antrean pesan yang berkaitan dengan layanan.', steps: ['Buka Notifikasi untuk melihat daftar notifikasi demo.', 'Periksa siapa penerima, saluran, subjek, dan status notifikasi.', 'Saat membuat antrean, pastikan persetujuan komunikasi penerima sudah ada dan pilih saluran yang sesuai.', 'Simpan antrean dan periksa statusnya. Status Simulasi berarti pesan belum benar-benar dikirim ke email atau WhatsApp.'], preview: [['Penerima', 'Muzakki terdaftar'], ['Saluran', 'Email / WhatsApp simulasi'], ['Persetujuan', 'Harus disetujui'], ['Status', 'Simulasi'], ['Catatan', 'Belum ada pengiriman eksternal']], result: 'Riwayat antrean pesan terlihat untuk kebutuhan evaluasi.', caution: 'Jangan menjanjikan pesan sudah diterima oleh Muzakki. Pengiriman email dan WhatsApp memerlukan API dan konfigurasi produksi yang belum tersedia.' },
           { menu: 'Audit & Arsip', goal: 'Memeriksa aktivitas pengguna dan konsistensi rantai audit pada data lokal.', steps: ['Buka Audit & Arsip setelah melakukan aktivitas yang ingin diperiksa.', 'Baca waktu, pengguna, jenis aktivitas, detail, dan nilai hash pada tabel log.', 'Periksa kartu Status pemeriksaan. Status Konsisten menunjukkan hash chain demo cocok dengan data log yang sedang dibaca.', 'Jika status menunjukkan Perlu audit, catat jumlah entri bermasalah dan jangan menghapus atau mengedit data secara manual.', 'Gunakan hasil pemeriksaan sebagai bahan evaluasi. Simpan arsip data melalui prosedur backup project bila diperlukan.'], preview: [['Status pemeriksaan', 'Konsisten / Perlu audit'], ['Log aktivitas', 'Waktu · Pengguna · Jenis · Detail'], ['Hash', 'SHA-256 berantai'], ['Antrean sinkronisasi', 'Jumlah event lokal'], ['Aksi', 'Periksa log dan eskalasi anomali']], result: 'Admin dapat menelusuri aktivitas yang dicatat dan mengenali perubahan data lokal yang tidak konsisten.', caution: 'Hash chain di browser bukan audit immutable dan tidak membuktikan identitas penanda tangan. Jangan menganggapnya sebagai pengganti audit server.' },
           { menu: 'Evaluasi Prototype', goal: 'Membaca keputusan yang masih menunggu validasi sebelum sistem dipakai secara resmi.', steps: ['Buka Evaluasi Prototype.', 'Baca setiap topik, status keputusan, dan alasan mengapa topik tersebut belum final.', 'Catat hal yang perlu dibawa ke rapat stakeholder, pembimbing agama, Bendahara, atau BAZNAS.', 'Jangan mengubah alur operasional berdasarkan asumsi pribadi sebelum keputusan dicatat.'], preview: [['Topik', 'Aturan bisnis yang belum final'], ['Status', 'Perlu keputusan stakeholder'], ['Tindak lanjut', 'Diskusi dan validasi'], ['Hasil', 'Keputusan terdokumentasi']], result: 'Tim memahami fitur yang sudah dapat diuji dan keputusan yang masih harus disepakati.' }
@@ -2341,7 +2437,7 @@
     const receiptTable = `<section class="card"><h3>Rincian penghimpunan</h3>${A.table(['Nomor', 'Tanggal', 'Muzakki', 'Sumber', 'Status', 'Uang', 'Beras'], m.txs.map((tx) => [esc(tx.serial), esc(new Date(tx.createdAt).toLocaleDateString('id-ID')), esc(A.person(tx.personId)?.name || 'Muzakki'), esc(tx.source === 'self-service' ? 'Mandiri' : 'Konter'), statusPill(tx.status, 'transaction'), money(effectiveTotals(tx).money), kilos(effectiveTotals(tx).rice)]))}</section>`
     const cashTable = `<section class="card"><h3>Rincian serah terima dan rekening</h3>${A.table(['Kode setoran', 'Amil', 'Jumlah transaksi', 'Kas aktual', 'Rekening', 'Status'], m.deposits.map((x) => [esc(x.id), esc(A.who(x.amilId)), x.transactionIds.length, `${money(x.actualMoney ?? x.declaredMoney)} · ${kilos(x.actualRice ?? x.declaredRice)}`, `${money(x.bankMoney || 0)} · ${kilos(x.bankRice || 0)}`, statusPill(x.status, 'deposit')]))}</section>`
     const distributionTable = `<section class="card"><h3>Rincian distribusi</h3>${A.table(['Tanggal', 'Batch', 'Mustahik ID', 'Uang', 'Beras', 'Pelaksana'], m.distributions.map((x) => [esc(new Date(x.deliveredAt).toLocaleDateString('id-ID')), esc(db.batches.find((b) => b.id === x.batchId)?.name || '—'), esc(x.mustahikId), money(x.money), kilos(x.rice), esc(A.who(x.deliveredBy))]))}</section>`
-    const mustahikTable = `<section class="card"><h3>Daftar mustahik terverifikasi</h3>${A.table(['Nomor', 'Nama', 'Status domisili / Daerah / RW / RT', 'Wilayah penilaian (kolom H)', 'Asnaf', 'Status'], m.mustahiks.map((x) => { const p = A.person(x.personId); return [esc(x.registrationNo || x.id), esc(p?.name || '—'), `${esc(p?.domicileStatus === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah')} · ${esc(domicileLabel(p, currentTenantId()))}`, esc(x.region || '—'), esc(x.finalStatus || x.asnaf || '—'), statusPill(x.status)] }))}</section>`
+    const mustahikTable = `<section class="card"><h3>Daftar mustahik terverifikasi</h3>${A.table(['Nomor', 'Nama', 'Status domisili / Daerah / RW / RT', 'Wilayah penilaian (kolom H)', 'Asnaf', 'Status'], m.mustahiks.map((x) => { const p = A.person(x.personId); return [esc(x.registrationNo || x.id), esc(p?.name || '—'), `${esc(p?.domicileStatus === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah')} · ${esc(domicileLabel(p, currentTenantId()))}`, esc(mustahikRegionLabel(x.region, currentTenantId())), esc(x.finalStatus || x.asnaf || '—'), statusPill(x.status)] }))}</section>`
     const detail = type === 'receipt' ? receiptTable : type === 'cash' ? cashTable : type === 'distribution' ? distributionTable : type === 'mustahik' ? mustahikTable : `<div class="two-col"><section class="card"><h3>Rekap per jenis ZIS</h3>${A.table(['Jenis', 'Uang', 'Beras'], rows.map(([x, u, r]) => [esc(x), money(u), kilos(r)]))}</section><section class="card"><h3>Rekap identitas per Daerah / RW / RT</h3>${A.table(['Tingkat', 'Daerah', 'RW', 'RT', 'Muzakki', 'Mustahik', 'Total'], territoryRows.map((x) => [esc(x.level), esc(x.areaName), esc(x.rwName || '—'), esc(x.rtName || '—'), x.muzakki, x.mustahik, x.muzakki + x.mustahik]))}</section></div>${receiptTable}${cashTable}${distributionTable}${mustahikTable}`
     return `${A.boxhead('Pelaporan Periode dan UPZ', 'Rekap penghimpunan, rekonsiliasi, batch distribusi, penyaluran dan jejak audit untuk pemeriksaan dan laporan berkala.', `<div class="actions">${action('Unduh CSV', 'export-report-csv', 'sm')}${action('Unduh XLSX', 'export-report-xlsx', 'sm primary')}${action('Cetak / PDF', 'export-report-pdf', 'sm')}</div>`)}<div class="cards">${A.stat('Penerimaan uang', money(m.received), 'Nilai transaksi non-batal')}${A.stat('Penerimaan beras', kilos(m.rice), 'Dicatat sebagai kilogram')}${A.stat('Disahkan Amil (Paid)', money(m.verified), 'Tahap penghimpunan; belum lulus rekonsiliasi Bendahara')}${A.stat('Sudah disalurkan', money(m.sent), 'Realisasi batch Relawan')}</div><section class="card"><h3>Filter laporan</h3><div class="grid-form">${A.sel('Periode', 'report-period', A.scoped('periods').map((p) => [p.id, p.name]), m.period?.id || '')}${A.sel('Jenis laporan', 'report-type', [['all', 'Semua ZIS'], ['receipt', 'Penerimaan'], ['cash', 'Rekonsiliasi kas'], ['distribution', 'Distribusi'], ['mustahik', 'Mustahik dan wilayah']], type)}</div><p class="caption">Filter periode dan jenis laporan diterapkan pada tampilan serta berkas ekspor.</p></section><section class="card"><h3>Ringkasan BAZNAS / UPZ</h3><p class="caption">Format ringkas ini menjadi bahan penyelarasan dengan BAZNAS. Pengiriman pusat belum aktif karena endpoint dan format integrasi resmi belum disediakan.</p>${A.table(['Indikator', 'Nilai'], baznas.map(([k, v]) => [esc(k), esc(v)]))}<div class="form-actions">${action('Unduh paket laporan UPZ XLSX', 'export-baznas-xlsx', 'sm primary')}${action('Unduh paket laporan UPZ CSV', 'export-baznas-csv', 'sm')}</div></section>${detail}`
   }
@@ -2350,7 +2446,7 @@
     const list = A.scoped('mustahiks')
     const count = (status) => list.filter((x) => (x.finalStatus || x.asnaf) === status).length
     const territoryRows = territoryReportRows().filter((x) => x.mustahik > 0)
-    return `${A.boxhead('Mustahik, Survei & Kelayakan', 'Identitas administratif ditautkan ke master Daerah/RW/RT lembaga. Wilayah penilaian kolom H tetap terpisah dan tetap menjadi input formula workbook 1447H.', action('Tambah survei mustahik', 'mustahik-new', 'primary'))}<div class="cards">${A.stat('Data mustahik', list.length, 'Identitas tersimpan per lembaga')}${A.stat('Fakir', count('FAKIR'), 'Sesuai formula workbook')}${A.stat('Miskin', count('MISKIN'), 'Sesuai formula workbook')}${A.stat('Mualaf', count('MUALAF'), 'Jalur Mualaf sesuai formula')}</div><section class="card"><h3>Rekap Mustahik per Daerah / RW / RT</h3>${A.table(['Tingkat', 'Daerah', 'RW', 'RT', 'Jumlah Mustahik'], territoryRows.map((x) => [esc(x.level), esc(x.areaName), esc(x.rwName || '—'), esc(x.rtName || '—'), x.mustahik]))}</section><section class="card"><h3>Daftar calon / penerima Mustahik</h3>${A.table(['Nama', 'Domisili administratif', 'Wilayah penilaian (kolom H)', 'Input penilaian', 'Skor / asnaf', 'Status', 'Aksi'], list.map((m) => { const p = A.person(m.personId); const label = domicileLabel(p, currentTenantId()); return [`<b>${esc(p?.name || '—')}</b><div class="tiny">${esc(p?.address || '')}</div>`, `${esc(p?.domicileStatus === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah')}<div class="tiny">${esc(label)}</div>`, esc(m.region || '—'), `<span class="tiny">${esc(m.incomeBand || 'Belum diisi')} · ${esc(m.housing || '—')} · ${esc(m.marital || '—')}</span><div class="tiny">${esc(m.dependents || 'Belum diisi')} tanggungan</div>`, `<b>${Number(m.score || 0)}</b> / 500<div class="tiny">${esc(m.finalStatus || m.asnaf || 'Belum diklasifikasi')}</div>`, statusPill(m.status), `${actionFor('Edit survei', 'mustahik-edit-v5', m.id, 'sm')}${m.status !== 'terverifikasi' ? actionFor('Verifikasi', 'mustahik-verify-v5', m.id, 'sm primary') : ''}`] }))}</section><div class="alert warn">Kolom “Wilayah penilaian (kolom H)” adalah input survei terpisah untuk formula workbook 1447H. Nilainya tidak diisi otomatis dari Daerah/RW/RT administratif.</div>`
+    return `${A.boxhead('Mustahik, Survei & Kelayakan', 'Kolom H memakai master Daerah/RW/RT tenant aktif: kosong = 0, Non-[Daerah] = 50, dan Daerah dengan RT = 100. Domisili administratif tetap tersimpan terpisah.', action('Tambah survei mustahik', 'mustahik-new', 'primary'))}<div class="cards">${A.stat('Data mustahik', list.length, 'Identitas tersimpan per lembaga')}${A.stat('Fakir', count('FAKIR'), 'Sesuai formula skor')}${A.stat('Miskin', count('MISKIN'), 'Sesuai formula skor')}${A.stat('Jalur asnaf lain', list.filter((x) => x.asnafRoute || x.mualafRoute).length, 'Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, Amil')}</div><section class="card"><h3>Rekap Mustahik per Daerah / RW / RT</h3>${A.table(['Tingkat', 'Daerah', 'RW', 'RT', 'Jumlah Mustahik'], territoryRows.map((x) => [esc(x.level), esc(x.areaName), esc(x.rwName || '—'), esc(x.rtName || '—'), x.mustahik]))}</section><section class="card"><h3>Daftar calon / penerima Mustahik</h3>${A.table(['Nama', 'Domisili administratif', 'Wilayah penilaian (kolom H)', 'Input penilaian', 'Skor / asnaf · Q', 'Status', 'Aksi'], list.map((m) => { const p = A.person(m.personId); const label = domicileLabel(p, currentTenantId()); return [`<b>${esc(p?.name || '—')}</b><div class="tiny">${esc(p?.address || '')}</div>`, `${esc(p?.domicileStatus === 'warga_daerah' ? 'Warga daerah' : 'Non-daerah')}<div class="tiny">${esc(label)}</div>`, esc(mustahikRegionLabel(m.region, currentTenantId())), `<span class="tiny">${esc(m.incomeBand || 'Belum diisi')} · ${esc(m.housing || '—')} · ${esc(m.marital || '—')}</span><div class="tiny">${esc(m.dependents || 'Belum diisi')} tanggungan</div>`, `<b>${Number(m.score || 0)}</b> / 500<div class="tiny">R: ${esc(m.finalStatus || m.asnaf || 'Belum diklasifikasi')} · Q: ${esc(m.asnafRoute || (m.mualafRoute ? 'MUALAF' : '—'))}</div>`, statusPill(m.status), `${actionFor('Edit survei', 'mustahik-edit-v5', m.id, 'sm')}${m.status !== 'terverifikasi' ? actionFor('Verifikasi', 'mustahik-verify-v5', m.id, 'sm primary') : ''}`] }))}</section><div class="alert light">Pilihan H disimpan sebagai ID Daerah/RW/RT tenant aktif; RT dari tenant lain tidak dapat dipakai. Bila data lama tidak cocok dengan master wilayah, periksa dan pilih ulang sebelum menyimpan.</div>`
   }
   A.set('mustahikPage', mustahikPageV5)
 
@@ -3077,7 +3173,7 @@
     try {
       if (['self-transaction', 'operator-transaction'].includes(form.dataset.v5Form) && maybeConfirmExcess(form, d)) return
       switch (form.dataset.v5Form) {
-        case 'muzakki-register': submitMuzakkiRegistration(d); return
+        case 'muzakki-register': submitMuzakkiRegistration(d); A.clearModalDraft?.(form); return
         case 'self-profile': selfProfileSave(d); break
         case 'family-save': familySave(form); break
         case 'join-tenant': {
@@ -3109,7 +3205,7 @@
           switchTenant(tenant.id)
           break
         }
-        case 'self-transaction': submitSelfTransaction(d); return
+        case 'self-transaction': submitSelfTransaction(d); A.clearModalDraft?.(form); return
         case 'self-transaction-cancel': {
           if (activeUser()?.role !== 'Muzakki') throw new Error('Hanya Muzakki yang dapat membatalkan transaksi pribadi')
           const tx = db.transactions.find((item) => item.id === id)
@@ -3126,7 +3222,7 @@
           break
         }
         case 'allocation-flexible-create': createFlexibleAllocation(d); break
-        case 'operator-transaction': submitOperatorTransaction(d); return
+        case 'operator-transaction': submitOperatorTransaction(d); A.clearModalDraft?.(form); return
         case 'amil-verify': {
           expirePending()
           if (activeUser()?.role !== 'Amil') throw new Error('Hanya Amil yang dapat mengesahkan transaksi')
@@ -3328,6 +3424,7 @@
         }
         default: return
       }
+      A.clearModalDraft?.(form)
       A.persist()
       if (state.modal) state.modal = null
       A.render()
@@ -3353,6 +3450,26 @@
   window.__SIZISNUR_OPEN_OPERATOR_TRANSACTION = () => openOperatorTransactionModal()
   window.__SIZISNUR_TRANSACTION_FORM_FIELDS = (prefix, units, defaultValue) => transactionCalculatorFields(prefix, units, defaultValue)
   window.__SIZISNUR_UPDATE_TRANSACTION_FORM = (form) => updateSharedTransactionForm(form)
+  window.__SIZISNUR_RESTORE_TRANSACTION_LINES = (form, lines) => {
+    const shared = form?.querySelector?.('[data-shared-transaction="yes"]')
+    const host = shared?.querySelector('[data-transaction-lines]')
+    if (!shared || !host || !Array.isArray(lines) || !lines.length) return false
+    const count = Math.min(12, lines.length)
+    const prefix = shared.dataset.transactionPrefix || 'tx'
+    host.innerHTML = lines.slice(0, count).map((_, index) => transactionLineMarkup(prefix, index, Number(shared.dataset.defaultFitrahCount) || 1, '')).join('')
+    shared.dataset.nextLineIndex = String(count)
+    Array.from(host.querySelectorAll('[data-transaction-line]')).forEach((row, index) => {
+      Object.entries(lines[index] || {}).forEach(([name, entry]) => {
+        const control = row.querySelector(`[data-line-field="${name}"]`)
+        if (!control) return
+        if (String(control.type).toLowerCase() === 'checkbox') control.checked = !!entry.checked
+        else control.value = entry.value ?? ''
+        if (entry.autoFill !== undefined) control.dataset.autoFill = entry.autoFill
+      })
+    })
+    updateSharedTransactionForm(shared)
+    return true
+  }
   window.__SIZISNUR_FORMAT_INPUT_VALUE = (input) => formatInputValue(input)
   window.__SIZISNUR_MAY_CONFIRM_TRANSACTION_EXCESS = (form, data) => maybeConfirmExcess(form, data)
   window.__SIZISNUR_RECEIPT_MARKUP = (tx) => receiptMarkupV5(tx)

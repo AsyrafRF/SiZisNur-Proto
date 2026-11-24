@@ -1,5 +1,13 @@
 # Changelog SiZisNur Prototype
 
+## Penyesuaian survei mustahik, wilayah tenant, dan draft modal — 24 November 2026
+
+- Mengganti label dan field kolom Q dari **Jalur Mualaf** menjadi **Jalur Asnaf lain** dengan opsi Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil. Percabangan kolom R mempertahankan posisi logika Q/P dari formula Mualaf yang terdokumentasi; pilihan Q tidak selalu menjadi status akhir karena kondisi P tetap menentukan hasil. Field Awal Mualaf hanya muncul untuk pilihan Mualaf.
+- Menyelaraskan pilihan kolom H dengan Master Daerah/RW/RT tenant aktif: kosong bernilai 0, Non-[Daerah] tenant bernilai 50, dan [Daerah] dengan RT tenant bernilai 100. Referensi disimpan sebagai ID wilayah tenant, divalidasi lintas relasi, dan dimigrasikan dari nilai lama bila dapat dipetakan secara unik. Data domisili administratif tetap terpisah.
+- Mengubah seluruh modal agar klik backdrop tidak menutup modal. Modal hanya ditutup melalui tombol X atau aksi batal/close yang eksplisit. Draft form disimpan otomatis pada setiap perubahan dan dipulihkan saat modal dibuka kembali; draft dihapus hanya setelah submit berhasil. Field password/file tidak disimpan ke draft.
+- Memperbarui dokumentasi, matriks skor dan versi cache service worker. Baseline nominal/bobot alokasi tetap tidak diubah: project tidak menyediakan dasar alokasi untuk Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil.
+- Catatan sumber: berkas workbook `.xlsx` asli tidak disertakan di arsip project; pemeriksaan aturan mengikuti dokumentasi dan kode yang tersedia, bukan rekonsiliasi langsung terhadap workbook sumber.
+
 ## Kebijakan verifikasi transaksi 2 jam dan penghapusan build standalone — 23 November 2026
 
 - Menetapkan satu masa berlaku untuk semua transaksi zakat `Pending`: maksimal 2 jam sejak waktu pembuatan atau sampai periode ditutup, mana yang lebih dahulu.

@@ -176,6 +176,7 @@
     // preset replaces the database in-place without reloading the script bundle.
     window.__SIZISNUR_REBUILD_DEMO_MUZAKKI?.()
     window.__SIZISNUR_REBUILD_TENANT_TERRITORIES?.()
+    window.__SIZISNUR_MIGRATE_MUSTAHIK_REGIONS?.()
     window.__SIZISNUR_REBUILD_AUDIT_HASHES?.()
     A.persist()
     confirmMode = ''; pendingImport = null; pendingImportSummary = null
@@ -373,6 +374,7 @@
         if (value.trim() !== 'GANTI DATASET') throw new Error('Ketik GANTI DATASET persis untuk mengonfirmasi penggantian dataset.')
         loadDatasetPreset(form.dataset.profile)
       }
+      A.clearModalDraft?.(form)
     } catch (error) { A.toast(error.message || String(error), 'error') }
   })
   document.addEventListener('change', (event) => {
