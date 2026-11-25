@@ -120,9 +120,11 @@ Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan peng
 - **Email demo:** `root@sizisnur.demo`
 - **ID internal:** `PA-SIZISNUR-ROOT`
 - **Cara masuk:** pilih tile **Admin SiZisNur** pada halaman **Akses Demo Langsung**. Akun root tidak diterima pada jalur Login Panitia.
-- **Konsol:** Ringkasan, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
+- **Konsol:** Ringkasan, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, **Tiket Bantuan**, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
 
-Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, serta mengaktifkan/nonaktifkan akun lembaga. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
+Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, mengaktifkan/nonaktifkan akun lembaga, serta menangani **Tiket Bantuan** lintas lembaga. Tiket menyimpan asal Lembaga dan identitas pelapor; root dapat membalas langsung dan mengubah status, sedangkan pengguna Lembaga dapat membaca jawaban serta membalas kembali. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
+
+Catatan review alur sistem dan keputusan desain tiket support tersedia pada [`docs/REVIEW_ALUR_DAN_TIKET_SUPPORT_2026-11-25.md`](docs/REVIEW_ALUR_DAN_TIKET_SUPPORT_2026-11-25.md).
 
 ## 9. Alur end-to-end yang diimplementasikan
 

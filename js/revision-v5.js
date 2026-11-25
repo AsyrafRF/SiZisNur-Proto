@@ -2071,6 +2071,43 @@
   }
   function supportPage() {
     const role = activeUser()?.role || 'Admin'
+    const supportStatusLabels = {
+      baru: 'Baru', diproses: 'Sedang ditangani', menunggu_tenant: 'Menunggu jawaban Lembaga',
+      menunggu_admin: 'Menunggu Admin SiZisNur', selesai: 'Selesai',
+    }
+    const supportStatusClass = (status) => ({
+      baru: 'warning', diproses: 'info', menunggu_tenant: 'warning',
+      menunggu_admin: 'danger', selesai: 'success',
+    }[status] || 'light')
+    const displaySupportDate = (value) => value
+      ? new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+      : '—'
+    const currentSupportTickets = typeof A.scoped === 'function'
+      ? A.scoped('supportTickets').filter((ticket) => role === 'Admin' || ticket.userId === activeUser()?.id)
+      : []
+    const orderedSupportTickets = currentSupportTickets.slice().sort((a, b) =>
+      String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+    const supportTicketCards = orderedSupportTickets.length
+      ? orderedSupportTickets.map((ticket) => {
+        const messages = Array.isArray(ticket.messages) && ticket.messages.length
+          ? ticket.messages
+          : [{ senderName: ticket.createdByName || 'Pelapor', senderRole: ticket.role || 'Pengguna lembaga', senderScope: 'tenant', body: ticket.description || '', createdAt: ticket.createdAt }]
+        const thread = messages.map((message) => `<article class="ticket-message ${message.senderScope === 'platform' ? 'is-platform' : 'is-tenant'}">
+          <div class="ticket-message-head"><b>${esc(message.senderName || 'Pengguna')}</b><span>${esc(message.senderRole || (message.senderScope === 'platform' ? 'Admin SiZisNur' : 'Lembaga'))} · ${esc(displaySupportDate(message.createdAt))}</span></div>
+          <p>${esc(message.body || '').replace(/\n/g, '<br>')}</p>
+        </article>`).join('')
+        const status = ticket.status || 'baru'
+        return `<article class="card support-ticket-card">
+          <div class="card-top"><div><span class="ticket-id">${esc(ticket.id)}</span><h3>${esc(ticket.subject || 'Tiket bantuan')}</h3></div><span class="tag ${supportStatusClass(status)}">${esc(supportStatusLabels[status] || status)}</span></div>
+          <div class="ticket-summary"><span>${esc(ticket.kind || 'help')} · Prioritas ${esc(ticket.priority || 'normal')}</span><span>Dibuat ${esc(displaySupportDate(ticket.createdAt))}</span></div>
+          <div class="ticket-thread">${thread}</div>
+          <form data-v5-form="support-reply" data-id="${esc(ticket.id)}">
+            ${A.textarea('Balasan / informasi tambahan', 'message', '')}
+            ${formButton(status === 'selesai' ? 'Balas dan buka kembali tiket' : 'Kirim balasan')}
+          </form>
+        </article>`
+      }).join('')
+      : '<div class="empty">Belum ada tiket dukungan yang dapat ditampilkan. Tiket yang Anda buat akan muncul di sini bersama balasan Admin SiZisNur.</div>'
     const guides = {
       Admin: {
         intro: 'Anda bertugas menyiapkan lembaga, akun petugas, periode, parameter perhitungan, dan kelayakan Mustahik. Transaksi yang sudah disahkan Amil tidak boleh diedit atau dihapus langsung.',
@@ -2210,7 +2247,7 @@
     const jumps = manualModules.map((module, index) => `<button type="button" class="manual-jump" data-guide-target="manual-${slug}-${index + 1}">${esc(module.menu)}</button>`).join('')
     const faqs = current.faqs.map(([q, a]) => `<details class="manual-faq"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')
     const workflow = current.flow.map((step, index) => `<div class="guide-step"><span>${String(index + 1).padStart(2, '0')}</span><b>${esc(step)}</b></div>`).join('<div class="guide-arrow">↓</div>')
-    return `${A.boxhead(`Panduan Penggunaan · ${esc(role)}`, current.intro)}<section class="manual-welcome"><div><span class="manual-eyebrow">PANDUAN KHUSUS ROLE</span><h2>Ikuti petunjuk satu per satu</h2><p>Panduan ini menjelaskan letak menu, tombol yang perlu ditekan, data yang perlu diisi, hasil yang akan muncul, dan tindakan bila terjadi kendala. Nama menu ditulis sama seperti yang terlihat pada sidebar.</p></div><span class="manual-role-mark">${esc(role)}</span></section><section class="card manual-flow-card"><div class="card-top"><div><h3>Alur kerja ${esc(role)}</h3><p class="caption">Gambaran besar pekerjaan Anda dalam satu periode.</p></div><span class="tag info">${current.flow.length} tahap</span></div><div class="guide-flow">${workflow}</div></section><section class="card manual-ready-card"><h3>Sebelum mulai menggunakan aplikasi</h3><div class="manual-ready-grid">${current.ready.map((item, i) => `<div><span>${String(i + 1).padStart(2, '0')}</span><p>${esc(item)}</p></div>`).join('')}</div></section><section class="manual-menu-section"><div class="manual-section-head"><div><span class="manual-eyebrow">PETUNJUK OPERASIONAL</span><h3>Panduan penggunaan setiap menu</h3><p>Pilih menu yang ingin dipelajari. Buka judul menu untuk melihat urutan langkah, contoh tampilan, hasil yang diharapkan, dan catatan penting.</p></div><span class="manual-count">${manualModules.length} menu</span></div><div class="manual-jump-list">${jumps}</div><div class="manual-modules">${modules}</div></section><section class="card manual-faq-card"><div class="manual-section-head"><div><span class="manual-eyebrow">BANTUAN CEPAT</span><h3>Pertanyaan yang sering muncul</h3><p>Jawaban singkat untuk kendala yang paling mungkin ditemui saat menggunakan role ${esc(role)}.</p></div></div>${faqs}</section><section class="card"><h3>Bantuan, dukungan dan umpan balik</h3><p class="caption">Bila petunjuk di atas belum menyelesaikan masalah, kirim pertanyaan, kendala penggunaan, atau laporan bug. Pada prototype, tiket disimpan di database browser lokal dan belum diteruskan ke server pemantauan.</p><form data-v5-form="support"><div class="grid-form">${A.sel('Jenis laporan', 'kind', [['help', 'Butuh bantuan'], ['bug', 'Laporkan bug'], ['feedback', 'Saran perbaikan'], ['security', 'Dugaan masalah keamanan']], 'help')}${A.fld('Judul singkat', 'subject', '', 'text', 'required')}${A.sel('Prioritas', 'priority', [['normal', 'Normal'], ['high', 'Tinggi'], ['urgent', 'Mendesak']], 'normal')}</div>${A.textarea('Uraian lengkap', 'description', '')}${A.fld('Kontak balasan (opsional)', 'contact', '', 'text')}${formButton('Kirim dukungan')}</form></section><div class="alert light">Untuk keamanan, jangan masukkan kata sandi, NIK lengkap, data rekening pribadi, atau informasi sensitif ke dalam tiket bantuan. Saat rilis, pengiriman tiket ke platform monitoring memerlukan API dan kebijakan akses tersendiri.</div>`
+    return `${A.boxhead(`Panduan Penggunaan · ${esc(role)}`, current.intro)}<section class="manual-welcome"><div><span class="manual-eyebrow">PANDUAN KHUSUS ROLE</span><h2>Ikuti petunjuk satu per satu</h2><p>Panduan ini menjelaskan letak menu, tombol yang perlu ditekan, data yang perlu diisi, hasil yang akan muncul, dan tindakan bila terjadi kendala. Nama menu ditulis sama seperti yang terlihat pada sidebar.</p></div><span class="manual-role-mark">${esc(role)}</span></section><section class="card manual-flow-card"><div class="card-top"><div><h3>Alur kerja ${esc(role)}</h3><p class="caption">Gambaran besar pekerjaan Anda dalam satu periode.</p></div><span class="tag info">${current.flow.length} tahap</span></div><div class="guide-flow">${workflow}</div></section><section class="card manual-ready-card"><h3>Sebelum mulai menggunakan aplikasi</h3><div class="manual-ready-grid">${current.ready.map((item, i) => `<div><span>${String(i + 1).padStart(2, '0')}</span><p>${esc(item)}</p></div>`).join('')}</div></section><section class="manual-menu-section"><div class="manual-section-head"><div><span class="manual-eyebrow">PETUNJUK OPERASIONAL</span><h3>Panduan penggunaan setiap menu</h3><p>Pilih menu yang ingin dipelajari. Buka judul menu untuk melihat urutan langkah, contoh tampilan, hasil yang diharapkan, dan catatan penting.</p></div><span class="manual-count">${manualModules.length} menu</span></div><div class="manual-jump-list">${jumps}</div><div class="manual-modules">${modules}</div></section><section class="card manual-faq-card"><div class="manual-section-head"><div><span class="manual-eyebrow">BANTUAN CEPAT</span><h3>Pertanyaan yang sering muncul</h3><p>Jawaban singkat untuk kendala yang paling mungkin ditemui saat menggunakan role ${esc(role)}.</p></div></div>${faqs}</section><section class="card support-ticket-submit"><h3>Bantuan, dukungan dan umpan balik</h3><p class="caption">Kirim pertanyaan, kendala penggunaan, laporan bug, atau masukan. Laporan akan masuk ke kotak tiket Admin SiZisNur dengan identitas Lembaga, role pelapor, dan riwayat percakapan.</p><form data-v5-form="support"><div class="grid-form">${A.sel('Jenis laporan', 'kind', [['help', 'Butuh bantuan'], ['bug', 'Laporkan bug'], ['feedback', 'Saran perbaikan'], ['security', 'Dugaan masalah keamanan']], 'help')}${A.fld('Judul singkat', 'subject', '', 'text', 'required')}${A.sel('Prioritas', 'priority', [['normal', 'Normal'], ['high', 'Tinggi'], ['urgent', 'Mendesak']], 'normal')}</div>${A.textarea('Uraian lengkap', 'description', '')}${A.fld('Kontak balasan (opsional)', 'contact', '', 'text')}${formButton('Kirim ke Admin SiZisNur')}</form></section><section class="support-ticket-history"><div class="card-top"><div><h3>Riwayat tiket dan balasan</h3><p class="caption">${role === 'Admin' ? 'Sebagai Admin Lembaga, Anda dapat memantau tiket yang diajukan pengguna lain pada Lembaga ini.' : 'Anda dapat melihat tiket yang Anda ajukan beserta jawaban Admin SiZisNur.'}</p></div><span class="tag info">${orderedSupportTickets.length} tiket</span></div>${supportTicketCards}</section><div class="alert light">Untuk keamanan, jangan masukkan kata sandi, NIK lengkap, data rekening pribadi, atau informasi sensitif ke dalam tiket bantuan. Fitur ini tersimpan pada database browser prototype; balasan belum tersinkron lintas perangkat sampai backend tiket tersedia.</div>`
   }
 
   function prototypePage() {
@@ -3342,12 +3379,48 @@
           break
         }
         case 'support': {
-          if (!d.subject.trim() || !d.description.trim()) throw new Error('Judul dan uraian wajib diisi')
-          const ticket = { id: newId('SP'), tenantId: currentTenantId(), userId: activeUser().id, role: activeUser().role, kind: d.kind, priority: d.priority, subject: d.subject.trim(), description: d.description.trim(), contact: d.contact.trim(), status: 'baru', createdAt: timestamp() }
+          const actor = activeUser()
+          const tenantId = currentTenantId()
+          const subject = String(d.subject || '').trim()
+          const description = String(d.description || '').trim()
+          const kind = ['help', 'bug', 'feedback', 'security'].includes(d.kind) ? d.kind : 'help'
+          const priority = ['normal', 'high', 'urgent'].includes(d.priority) ? d.priority : 'normal'
+          if (!actor || actor.scope === 'platform' || !db.tenants.some((tenant) => tenant.id === tenantId)) throw new Error('Tiket dukungan hanya dapat dibuat dari akun Lembaga yang aktif.')
+          if (!subject || !description) throw new Error('Judul dan uraian wajib diisi')
+          const createdAt = timestamp()
+          const ticket = {
+            id: newId('SP'), tenantId, userId: actor.id, createdByName: actor.name, role: actor.role,
+            kind, priority, subject, description, contact: String(d.contact || '').trim(),
+            status: 'baru', createdAt, updatedAt: createdAt,
+            messages: [{ id: newId('SM'), senderId: actor.id, senderName: actor.name, senderRole: actor.role, senderScope: 'tenant', body: description, createdAt }],
+          }
           db.supportTickets.push(ticket)
           enqueueSync('support.created', { ticketId: ticket.id, kind: ticket.kind, priority: ticket.priority })
-          A.aud('SUPPORT', `Tiket dukungan ${ticket.id} dibuat`)
-          A.toast('Laporan bantuan tersimpan di browser ini')
+          A.aud('SUPPORT', `Tiket ${ticket.id} untuk Admin SiZisNur dibuat`)
+          A.toast(`Tiket ${ticket.id} dikirim ke Admin SiZisNur`)
+          break
+        }
+        case 'support-reply': {
+          const actor = activeUser()
+          const tenantId = currentTenantId()
+          const ticket = db.supportTickets.find((item) => item.id === id && item.tenantId === tenantId)
+          const message = String(d.message || '').trim()
+          if (!actor || actor.scope === 'platform' || !ticket) throw new Error('Tiket tidak ditemukan pada Lembaga aktif.')
+          if (actor.role !== 'Admin' && ticket.userId !== actor.id) throw new Error('Anda hanya dapat membalas tiket yang Anda ajukan sendiri.')
+          if (!message) throw new Error('Isi balasan atau informasi tambahan wajib ditulis.')
+          if (!Array.isArray(ticket.messages) || !ticket.messages.length) {
+            ticket.messages = [{ id: newId('SM'), senderId: ticket.userId || null, senderName: ticket.createdByName || 'Pelapor', senderRole: ticket.role || 'Pengguna lembaga', senderScope: 'tenant', body: ticket.description || '', createdAt: ticket.createdAt || timestamp() }]
+          }
+          const sentAt = timestamp()
+          ticket.messages.push({ id: newId('SM'), senderId: actor.id, senderName: actor.name, senderRole: actor.role, senderScope: 'tenant', body: message, createdAt: sentAt })
+          ticket.status = 'menunggu_admin'
+          ticket.updatedAt = sentAt
+          ticket.lastMessageAt = sentAt
+          ticket.lastMessageBy = actor.name
+          if (ticket.resolvedAt) { ticket.reopenedAt = sentAt; delete ticket.resolvedAt; delete ticket.resolvedBy }
+          A.aud('SUPPORT_REPLY', `${actor.role} ${actor.name} membalas tiket ${ticket.id}`)
+          enqueueSync('support.replied', { ticketId: ticket.id, tenantId, messageId: ticket.messages[ticket.messages.length - 1].id })
+          A.toast(`Balasan tiket ${ticket.id} dikirim ke Admin SiZisNur`)
           break
         }
         case 'territory-rw-save': {

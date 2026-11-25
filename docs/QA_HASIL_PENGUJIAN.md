@@ -180,3 +180,11 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - `node tests/receipt-printing.test.cjs` lulus: aksi thermal membuka jendela cetak, mencakup transaksi Fitrah uang + Fitrah beras + Fidyah dan token QR; aksi PDF tetap memakai layout normal serta renderer yang sama.
 - Jumlah suite otomatis menjadi 18/18. Pengujian fisik dengan printer thermal dan driver tertentu tetap perlu dilakukan saat UAT perangkat.
 - Service worker dinaikkan ke `sizisnur-shell-v5-20261115-shared-transaction-multi-line-v4-thermal-print-fix` agar browser mengambil JS terbaru.
+
+
+## Pembaruan tiket bantuan lintas Lembaga — 25 November 2026
+
+- `tests/support-tickets.test.cjs` memverifikasi pembuatan tiket oleh pengguna tenant, pencatatan identitas dan `tenantId`, inbox root lintas tenant, tampilan asal Lembaga, balasan Admin SiZisNur, balasan lanjutan tenant, transisi status, serta audit dan antrean sinkronisasi lokal.
+- Tes isolasi memastikan role non-Admin hanya melihat tiket miliknya, Admin Lembaga dapat melihat tiket dalam tenant yang sama, dan root dapat melihat tiket semua tenant.
+- Seluruh 20 berkas `tests/*.test.cjs` lulus setelah perubahan ini; `node --check` juga lulus untuk `js/revision-v5.js` dan `js/platform-admin.js`.
+- Hasil di atas adalah pengujian otomatis prototype lokal, bukan uji otorisasi backend atau pengujian multi-perangkat produksi.

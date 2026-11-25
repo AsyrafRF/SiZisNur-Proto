@@ -20,7 +20,7 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 | Jurnal dan laporan keuangan | INTERAKTIF + SIMULASI | Jurnal otomatis uang IDR dan persediaan kg, neraca ringkas, perubahan dana, ekspor XLSX | Bagan akun final, standar akuntansi, audit independen dan laporan resmi |
 | Laporan dan UPZ | INTERAKTIF + SIMULASI | Filter periode/jenis, CSV, XLSX, cetak ke PDF, ringkasan UPZ | Pengiriman bulanan ke pusat, validasi skema dan integrasi resmi BAZNAS |
 | Notifikasi | SIMULASI | Pesan lokal, status, ucapan transaksi dan kanal pilihan | Provider email/WA/SMS, template resmi, opt-out dan delivery receipts |
-| Support dan feedback | INTERAKTIF + SIMULASI | Ticket bantuan/bug/feedback tersimpan lokal | Monitoring eksternal, SLA, notifikasi dan manajemen insiden |
+| Support dan feedback | INTERAKTIF + SIMULASI | Tiket bantuan/bug/feedback/security masuk ke inbox Admin SiZisNur; root melihat asal Lembaga, pelapor, prioritas, percakapan, dan dapat membalas; pengguna Lembaga melihat riwayat serta membalas tiketnya; Admin Lembaga dapat memantau tiket satu Lembaga | Backend/API lintas perangkat, notifikasi, lampiran, SLA, penugasan, eskalasi insiden, otorisasi server-side dan retensi |
 | Offline-first | INTERAKTIF + SIMULASI | Cache shell PWA dan antrean perubahan pada browser | Backend sync, resolusi konflik, enkripsi lokal, autentikasi ulang dan jaminan transaksi offline |
 | Audit | INTERAKTIF + SIMULASI | Rantai SHA-256, pemeriksaan konsistensi, log per lembaga | Append-only server, digital signature, WORM, backup terpisah dan audit independen |
 | Privasi dan legal | DOKUMENTASI | Checklist kesiapan rilis dan catatan risiko di halaman Evaluasi Prototype | Penilaian dampak privasi, perjanjian pemrosesan data, tinjauan hukum dan persetujuan BAZNAS |
@@ -29,7 +29,7 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 
 Admin SiZisNur berada di luar tujuh role lembaga. Akun demo `root@sizisnur.demo` (`PA-SIZISNUR-ROOT`) tersimpan di `platformAdmins` dengan `scope: platform` dan tanpa `tenantId`. Data akun root tidak dimasukkan ke koleksi `users` milik lembaga.
 
-Konsol root menyediakan ringkasan platform, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, Pengaturan Sistem, Audit Platform, dan Profil Root. Pengajuan publik hanya dapat diputuskan melalui konsol root; lembaga yang ditangguhkan atau saat mode pemeliharaan aktif tidak dapat membuka workspace lembaga. Detail dan skenario uji ada pada `ADMIN_SIZISNUR_ROOT.md`.
+Konsol root menyediakan ringkasan platform, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, **Tiket Bantuan**, Pengaturan Sistem, Audit Platform, dan Profil Root. Tiket disimpan menurut `tenantId`; Admin root melihat semua Lembaga, Admin Lembaga melihat tiket Lembaganya, dan pengguna lain hanya melihat tiket yang diajukannya sendiri. Pengajuan publik hanya dapat diputuskan melalui konsol root; lembaga yang ditangguhkan atau saat mode pemeliharaan aktif tidak dapat membuka workspace lembaga. Detail dan skenario uji ada pada `ADMIN_SIZISNUR_ROOT.md`.
 
 Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `localStorage` dan JavaScript dapat dimodifikasi pemilik perangkat. Jangan anggap akun root demo sebagai superadmin aman sebelum autentikasi, MFA, RBAC server-side, isolasi lembaga, dan audit append-only diterapkan.
 

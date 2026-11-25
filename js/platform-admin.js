@@ -17,6 +17,7 @@
 
   db.platformAdmins ||= []
   db.platformAudit ||= []
+  db.supportTickets ||= []
   db.platformSettings ||= {
     platformName: 'SiZisNur',
     supportEmail: 'support@sizisnur.demo',
@@ -53,6 +54,7 @@
     db = A.db
     db.platformAdmins ||= []
     db.platformAudit ||= []
+    db.supportTickets ||= []
     db.platformSettings ||= { platformName: 'SiZisNur', supportEmail: 'support@sizisnur.demo', publicRegistrationOpen: true, maintenanceMode: false, maintenanceMessage: 'Sistem sedang dalam pemeliharaan.', publicNotice: '', defaultTenantStatus: 'aktif', updatedAt: null, updatedBy: null }
   }
 
@@ -87,6 +89,7 @@
     const pendingApplications = db.applications.filter((item) => item.status === 'menunggu').length
     const tenantUsers = db.users.length
     const txCount = db.transactions.length
+    const ticketCounts = supportTicketCounts()
     const recent = db.platformAudit.slice(0, 6)
     return `${A.boxhead('Ringkasan Platform', 'Ruang kendali global SiZisNur. Kelola lembaga, akses lembaga, pengajuan lembaga, dan konfigurasi platform tanpa masuk ke data operasional masing-masing lembaga.')}
       <div class="alert light"><b>Lingkup root:</b> Admin SiZisNur mengelola metadata dan status lembaga serta pengaturan platform. Transaksi, tarif zakat, mustahik, dan kas tetap menjadi tanggung jawab Admin serta petugas lembaga masing-masing.</div>
@@ -107,6 +110,7 @@
       <section class="card"><div class="card-top"><h3>Kontrol cepat</h3><span class="caption">Pengelolaan tingkat platform</span></div><div class="root-quick-actions">
         <button class="btn primary" type="button" data-root-action="tenant-create">＋ Daftarkan lembaga</button>
         <button class="btn" type="button" data-root-tab="applications">Tinjau pengajuan lembaga</button>
+        <button class="btn" type="button" data-root-tab="support">Tiket Bantuan (${fmt(ticketCounts.awaitingRoot)})</button>
         <button class="btn" type="button" data-root-tab="settings">Pengaturan sistem</button>
       </div></section>`
   }
@@ -207,6 +211,120 @@
       <section class="card">${A.table(['Waktu','Aktor','Aktivitas','Rincian'], db.platformAudit.map((item) => [date(item.at),esc(item.actorName),badge(item.type),esc(item.detail)]), 'Belum ada aktivitas root.')}</section>`
   }
 
+  const SUPPORT_STATUS_LABELS = {
+    baru: 'Baru',
+    diproses: 'Sedang ditangani',
+    menunggu_tenant: 'Menunggu jawaban Lembaga',
+    menunggu_admin: 'Menunggu Admin SiZisNur',
+    selesai: 'Selesai',
+  }
+  const SUPPORT_KIND_LABELS = {
+    help: 'Bantuan penggunaan',
+    bug: 'Laporan bug',
+    feedback: 'Saran perbaikan',
+    security: 'Dugaan masalah keamanan',
+  }
+  function supportTicketStatus(status) {
+    return SUPPORT_STATUS_LABELS[status] || status || 'Baru'
+  }
+  function supportTicketMessages(ticket) {
+    if (Array.isArray(ticket.messages) && ticket.messages.length) return ticket.messages
+    // Backward compatibility for tickets created before the conversation thread existed.
+    return [{
+      id: `LEGACY-${ticket.id}`,
+      senderId: ticket.userId || null,
+      senderName: ticket.createdByName || db.users.find((item) => item.id === ticket.userId && item.tenantId === ticket.tenantId)?.name || 'Pelapor',
+      senderRole: ticket.role || 'Pengguna lembaga',
+      senderScope: 'tenant',
+      body: ticket.description || '',
+      createdAt: ticket.createdAt,
+    }]
+  }
+  function supportTicketCounts() {
+    const tickets = db.supportTickets || []
+    return {
+      total: tickets.length,
+      new: tickets.filter((ticket) => (ticket.status || 'baru') === 'baru').length,
+      awaitingRoot: tickets.filter((ticket) => ['baru', 'menunggu_admin'].includes(ticket.status || 'baru')).length,
+      inProgress: tickets.filter((ticket) => ticket.status === 'diproses').length,
+      waitingTenant: tickets.filter((ticket) => ticket.status === 'menunggu_tenant').length,
+      resolved: tickets.filter((ticket) => ticket.status === 'selesai').length,
+    }
+  }
+  function platformSupportTickets() {
+    const tickets = (db.supportTickets || []).slice().sort((a, b) =>
+      String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+    const counts = supportTicketCounts()
+    const filter = state.platformTicketFilter || 'all'
+    const filters = [
+      ['all', 'Semua'], ['awaiting_root', 'Perlu ditangani'], ['diproses', 'Sedang ditangani'],
+      ['menunggu_tenant', 'Menunggu Lembaga'], ['selesai', 'Selesai'],
+    ]
+    const matches = (ticket) => {
+      const status = ticket.status || 'baru'
+      if (filter === 'awaiting_root') return ['baru', 'menunggu_admin'].includes(status)
+      if (filter === 'all') return true
+      return status === filter
+    }
+    const rows = tickets.filter(matches).map((ticket) => {
+      const tenant = db.tenants.find((item) => item.id === ticket.tenantId)
+      const requester = db.users.find((item) => item.id === ticket.userId && item.tenantId === ticket.tenantId)
+      const lastMessage = supportTicketMessages(ticket).slice(-1)[0]
+      const status = ticket.status || 'baru'
+      const priority = ticket.priority === 'urgent' ? 'Mendesak' : ticket.priority === 'high' ? 'Tinggi' : 'Normal'
+      return [
+        `<b>${esc(ticket.subject || 'Tiket bantuan')}</b><div class="tiny mono">${esc(ticket.id)}</div><div class="tiny">${esc(SUPPORT_KIND_LABELS[ticket.kind] || ticket.kind || 'Bantuan')}</div>`,
+        `<b>${esc(tenant?.name || 'Lembaga tidak ditemukan')}</b><div class="tiny mono">${esc(ticket.tenantId || '—')}</div>`,
+        `${esc(ticket.createdByName || requester?.name || 'Pelapor')}<div class="tiny">${esc(ticket.role || requester?.role || 'Pengguna')}</div>`,
+        badge(priority),
+        `<span class="ticket-status-text ${status === 'selesai' ? 'is-done' : ['baru','menunggu_admin'].includes(status) ? 'is-pending' : ''}">${esc(supportTicketStatus(status))}</span>`,
+        date(lastMessage?.createdAt || ticket.updatedAt || ticket.createdAt),
+        `<button type="button" class="btn sm primary" data-root-action="ticket-detail" data-id="${esc(ticket.id)}">Buka tiket</button>`,
+      ]
+    })
+    return `${A.boxhead('Tiket Bantuan & Feedback', 'Kotak masuk lintas Lembaga untuk laporan bantuan, bug, saran, dan dugaan masalah keamanan. Balasan disimpan dalam satu percakapan dan ditujukan ke Lembaga asal tiket.')}
+      <div class="alert light"><b>Alur tiket:</b> Laporan dari pengguna Lembaga masuk ke sini dengan identitas Lembaga dan pelapor. Setelah Admin SiZisNur membalas, tiket dapat menunggu jawaban Lembaga atau ditandai selesai. Balasan lanjutan dari Lembaga akan membuka kembali tiket untuk ditangani root.</div>
+      <div class="cards root-ticket-metrics">
+        ${A.stat('Total tiket', fmt(counts.total), 'Semua Lembaga')}
+        ${A.stat('Perlu ditangani', fmt(counts.awaitingRoot), 'Baru / menunggu Admin')}
+        ${A.stat('Sedang ditangani', fmt(counts.inProgress), 'Dalam proses root')}
+        ${A.stat('Menunggu Lembaga', fmt(counts.waitingTenant), 'Perlu informasi lanjutan')}
+        ${A.stat('Selesai', fmt(counts.resolved), 'Tiket ditutup')}
+      </div>
+      <section class="card">
+        <div class="card-top"><div><h3>Daftar tiket</h3><p class="caption">Terbaru ditampilkan di urutan teratas. Pilih tiket untuk membaca percakapan dan mengirim jawaban.</p></div><span class="tag info">${fmt(tickets.length)} tiket</span></div>
+        <div class="root-ticket-filters">${filters.map(([key,label]) => `<button type="button" class="btn sm ${filter === key ? 'primary' : ''}" data-root-ticket-filter="${key}">${label}${key === 'awaiting_root' ? ` (${fmt(counts.awaitingRoot)})` : ''}</button>`).join('')}</div>
+        ${A.table(['Tiket','Lembaga','Pelapor','Prioritas','Status','Aktivitas terakhir','Aksi'], rows, 'Belum ada tiket pada filter ini.')}
+      </section>
+      <div class="alert light">Catatan prototype: kotak masuk ini membaca database browser lokal yang sama. Agar Admin SiZisNur dapat menerima tiket dan membalasnya dari perangkat berbeda, tahap produksi memerlukan API tiket, otorisasi root/tenant di server, notifikasi, dan penyimpanan percakapan di backend.</div>`
+  }
+  function openSupportTicket(ticketId) {
+    const ticket = db.supportTickets.find((item) => item.id === ticketId)
+    if (!ticket) throw new Error('Tiket bantuan tidak ditemukan.')
+    const tenant = db.tenants.find((item) => item.id === ticket.tenantId)
+    const requester = db.users.find((item) => item.id === ticket.userId && item.tenantId === ticket.tenantId)
+    const messages = supportTicketMessages(ticket)
+    const thread = messages.map((message) => `<article class="ticket-message ${message.senderScope === 'platform' ? 'is-platform' : 'is-tenant'}">
+      <div class="ticket-message-head"><b>${esc(message.senderName || 'Pengguna')}</b><span>${esc(message.senderRole || 'Pengguna')} · ${date(message.createdAt)}</span></div>
+      <p>${esc(message.body || '').replace(/\n/g, '<br>')}</p>
+    </article>`).join('')
+    const defaultStatus = ticket.status === 'selesai' ? 'menunggu_tenant' : ticket.status === 'menunggu_tenant' ? 'menunggu_tenant' : 'diproses'
+    A.modal(`Tiket ${ticket.id} · ${ticket.subject || 'Bantuan'}`, `
+      <div class="ticket-detail-meta">
+        <div><span>Lembaga</span><b>${esc(tenant?.name || ticket.tenantId || '—')}</b><small>${esc(ticket.tenantId || '—')}</small></div>
+        <div><span>Pelapor</span><b>${esc(ticket.createdByName || requester?.name || 'Pelapor')}</b><small>${esc(ticket.role || requester?.role || 'Pengguna lembaga')}</small></div>
+        <div><span>Jenis / prioritas</span><b>${esc(SUPPORT_KIND_LABELS[ticket.kind] || ticket.kind || 'Bantuan')} · ${esc(ticket.priority || 'normal')}</b><small>Kontak: ${esc(ticket.contact || 'Tidak dicantumkan')}</small></div>
+        <div><span>Status sekarang</span><b>${esc(supportTicketStatus(ticket.status || 'baru'))}</b><small>Dibuat ${esc(date(ticket.createdAt))}</small></div>
+      </div>
+      <section class="ticket-thread">${thread}</section>
+      <form data-root-form="ticket-reply" data-id="${esc(ticket.id)}">
+        <div class="grid-form">${A.sel('Status setelah jawaban', 'status', [['diproses','Sedang ditangani'],['menunggu_tenant','Menunggu jawaban Lembaga'],['selesai','Tandai selesai']], defaultStatus)}${A.sel('Prioritas tiket', 'priority', [['normal','Normal'],['high','Tinggi'],['urgent','Mendesak']], ticket.priority || 'normal')}</div>
+        ${A.textarea('Jawaban Admin SiZisNur kepada Lembaga', 'message', '')}
+        <div class="alert light">Jawaban ini akan tercatat pada riwayat tiket dan terlihat oleh pengguna yang mengajukan tiket serta Admin Lembaga terkait.</div>
+        <div class="form-actions"><button type="submit" class="btn primary">Kirim jawaban & perbarui tiket</button></div>
+      </form>`, true)
+  }
+
   function rootContent() {
     const tab = state.platformTab || 'overview'
     if (tab === 'prototype-settings') {
@@ -216,6 +334,7 @@
         : '<section class="card"><h2>Pengaturan Prototype</h2><p>Modul pengaturan belum siap. Muat ulang halaman.</p></section>'
     }
     if (tab === 'tenants') return state.selectedPlatformTenant ? tenantDetail(state.selectedPlatformTenant) : platformTenants()
+    if (tab === 'support') return platformSupportTickets()
     if (tab === 'applications') return platformApplications()
     if (tab === 'users') return platformUsers()
     if (tab === 'settings') return platformSettings()
@@ -231,11 +350,12 @@
     document.body.classList.toggle('dark', window.localStorage.getItem('sizisnur_theme') === 'dark')
     const tabs = [
       ['overview','Ringkasan','◫'], ['tenants','Lembaga terdaftar','▦'], ['applications','Pengajuan lembaga','◷'],
-      ['users','Akun pengguna lembaga','♙'], ['settings','Pengaturan sistem','⚙'], ['audit','Audit platform','⊙'], ['account','Akun root','◎'],
+      ['users','Akun pengguna lembaga','♙'], ['support','Tiket Bantuan','✉'], ['settings','Pengaturan sistem','⚙'], ['audit','Audit platform','⊙'], ['account','Akun root','◎'],
       ['prototype-settings','Pengaturan Prototype','◇'],
     ]
     const counts = db.applications.filter((item) => item.status === 'menunggu').length
-    root.innerHTML = `<div class="root-shell"><aside class="root-side"><div class="root-brand"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><div><b>SiZisNur</b><small>Platform Control Plane</small></div></div><div class="root-side-label">ADMINISTRASI GLOBAL</div><nav class="root-nav">${tabs.map(([key,label,icon]) => `<button type="button" class="root-nav-btn ${state.platformTab === key ? 'active' : ''}" data-root-tab="${key}"><span>${icon}</span>${label}${key === 'applications' && counts ? `<i>${counts}</i>` : ''}</button>`).join('')}</nav><div class="root-side-foot"><span class="status-dot"></span> Root scope · browser demo<br>Terpisah dari lembaga<br><small>© SiZisNur</small></div></aside><section class="root-workspace"><header class="root-topbar"><div><span class="root-eyebrow">KONSOL PLATFORM / ROOT</span><h1>${esc(tabs.find(([key]) => key === (state.platformTab || 'overview'))?.[1] || 'Ringkasan')}</h1></div><div class="root-top-actions"><span class="root-user-pill"><b>${esc(rootUser()?.name || 'Admin SiZisNur')}</b><small>${ROOT_ROLE}</small></span><button type="button" class="btn sm" data-root-action="theme">◐ Tema</button><button type="button" class="btn sm danger" data-root-action="logout">Keluar</button></div></header><main class="root-content">${rootContent()}</main><footer class="root-footer">SIMULASI LOKAL — data platform tersimpan pada browser ini. Belum ada autentikasi backend atau kontrol akses server.</footer></section></div><div id="modal-root"></div>`
+    const supportCount = supportTicketCounts().awaitingRoot
+    root.innerHTML = `<div class="root-shell"><aside class="root-side"><div class="root-brand"><img src="assets/sizisnur-logo-mark.png" alt="Logo SiZisNur"><div><b>SiZisNur</b><small>Platform Control Plane</small></div></div><div class="root-side-label">ADMINISTRASI GLOBAL</div><nav class="root-nav">${tabs.map(([key,label,icon]) => `<button type="button" class="root-nav-btn ${state.platformTab === key ? 'active' : ''}" data-root-tab="${key}"><span>${icon}</span>${label}${key === 'applications' && counts ? `<i>${counts}</i>` : ''}${key === 'support' && supportCount ? `<i>${supportCount}</i>` : ''}</button>`).join('')}</nav><div class="root-side-foot"><span class="status-dot"></span> Root scope · browser demo<br>Terpisah dari lembaga<br><small>© SiZisNur</small></div></aside><section class="root-workspace"><header class="root-topbar"><div><span class="root-eyebrow">KONSOL PLATFORM / ROOT</span><h1>${esc(tabs.find(([key]) => key === (state.platformTab || 'overview'))?.[1] || 'Ringkasan')}</h1></div><div class="root-top-actions"><span class="root-user-pill"><b>${esc(rootUser()?.name || 'Admin SiZisNur')}</b><small>${ROOT_ROLE}</small></span><button type="button" class="btn sm" data-root-action="theme">◐ Tema</button><button type="button" class="btn sm danger" data-root-action="logout">Keluar</button></div></header><main class="root-content">${rootContent()}</main><footer class="root-footer">SIMULASI LOKAL — data platform tersimpan pada browser ini. Belum ada autentikasi backend atau kontrol akses server.</footer></section></div><div id="modal-root"></div>`
     if (state.modal) {
       const modalRoot = $('modal-root')
       if (modalRoot) { modalRoot.innerHTML = `<div class="modal-backdrop" data-action="close-modal-bg"><section role="dialog" aria-modal="true" class="modal ${state.modal.large ? 'large' : ''}"><div class="modal-head"><h3>${esc(state.modal.title)}</h3><button type="button" class="close" data-action="close-modal">×</button></div>${state.modal.body}</section></div>`; A.restoreModalDrafts?.(modalRoot) }
@@ -333,6 +453,13 @@
   }
 
   function onRootClick(event) {
+    const ticketFilter = event.target.closest('[data-root-ticket-filter]')
+    if (ticketFilter) {
+      if (!rootUser()) { A.toast('Hanya Admin SiZisNur yang dapat memfilter tiket.', 'error'); return }
+      state.platformTicketFilter = ticketFilter.dataset.rootTicketFilter || 'all'
+      renderRoot()
+      return
+    }
     const tab = event.target.closest('[data-root-tab]')
     if (tab) {
       if (!rootUser()) { A.toast('Hanya Admin SiZisNur yang dapat membuka menu platform.', 'error'); return }
@@ -360,6 +487,7 @@
           renderRoot(); break
         }
         case 'application-review': reviewApplication(id); break
+        case 'ticket-detail': openSupportTicket(id); break
         case 'user-toggle': {
           const user = db.users.find((item) => item.id === id)
           if (!user) throw new Error('Akun lembaga tidak ditemukan.')
@@ -410,6 +538,38 @@
           application.reviewedAt = A.now()
           writeRootAudit('APPLICATION_REVIEW', `Pengajuan ${application.name}: ${application.status}.`)
           state.modal = null; A.toast(`Pengajuan ${application.name}: ${application.status}.`); break
+        }
+        case 'ticket-reply': {
+          const ticket = db.supportTickets.find((item) => item.id === id)
+          const message = String(data.message || '').trim()
+          const status = ['diproses', 'menunggu_tenant', 'selesai'].includes(data.status) ? data.status : 'diproses'
+          const priority = ['normal', 'high', 'urgent'].includes(data.priority) ? data.priority : 'normal'
+          if (!ticket) throw new Error('Tiket bantuan tidak ditemukan.')
+          if (!message) throw new Error('Jawaban Admin SiZisNur wajib diisi.')
+          const messages = supportTicketMessages(ticket).slice()
+          const repliedAt = A.now()
+          messages.push({
+            id: A.id('SM'), senderId: rootUser().id, senderName: rootUser().name, senderRole: ROOT_ROLE,
+            senderScope: 'platform', body: message, createdAt: repliedAt,
+          })
+          ticket.messages = messages
+          ticket.priority = priority
+          ticket.status = status
+          ticket.updatedAt = repliedAt
+          ticket.lastMessageAt = repliedAt
+          ticket.lastMessageBy = rootUser().name
+          if (status === 'selesai') {
+            ticket.resolvedAt = repliedAt
+            ticket.resolvedBy = rootUser().id
+          } else {
+            delete ticket.resolvedAt
+            delete ticket.resolvedBy
+          }
+          writeRootAudit('SUPPORT_REPLY', `Admin SiZisNur membalas tiket ${ticket.id} dari ${tenantName(ticket.tenantId)}; status ${supportTicketStatus(status)}.`)
+          state.modal = null
+          state.platformTicketFilter = 'all'
+          A.toast(`Jawaban untuk tiket ${ticket.id} tersimpan.`)
+          break
         }
         case 'settings-save': {
           const settings = rootSetting()

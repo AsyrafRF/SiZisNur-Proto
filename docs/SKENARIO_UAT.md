@@ -102,10 +102,13 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 2. Unduh CSV dan XLSX. Periksa bahwa data uang dan beras mempunyai kolom/satuan masing-masing.
 3. Gunakan fungsi cetak browser dan pilih Simpan sebagai PDF.
 4. Unduh paket UPZ dan pastikan statusnya dijelaskan sebagai bahan ekspor, bukan upload langsung ke BAZNAS.
-5. Dari setiap role, kirim ticket bantuan, bug, saran, atau laporan keamanan. Pastikan ticket tersimpan lokal.
-6. Putuskan koneksi jaringan. Pastikan shell yang sudah di-cache tetap dapat dibuka dan perubahan simulasi masuk antrean lokal.
-7. Pulihkan koneksi. Tanpa endpoint API tidak ada sync cloud. Dengan endpoint uji khusus, validasi autentikasi, idempotensi, konflik, dan penerimaan event di server.
-8. Periksa dashboard, panduan role, diagram alur dan halaman Evaluasi Prototype.
+5. Dari setiap role Lembaga, kirim tiket bantuan, bug, saran, atau laporan keamanan. Pastikan tiket masuk ke `supportTickets` dengan `tenantId`, identitas pelapor, dan pesan awal.
+6. Masuk sebagai Admin SiZisNur. Buka **Tiket Bantuan**, pastikan tiket dari beberapa Lembaga terlihat bersama nama/ID Lembaga asal, lalu buka salah satu tiket dan balas dengan status **Menunggu jawaban Lembaga**.
+7. Masuk kembali sebagai pelapor. Pastikan balasan root tampil pada riwayat tiket, kirim informasi tambahan, dan pastikan status berubah menjadi **Menunggu Admin SiZisNur**. Uji pula balasan Admin Lembaga pada tiket milik role lain di tenant yang sama; role non-Admin tidak boleh melihat tiket pengguna lain.
+8. Kembali sebagai root, balas dan tandai tiket **Selesai**. Pastikan riwayat percakapan dan Audit Platform mencatat jawaban/status akhir.
+9. Putuskan koneksi jaringan. Pastikan shell yang sudah di-cache tetap dapat dibuka dan perubahan simulasi masuk antrean lokal.
+10. Pulihkan koneksi. Tanpa endpoint API tidak ada sync cloud. Dengan endpoint uji khusus, validasi autentikasi, idempotensi, konflik, dan penerimaan event di server.
+11. Periksa dashboard, panduan role, diagram alur dan halaman Evaluasi Prototype.
 
 ## H. Acuan Workbook 1447H/2026M
 

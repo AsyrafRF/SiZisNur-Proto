@@ -1,5 +1,16 @@
 # Changelog SiZisNur Prototype
 
+## Tiket Bantuan lintas Lembaga dan percakapan dengan Admin SiZisNur — 25 November 2026
+
+- Menghubungkan formulir Bantuan, Support & Feedback pada seluruh role Lembaga ke inbox **Tiket Bantuan** pada konsol Admin SiZisNur.
+- Setiap tiket membawa ID Lembaga, pelapor, role, jenis laporan, prioritas, judul, uraian, kontak opsional, dan pesan awal. Root dapat mengidentifikasi Lembaga asal serta membalas langsung dalam percakapan.
+- Menambahkan riwayat pesan dua arah, prioritas, dan status `baru`, `diproses`, `menunggu_tenant`, `menunggu_admin`, serta `selesai`. Balasan pengguna Lembaga membuka kembali tiket ke status `menunggu_admin`.
+- Admin Lembaga dapat melihat dan membalas tiket dalam tenant-nya; role lain hanya melihat tiket yang mereka buat sendiri. Admin SiZisNur dapat melihat semua tiket lintas tenant.
+- Tiket legacy yang belum memiliki `messages` tetap dibaca dari field `description`, sehingga struktur data lama tidak dibuang.
+- Mencatat balasan root pada `platformAudit`, balasan tenant pada audit Lembaga dan antrean sinkronisasi lokal. Menambah tes alur tiket dan memperbarui dokumentasi serta cache service worker.
+- Batasan: percakapan tetap tersimpan di `localStorage` browser. API backend, notifikasi, lampiran, SLA, penugasan, eskalasi keamanan, dan otorisasi server-side belum tersedia.
+
+
 ## Penyesuaian survei mustahik, wilayah tenant, dan draft modal — 24 November 2026
 
 - Mengganti label dan field kolom Q dari **Jalur Mualaf** menjadi **Jalur Asnaf lain** dengan opsi Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil. Percabangan kolom R mempertahankan posisi logika Q/P dari formula Mualaf yang terdokumentasi; pilihan Q tidak selalu menjadi status akhir karena kondisi P tetap menentukan hasil. Field Awal Mualaf hanya muncul untuk pilihan Mualaf.

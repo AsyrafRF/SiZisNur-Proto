@@ -28,13 +28,31 @@ Pada halaman pilihan akses, buka **Akses Demo Langsung** lalu pilih tile **Admin
 | Lembaga terdaftar | Melihat seluruh lembaga, ringkasan akun/transaksi, metadata lembaga, serta mengaktifkan atau menangguhkan akses lembaga. |
 | Pengajuan lembaga | Meninjau pengajuan dari portal publik; menyetujui dan membuat lembaga beserta Admin awal, atau menolak dengan catatan. |
 | Akun pengguna lembaga | Melihat pengguna lintas lembaga dan mengaktifkan/menonaktifkan akun. Akun root ditampilkan terpisah. |
+| **Tiket Bantuan** | Menerima tiket bantuan, bug, saran, dan dugaan masalah keamanan dari semua Lembaga; membaca identitas Lembaga/pelapor; membalas dalam satu percakapan; mengatur prioritas serta status tindak lanjut. |
 | Pengaturan sistem | Mengubah nama platform, email dukungan, buka/tutup pendaftaran, status default lembaga baru, pengumuman global, dan mode pemeliharaan. |
 | Audit platform | Melihat catatan aktivitas yang dibuat melalui konsol root. |
 | Akun root | Mengubah nama tampilan dan email akun root serta memeriksa pemisahan kewenangan. |
 
 Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyalin parameter aturan awal dari lembaga contoh, dan menambahkan satu periode draf. Admin lembaga harus memeriksa serta mengesahkan tarif dan parameter lokal sebelum dipakai.
 
-## 4. Aturan akses prototype
+
+## 4. Alur Tiket Bantuan lintas Lembaga
+
+1. Pengguna dari salah satu role Lembaga mengirim laporan dari **Panduan Demo → Bantuan, dukungan dan umpan balik**.
+2. Tiket membawa `tenantId`, `userId`, role dan nama pelapor, jenis laporan, prioritas, judul, uraian, serta waktu pembuatan. Tiket masuk ke menu **Tiket Bantuan** pada konsol Admin SiZisNur.
+3. Admin SiZisNur membuka tiket untuk melihat nama dan ID Lembaga, pelapor, kontak yang diberikan, prioritas, dan seluruh pesan.
+4. Root membalas langsung pada tiket dan memilih status tindak lanjut:
+   - `diproses` — sedang ditangani Admin SiZisNur.
+   - `menunggu_tenant` — Admin SiZisNur meminta/menunggu informasi dari Lembaga.
+   - `selesai` — penyelesaian ditandai selesai.
+5. Pelapor dapat membaca jawaban dan mengirim balasan tambahan. Balasan Lembaga mengubah status menjadi `menunggu_admin`, sehingga tiket kembali masuk daftar yang perlu ditangani root. Admin Lembaga dapat melihat dan membalas semua tiket pada Lembaganya; role lain hanya melihat tiket yang mereka ajukan sendiri.
+6. Tiket lama yang hanya memiliki `description` tetap ditampilkan sebagai pesan awal agar kompatibel; pesan baru disimpan dalam array `messages`.
+
+`supportTickets` tetap koleksi terpisah dari transaksi dan audit operasional. Aksi root dicatat di `platformAudit`; balasan pengguna Lembaga dicatat di audit Lembaga dan antrean sinkronisasi lokal.
+
+**Batas prototype:** data tiket dan percakapan masih berada pada `localStorage` browser. Root dan pengguna Lembaga hanya dapat melihat pembaruan pada database browser yang sama. Pengiriman lintas perangkat, notifikasi, lampiran, SLA, penugasan petugas, dan eskalasi keamanan memerlukan backend/ticket API, otorisasi server-side, kebijakan retensi, dan kanal pemberitahuan produksi.
+
+## 5. Aturan akses prototype
 
 - Akun root disimpan di `platformAdmins`, sedangkan semua akun lembaga tetap berada di `users` dengan `tenantId`.
 - `scope: platform` dan role `Admin SiZisNur` menjadi penanda aktor root pada UI prototype.
@@ -43,7 +61,7 @@ Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyal
 - Pengajuan publik disimpan dengan status `menunggu` dan hanya diputuskan dari konsol root. Jalur pemeriksaan platform publik yang lama telah ditutup.
 - `platformSettings` menyimpan konfigurasi global dan `platformAudit` menyimpan catatan aktivitas root, terpisah dari pengaturan dan audit lembaga.
 
-## 5. Uji cepat UAT
+## 6. Uji cepat UAT
 
 1. Buka halaman login dan pastikan tile Admin SiZisNur terlihat terpisah dari tujuh peran lembaga.
 2. Masuk sebagai Admin SiZisNur. Pastikan header menunjukkan **KONSOL PLATFORM / ROOT** dan menu global tersedia.
@@ -53,7 +71,7 @@ Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyal
 6. Aktifkan mode pemeliharaan dan pastikan akun lembaga dibatasi sementara root tetap dapat masuk. Matikan kembali mode pemeliharaan setelah uji.
 7. Periksa Audit Platform untuk melihat rekam perubahan yang dilakukan selama pengujian.
 
-## 6. Keamanan sebelum produksi
+## 7. Keamanan sebelum produksi
 
 Fitur ini belum boleh digunakan sebagai superadmin produksi. Prototype berjalan dengan JavaScript dan `localStorage`; pengguna yang memiliki akses ke browser dapat memeriksa atau mengubah data, memalsukan sesi, dan memodifikasi koleksi platform. Belum ada MFA, backend, otorisasi server-side, maupun audit immutable. Form login dan hash PBKDF2 pada browser hanya simulasi; localStorage/sessionStorage masih dapat dimodifikasi oleh pemilik perangkat. Pemisahan koleksi hanya pemisahan logis pada data demo.
 
