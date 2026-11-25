@@ -1,14 +1,6 @@
-## Kebijakan verifikasi transaksi — 23 November 2026
-
-- Masa berlaku seluruh transaksi zakat berstatus `pending` adalah maksimal 2 jam sejak `createdAt` atau sampai periode ditutup, mana yang lebih dahulu. Tenggat dan instruksi menuju meja Amil tampil pada formulir bersama, notifikasi, ringkasan transaksi publik, struk digital, struk thermal, dan hasil verifikasi QR publik.
-- Pemeriksaan kedaluwarsa dijalankan saat daftar transaksi dibuka, QR dipindai, struk dibuka, dan pengesahan dikirim. Tenggat yang sudah lewat mengubah status menjadi `expired`; Amil tidak dapat mengesahkan transaksi tersebut.
-- Data Pending lama pada database lokal, preset/reset, dan backup impor dinormalisasi berdasarkan waktu pembuatan asli. Backup lama yang hanya menyimpan tenggat 24 jam tetap dihitung dari waktu pembuatan lama, bukan dari waktu impor.
-- Distribusi HTML satu file dan skrip pembangunnya dihapus. Aplikasi web dan PWA tetap tersedia melalui folder project; `display: standalone` pada manifest tetap dipertahankan sebagai mode tampilan PWA, bukan build satu file.
-- Cache service worker dinaikkan ke `sizisnur-shell-v5-20261123-transaction-ttl-2h-no-standalone` agar browser mengambil source terbaru.
-
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 23 November 2026
+Tanggal pembaruan: 25 November 2026
 
 ## Pemeriksaan statis
 
@@ -71,7 +63,6 @@ Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publi
 
 Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersama, `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
 
-
 ## Pemeriksaan alert dan toast pada light/dark mode — 13 November 2026
 
 - Alert global memiliki warna teks eksplisit dan pasangan warna latar/teks untuk varian default, warn, danger, ok/success, info, serta light/neutral.
@@ -79,7 +70,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Tes otomatis `node tests/dark-alerts.test.cjs` memeriksa keberadaan token warna kedua tema dan rasio kontras teks terhadap latar minimal 4,5:1 (WCAG AA) untuk semua varian yang diuji.
 - Cakupan stylesheet global berlaku pada dashboard, form, modal, panduan role, laporan, halaman prototype, dan halaman lain yang menggunakan komponen `.alert` atau `.notice`.
 - Nama cache service worker dinaikkan agar stylesheet baru diambil sesudah deployment.
-
 
 ## Pemeriksaan UI global pada light/dark mode — 13 November 2026
 
@@ -91,7 +81,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Tes otomatis `node tests/dark-ui-theme.test.cjs` memvalidasi keberadaan selector dan rasio kontras token utama minimal 4,5:1.
 - Build standalone dibuat ulang dan cache service worker dinaikkan ke `sizisnur-shell-v5-20261113-dark-ui2`.
 
-
 ## Pemeriksaan paginasi data — 13 November 2026
 
 - Semua tabel bersama `table()` / `A.table()` menggunakan ukuran halaman 10. Tabel dengan 10 baris atau kurang tidak menampilkan kontrol.
@@ -102,7 +91,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - `node tests/pagination.test.cjs` lulus, termasuk render HTML untuk halaman pertama/kedua, jumlah baris, daftar kosong, dan daftar pendek.
 - Uji browser interaktif/headless belum dapat diselesaikan pada lingkungan ini karena kebijakan lingkungan eksekusi memblokir navigasi browser ke file lokal dan server localhost. Uji klik paginasi, responsivitas pada perangkat nyata, dan UAT tetap perlu dilakukan di browser pengguna.
 
-
 ## Perapian status Dashboard — 13 November 2026
 
 - Role aktif, status Online/Offline, mode penyimpanan lokal/server, serta antrean lokal kini ditampilkan dalam kelompok yang terpisah pada kartu hero Dashboard.
@@ -110,7 +98,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Panel status memiliki penyesuaian breakpoint desktop, tablet, dan ponsel serta label status yang diumumkan melalui `aria-live`.
 - Tes `node tests/dashboard-status.test.cjs` memeriksa markup, pembaruan status, mode penyimpanan, dan isolasi hitungan antrean per lembaga.
 - Seluruh tujuh suite tes proyek lulus setelah perubahan dan HTML standalone dibuat ulang.
-
 
 ## Pembaruan dashboard analitik — 13 November 2026
 
@@ -122,18 +109,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Tes baru mencakup skenario bahwa transaksi `paid` tanpa berita acara terverifikasi tidak masuk grafik Terverifikasi, dan distribusi lama tidak dipaksakan ke kategori tertentu.
 - Batasan tetap: data lokal prototype bukan sumber real-time lintas perangkat; status produksi harus divalidasi ulang di backend.
 
-
-
-## Pemisahan registrasi mandiri Muzakki dan pendaftaran lembaga — 15 November 2026
-
-- Form registrasi mandiri berisi empat input wajib: nama lengkap, nomor HP, email, dan alamat lengkap. Tidak ada pilihan lembaga, Daerah, RW/RT, atau persetujuan lembaga pada tahap registrasi.
-- Akun baru disimpan tanpa `tenantId`, person, kartu Muzakki, dan `muzakkiMemberships`. Dashboard pribadi menampilkan status Belum terhubung.
-- Menu Layanan Mandiri menampilkan aksi Pilih lembaga. Saat pengguna memilih lembaga aktif, sistem meminta domisili, alamat untuk lembaga, serta persetujuan penggunaan data.
-- Person, kartu digital, dan membership dibuat pada tahap penghubungan. Kontak yang cocok tidak dipakai untuk mengklaim data walk-in yang belum diverifikasi.
-- `node tests/muzakki-registration.test.cjs` dan seluruh suite `node --test tests/*.test.cjs` lulus.
-- Catatan historis: pada rilis saat itu artefak HTML satu-file dibuat ulang; mekanisme distribusi tersebut sudah dihapus pada revisi 23 November 2026.
-
-
 ## Dashboard pribadi Muzakki — 13 November 2026
 
 - `node tests/muzakki-dashboard.test.cjs` lulus untuk sesi default Muzakki, larangan akses dashboard agregat, transaksi milik sendiri, status berita acara Bendahara, dan riwayat lintas periode.
@@ -141,7 +116,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Tes mengganti status berita acara dari `terverifikasi` menjadi `kas_diterima` dan memastikan label menjadi Belum terverifikasi.
 - Status personal menggunakan relasi berita acara setoran sebagai bukti rekonsiliasi. Status transaksi `terverifikasi` tanpa berita acara terverifikasi tidak otomatis dianggap lulus rekonsiliasi.
 - Pembukaan dan unduhan struk untuk role Muzakki juga dibatasi pada transaksi yang terkait akun atau membership pribadi.
-
 
 ## Pemulihan kalkulator dan pemisahan kelebihan pembayaran — 13 November 2026
 
@@ -152,14 +126,12 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Tes `node tests/transaction-calculator.test.cjs` mencakup nilai contoh Rp45.000 kewajiban dan Rp50.000 pembayaran yang menghasilkan Rp45.000 zakat dan Rp5.000 Infak/Sedekah bila pengguna menyetujui.
 - Semua test `tests/*.test.cjs` dan `node --check` lulus pada revisi ini. Build standalone dibuat ulang. Uji browser headless belum dinyatakan lulus; UAT interaktif di browser pengguna masih diperlukan.
 
-
 ## Penyelarasan istilah antarmuka — 14 November 2026
 
 - Menggunakan **Lembaga** pada menu, judul halaman, label formulir, Portal Publik, konsol Admin SiZisNur, panduan, dan pesan validasi.
 - Menambahkan `docs/GLOSARIUM_TERMINOLOGI.md` untuk menyamakan istilah Admin Lembaga, Admin SiZisNur, dan Portal Publik.
 - Nama teknis internal seperti `tenantId`, `db.tenants`, rute/event internal, dan format identitas QR tetap dipertahankan untuk kompatibilitas.
 - Seluruh 12 suite pengujian yang tersedia lulus setelah ekspektasi teks antarmuka diperbarui. Build HTML standalone berhasil dibuat ulang.
-
 
 ## Portal Zakat Publik & Pendataan Mandiri — 15 November 2026
 
@@ -172,7 +144,6 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - `node tests/public-intake.test.cjs` dan seluruh 18 suite `tests/*.test.cjs` lulus; `node --check js/public-intake.js` lulus; build standalone menghasilkan HTML mandiri.
 - Batasan: `localStorage` hanya pada browser saat ini. QR yang dibuka pada perangkat berbeda tidak dapat mengakses database demo petugas. OTP hanya tampilan simulasi, tidak dikirim ke provider. Jangan masukkan PII atau transaksi nyata. Dokumen lengkap tahap implementasi, batasan, dan checklist keamanan produksi tersedia pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`.
 
-
 ## Cetak struk thermal 80 mm — 15 November 2026
 
 - Memperbaiki tombol **Cetak thermal 80 mm** yang sebelumnya memanggil helper `makeReceiptPrint` yang tidak tersedia setelah renderer struk disatukan. Kini helper didefinisikan kembali pada lapisan V5 dan menggunakan `A.receiptHtml(tx)` / `receiptPrintHtmlV5(tx)` sebagai sumber konten yang sama dengan PDF.
@@ -181,6 +152,22 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 - Jumlah suite otomatis menjadi 18/18. Pengujian fisik dengan printer thermal dan driver tertentu tetap perlu dilakukan saat UAT perangkat.
 - Service worker dinaikkan ke `sizisnur-shell-v5-20261115-shared-transaction-multi-line-v4-thermal-print-fix` agar browser mengambil JS terbaru.
 
+## Pemisahan registrasi mandiri Muzakki dan pendaftaran lembaga — 15 November 2026
+
+- Form registrasi mandiri berisi empat input wajib: nama lengkap, nomor HP, email, dan alamat lengkap. Tidak ada pilihan lembaga, Daerah, RW/RT, atau persetujuan lembaga pada tahap registrasi.
+- Akun baru disimpan tanpa `tenantId`, person, kartu Muzakki, dan `muzakkiMemberships`. Dashboard pribadi menampilkan status Belum terhubung.
+- Menu Layanan Mandiri menampilkan aksi Pilih lembaga. Saat pengguna memilih lembaga aktif, sistem meminta domisili, alamat untuk lembaga, serta persetujuan penggunaan data.
+- Person, kartu digital, dan membership dibuat pada tahap penghubungan. Kontak yang cocok tidak dipakai untuk mengklaim data walk-in yang belum diverifikasi.
+- `node tests/muzakki-registration.test.cjs` dan seluruh suite `node --test tests/*.test.cjs` lulus.
+- Catatan historis: pada rilis saat itu artefak HTML satu-file dibuat ulang; mekanisme distribusi tersebut sudah dihapus pada revisi 23 November 2026.
+
+## Kebijakan verifikasi transaksi — 23 November 2026
+
+- Masa berlaku seluruh transaksi zakat berstatus `pending` adalah maksimal 2 jam sejak `createdAt` atau sampai periode ditutup, mana yang lebih dahulu. Tenggat dan instruksi menuju meja Amil tampil pada formulir bersama, notifikasi, ringkasan transaksi publik, struk digital, struk thermal, dan hasil verifikasi QR publik.
+- Pemeriksaan kedaluwarsa dijalankan saat daftar transaksi dibuka, QR dipindai, struk dibuka, dan pengesahan dikirim. Tenggat yang sudah lewat mengubah status menjadi `expired`; Amil tidak dapat mengesahkan transaksi tersebut.
+- Data Pending lama pada database lokal, preset/reset, dan backup impor dinormalisasi berdasarkan waktu pembuatan asli. Backup lama yang hanya menyimpan tenggat 24 jam tetap dihitung dari waktu pembuatan lama, bukan dari waktu impor.
+- Distribusi HTML satu file dan skrip pembangunnya dihapus. Aplikasi web dan PWA tetap tersedia melalui folder project; `display: standalone` pada manifest tetap dipertahankan sebagai mode tampilan PWA, bukan build satu file.
+- Cache service worker dinaikkan ke `sizisnur-shell-v5-20261123-transaction-ttl-2h-no-standalone` agar browser mengambil source terbaru.
 
 ## Pembaruan tiket bantuan lintas Lembaga — 25 November 2026
 
