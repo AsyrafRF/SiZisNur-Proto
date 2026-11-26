@@ -79,3 +79,8 @@ Tahap 1 dan Tahap 2 tetap disediakan sesuai workbook. Total yang diuji untuk alo
 ## Standar kesiapan rilis
 
 Sebelum go-live, tim perlu melakukan threat modeling, secure SDLC, kontrol akses server-side, MFA untuk role kritis, validasi input, enkripsi saat transit dan tersimpan, audit append-only, backup terpisah, uji pemulihan, logging terpantau, privacy impact assessment, pengujian aksesibilitas, uji beban dan UAT. Tinjau ketentuan pengelolaan zakat dan pelindungan data pribadi bersama penasihat hukum dan BAZNAS.
+
+
+## Catatan pengelolaan periode — 26 November 2026
+
+Admin Lembaga dapat menghapus periode berstatus `draf` melalui menu **Periode Zakat**. Penghapusan memerlukan konfirmasi dan ditolak bila masih ada record lain yang terhubung melalui `periodId` (misalnya transaksi, setoran, alokasi, penyaluran, jadwal, shift, atau tautan publik). Periode `aktif` dan `arsip` tidak menyediakan aksi hapus dan tetap dilindungi pada pemeriksaan aksi.

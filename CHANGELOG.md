@@ -1,5 +1,13 @@
 # Changelog SiZisNur Prototype
 
+## Penghapusan aman periode draf dan penyelarasan konfirmasi transaksi — 26 November 2026
+
+- Menambahkan aksi **Hapus draf** pada halaman Periode Zakat hanya untuk periode berstatus `draf`; periode `aktif` dan `arsip` tidak menampilkan aksi tersebut dan tetap ditolak bila aksi dipanggil langsung.
+- Penghapusan tersedia pada draf tanpa record terkait; draf yang masih terhubung ditandai **Terhubung data** dan aksi hapus tidak ditampilkan. Penghapusan memakai modal konfirmasi, pemeriksaan ulang status, dan pemeriksaan relasi `periodId` pada koleksi data agar transaksi, setoran, alokasi, distribusi, jadwal, shift, tautan publik, atau catatan lain tidak menjadi orphan. Penghapusan dicatat pada audit Lembaga.
+- Menyatukan tombol pada form input Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik menjadi **Konfirmasi Zakat**. Keterangan kecil di bawah tombol menjelaskan pemrosesan transaksi dan penerbitan QR, sekaligus menegaskan bahwa pembayaran baru lunas setelah disahkan Amil.
+- Rumus kalkulasi, status awal `pending`, batas QR dua jam, proses verifikasi Amil, setoran Bendahara, dan renderer struk tidak diubah. Cache service worker diperbarui dan tes regresi ditambahkan.
+
+
 ## Tiket Bantuan lintas Lembaga dan percakapan dengan Admin SiZisNur — 25 November 2026
 
 - Menghubungkan formulir Bantuan, Support & Feedback pada seluruh role Lembaga ke inbox **Tiket Bantuan** pada konsol Admin SiZisNur.

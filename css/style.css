@@ -886,6 +886,10 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
 .transaction-line-excess input{margin-top:2px;flex:0 0 auto}
 .shared-transaction-form>.form-actions{margin:0}
 .shared-transaction-form>.form-actions .btn{white-space:normal}
+.transaction-submit-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:16px}
+.transaction-submit-actions .btn{white-space:normal}
+.transaction-submit-note{max-width:620px;margin:0;text-align:right;font-size:10.5px;line-height:1.5}
+@media(max-width:620px){.transaction-submit-actions{align-items:stretch}.transaction-submit-actions .btn{align-self:flex-end}.transaction-submit-note{text-align:left}}
 .transaction-calculation-preview{margin:0;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
 .receipt-line-item{align-items:flex-start}
 .receipt-line-item>span{min-width:0;line-height:1.55}

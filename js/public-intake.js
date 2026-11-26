@@ -297,7 +297,7 @@
       ${sharedFields}
       <div class="field"><label for="pi-note">Catatan untuk Amil (opsional)</label><textarea id="pi-note" name="note" rows="2"></textarea></div>
       <label class="check"><input type="checkbox" name="confirm" value="yes" required> Saya memahami ini rencana pembayaran berstatus Pending. Pembayaran baru sah setelah diterima, diperiksa, dan disahkan Amil.</label>
-      <div class="form-actions"><button type="submit" class="btn primary">Konfirmasi Zakat</button></div>
+      ${window.__SIZISNUR_TRANSACTION_FORM_ACTION ? window.__SIZISNUR_TRANSACTION_FORM_ACTION() : '<div class="form-actions transaction-submit-actions"><button type="submit" class="btn primary">Konfirmasi Zakat</button><p class="caption transaction-submit-note">Tekan tombol ini untuk memproses transaksi dan menerbitkan QR. Tunjukkan QR kepada Amil untuk verifikasi pembayaran; transaksi belum lunas sampai disahkan Amil.</p></div>'}
     </form></section>`
   }
   function renderExistingTransactions(ctx, session) {

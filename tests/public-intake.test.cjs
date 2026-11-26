@@ -121,6 +121,9 @@ assert.ok(elements.app.innerHTML.includes('Batas verifikasi Amil: 2 jam'), 'publ
 assert.ok(elements.app.innerHTML.includes('meja Amil'), 'public transaction form must instruct the Muzakki to present the QR at the Amil desk')
 assert.ok(elements.app.innerHTML.includes('lines[0][category]'), 'public form uses the same indexed multi-line calculator as other channels')
 assert.ok(elements.app.innerHTML.includes('Tambah jenis zakat / media'), 'public form supports additional payment lines')
+assert.equal((elements.app.innerHTML.match(/>Konfirmasi Zakat<\/button>/g) || []).length, 1, 'public transaction form uses the unified button label');
+assert.ok(elements.app.innerHTML.includes('Tekan tombol ini untuk memproses transaksi dan menerbitkan QR'), 'public transaction form explains what the button does');
+assert.ok(elements.app.innerHTML.includes('transaksi belum lunas sampai disahkan Amil'), 'public transaction form clarifies that an Amil must still approve payment');
 
 const txForm = newForm('transaction', {
   'lines[0][category]': 'Zakat Fitrah', 'lines[0][type]': 'uang', 'lines[0][jiwa]': '2', 'lines[0][value]': '90.000',
