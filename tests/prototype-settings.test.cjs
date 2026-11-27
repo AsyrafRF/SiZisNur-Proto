@@ -52,6 +52,7 @@ assert.ok(A.db.platformAdmins.some((item) => item.id === rootAccountId))
 assert.equal(A.db.tenants.length, 1, 'Masjid An-Nur is the default one-institution dataset')
 assert.equal(A.db.tenants[0].id, 'TN-ANNUR')
 assert.equal(A.db.datasetProfile, 'annur-default')
+assert.ok((A.db.rules || []).every((rule) => !Object.hasOwn(rule, 'monthlyIncentive') && !Object.hasOwn(rule, 'method')), 'current seed contains no retired incentive settings')
 const resetPending = A.db.transactions.find((item) => item.status === 'pending')
 assert.ok(resetPending, 'reset seed should retain its sample pending transaction')
 assert.equal(Date.parse(resetPending.expiresAt) - Date.parse(resetPending.createdAt), 2 * 60 * 60 * 1000, 'reset/preset data must receive the two-hour verification window from the original createdAt')
@@ -142,6 +143,11 @@ disabledRootBackup.data.platformAdmins[0].scope = 'tenant'
 disabledRootBackup.data.platformAdmins[0].role = 'Admin'
 disabledRootBackup.data.users.push({ id: rootAccountId, tenantId: 'TN-ANNUR', role: 'Admin' })
 const safeImported = settings.parseBackup(disabledRootBackup)
+const retiredIncentiveBackup = JSON.parse(JSON.stringify(exported.data))
+retiredIncentiveBackup.rules[0].monthlyIncentive = 500000
+retiredIncentiveBackup.rules[0].method = 'Metode kehadiran lama'
+const normalizedRetiredBackup = settings.normalizeImportedDatabase(retiredIncentiveBackup)
+assert.ok(normalizedRetiredBackup.rules.every((rule) => !Object.hasOwn(rule, 'monthlyIncentive') && !Object.hasOwn(rule, 'method')), 'legacy incentive rule fields are stripped during backup import')
 assert.equal(safeImported.platformAdmins[0].active, true, 'import normalization must preserve root access')
 assert.equal(safeImported.platformAdmins[0].scope, 'platform')
 assert.ok(!safeImported.users.some((item) => item.id === rootAccountId), 'root account must not be imported into tenant users')

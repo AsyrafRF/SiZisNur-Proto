@@ -63,8 +63,9 @@ assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.jiwa,0), 3114);
 assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.money,0), 175_240_500);
 assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.blankos,0), 980);
 assert.equal(app.WORKBOOK_BASELINE.receipts.riceZakat + app.WORKBOOK_BASELINE.receipts.riceInfaq, 1954.1);
-assert.equal(app.WORKBOOK_BASELINE.incentives.anonymized.reduce((n,x)=>n+x.blankos,0), 980);
-assert.equal(app.WORKBOOK_BASELINE.incentives.anonymized.reduce((n,x)=>n+x.days,0), 146);
+assert.equal(app.WORKBOOK_BASELINE.incentives, undefined, 'workbook incentive calculations are no longer part of the active system baseline');
+assert.equal(app.bridge.PAGES.incentives, undefined, 'incentive navigation must be removed');
+assert.equal(app.bridge.can('incentives'), false, 'no role can access the retired incentive page');
 const asnafCounts = Object.fromEntries(['FAKIR','MISKIN','MUALAF','CUKUP LAYAK'].map(k => [k, db.mustahiks.filter(x => (x.finalStatus || x.asnaf) === k).length]));
 assert.deepEqual(asnafCounts, { FAKIR: 21, MISKIN: 103, MUALAF: 5, 'CUKUP LAYAK': 0 });
 
@@ -135,6 +136,9 @@ for (const page of ['workbook', 'mustahik', 'tenant', 'users', 'periods', 'setti
 assert.ok(app.html().length > 0);
 assert.ok(app.bridge.can('mustahik'));
 assert.ok(!app.bridge.can('allocation'), 'Admin does not own allocation approval or treasury actions');
+assert.ok(!app.bridge.can('incentives'), 'Admin cannot access an incentive module that has been removed');
+app.navigateRef('schedule');
+assert.ok(app.html().includes('Pelacakan Shift Amil'), 'Admin can access automatic Amil shift tracking');
 app.navigateRef('workbook');
 assert.ok(app.html().includes('175.240.500'));
 assert.ok(app.html().includes('753,04'));
@@ -142,7 +146,9 @@ assert.ok(app.html().includes('row 16'));
 assert.deepEqual(JSON.parse(JSON.stringify(app.WORKBOOK_BASELINE.mustahik.formulaRecalc)), { fakir: 21, miskin: 102, cukupLayak: 1, mualaf: 5, mismatchRow: 16 });
 
 app.loginRef('US-BEN');
-for (const page of ['workbook', 'allocation', 'incentives', 'reports', 'deposits', 'ledger', 'distribution', 'corrections', 'audit']) {
+assert.ok(!app.bridge.can('incentives'), 'Bendahara cannot access the removed incentive feature');
+assert.ok(!app.bridge.can('schedule'), 'Bendahara does not access shift tracking');
+for (const page of ['workbook', 'allocation', 'reports', 'deposits', 'ledger', 'distribution', 'corrections', 'audit']) {
   app.navigateRef(page);
   assert.ok(!app.html().includes('Kesalahan tampilan'), `${page} page should render for Bendahara`);
 }
@@ -156,8 +162,8 @@ assert.ok(app.modalHtml().includes('37.500'));
 assert.ok(app.modalHtml().includes('13,04'));
 
 for (const [uid, allowed, denied] of [
-  ['US-PGR', ['dashboard','workbook','allocation','reports','audit','transactions','deposits','ledger','corrections'], ['users','mustahik','settings','muzakki']],
-  ['US-AML', ['dashboard','transactions','schedule','muzakki','corrections','amil-guide','help'], ['allocation','deposits','users']],
+  ['US-PGR', ['dashboard','workbook','allocation','reports','audit','transactions','deposits','ledger','corrections','schedule'], ['users','mustahik','settings','muzakki','incentives']],
+  ['US-AML', ['dashboard','transactions','schedule','muzakki','corrections','amil-guide','help'], ['allocation','deposits','users','incentives']],
   ['US-OPR', ['dashboard','transactions','muzakki','corrections','help'], ['allocation','deposits','users','amil-guide']],
   ['US-REL', ['dashboard','distribution','help'], ['transactions','allocation','deposits']],
   ['US-MZK', ['my-zis','help'], ['dashboard','transactions','deposits','allocation']],

@@ -40,8 +40,16 @@
     if (profile === 'annur-default') return A.seed()
     throw new Error('Dataset tidak dikenal. Pilih Dataset Multi-Lembaga atau Dataset Masjid An-Nur.')
   }
+  function removeRetiredAmilRuleFields(database) {
+    ;(database.rules || []).forEach((rule) => {
+      delete rule.monthlyIncentive
+      delete rule.method
+    })
+    return database
+  }
   function finalizePreset(fresh, profile) {
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(fresh[key])) fresh[key] = [] })
+    removeRetiredAmilRuleFields(fresh)
     fresh.transactions.forEach((transaction) => {
       if (String(transaction.status || '').trim().toLowerCase() === 'tercatat') transaction.status = 'pending'
       if (transaction.status === 'pending') window.__SIZISNUR_TRANSACTION_POLICY?.normalizePendingExpiry?.(transaction)
@@ -106,6 +114,7 @@
     validateDatabase(database)
     const next = clone(database)
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(next[key])) next[key] = [] })
+    removeRetiredAmilRuleFields(next)
     next.version = 5
     next.seedRevision ||= 2
     next.transactions.forEach((transaction) => {

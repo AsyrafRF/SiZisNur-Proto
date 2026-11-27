@@ -161,4 +161,9 @@ V3 adalah prototype front-end lokal. Penyimpanan menggunakan `localStorage`, oto
 
 ## Lembar pendukung yang belum menjadi formulir V3 terpisah
 
-`TANDA TERIMA FORM ZAKAT`, `TT ZAKAT BENDAHARA`, `TT BERAS BENDAHARA`, `TANDA TERIMA AMIL ZAKAT`, dan `TANDA TERIMA BERAS INFAK` masih berupa template/dokumen sumber dan belum dibangun sebagai formulir cetak interaktif terpisah. `FORM ANAK YATIM` adalah template kosong tanpa data/logic terintegrasi. `FLOW 1` dan `FLOW 2` berupa gambar/shape, bukan struktur tabel. V3 saat ini memetakan alur inti penerimaan, setoran, mustahik, alokasi, distribusi, jadwal, dan insentif; lembar pendukung ini masuk daftar pengembangan lanjutan.
+`TANDA TERIMA FORM ZAKAT`, `TT ZAKAT BENDAHARA`, `TT BERAS BENDAHARA`, `TANDA TERIMA AMIL ZAKAT`, dan `TANDA TERIMA BERAS INFAK` masih berupa template/dokumen sumber dan belum dibangun sebagai formulir cetak interaktif terpisah. `FORM ANAK YATIM` adalah template kosong tanpa data/logic terintegrasi. `FLOW 1` dan `FLOW 2` berupa gambar/shape, bukan struktur tabel. V3 pada awalnya memetakan alur penerimaan, setoran, mustahik, alokasi, distribusi, jadwal, dan perhitungan workbook. Setelah keputusan stakeholder 27 November 2026, sistem aktif hanya mempertahankan pelacakan shift otomatis Amil; alur jadwal manual dan penghitungan/pembayaran insentif tidak diimplementasikan. Catatan atau angka pada workbook sumber tetap merupakan arsip historis, bukan parameter operasional aplikasi saat ini.
+
+
+## Keputusan stakeholder — 27 November 2026
+
+Bagian penghitungan, penjadwalan, pembagian, dan pembayaran insentif Amil tidak menjadi kebutuhan sistem dan tidak diimplementasikan. Angka historis yang mungkin masih tercantum pada workbook acuan dipertahankan hanya sebagai catatan sumber; angka tersebut tidak dibaca sebagai tarif, saldo, atau dasar perhitungan aplikasi. Kebutuhan operasional yang tetap dipakai adalah pelacakan shift otomatis melalui tombol **Mulai Shift**, transaksi terkait `shiftId`, ringkasan penerimaan per shift, serta laporan CSV/XLSX dengan pembatasan akses sesuai role.

@@ -87,3 +87,31 @@ Sebelum rilis produksi, perlu disediakan layanan backend tiket dengan:
 ## 6. Verifikasi yang dijalankan
 
 `tests/support-tickets.test.cjs` menguji pembuatan tiket, pencatatan Lembaga/pelapor, inbox root lintas tenant, kebijakan visibilitas Admin/non-Admin, balasan root, balasan tenant, status selesai dan buka kembali, kompatibilitas tiket legacy, serta jejak audit dan antrean sinkronisasi lokal. Semua berkas `tests/*.test.cjs` dan pemeriksaan sintaks JavaScript lulus pada pembaruan ini.
+
+
+## 7. Keputusan stakeholder — penghapusan fitur insentif dan pelacakan shift Amil — 27 November 2026
+
+### Alur yang dipertahankan
+
+Audit implementasi memastikan koleksi `shiftSessions` sudah digunakan oleh workflow V5 dan transaksi yang disahkan Amil sudah menyimpan `shiftId`. Relasi ini juga menjadi dasar berita acara serah-terima Bendahara. Oleh karena itu, pelacakan shift memakai kembali sumber data dan ID relasi yang sama; tidak dibuat tabel transaksi shift duplikat dan tidak diubah status/rumus transaksi, deposit, atau jurnal.
+
+### Keputusan lingkup
+
+Tidak ada penjadwalan, perhitungan, pembagian, maupun pembayaran insentif Amil pada sistem aktif. Route/menu yang terkait, aturan konfigurasi, modul panduan, dan entrypoint interaksi insentif dihapus dari aplikasi. Koleksi `schedule` lama dipertahankan sebagai data legacy agar catatan lama tidak hilang, tetapi tidak lagi dirender atau menerima input baru.
+
+Shift baru hanya dibuat dari tombol **Mulai Shift** yang sudah ada di halaman Penerimaan & Verifikasi. Saat transaksi menjadi `Paid` melalui pengesahan Amil, transaksi otomatis mengacu pada `shiftId` aktif. Rekap menghitung transaksi `Paid` dan tahap lanjutannya (`disetor`, `kas_diterima`, `terverifikasi`), sementara transaksi Pending/batal/kedaluwarsa tidak dihitung. Nilai uang dan beras berasal dari rincian transaksi dan memasukkan koreksi berstatus `disetujui`.
+
+### Hak akses
+
+- **Amil:** melihat riwayat shift dan transaksi miliknya sendiri. Filter `amilId` tidak dapat memperluas cakupan tersebut.
+- **Admin Lembaga dan Pengurus:** melihat seluruh shift pada tenant aktif, filter Amil/tanggal/status, sortir waktu/durasi/jumlah transaksi/total uang/beras, rincian transaksi, ekspor CSV/XLSX. Keduanya tidak memiliki aksi mengubah atau membuat shift.
+
+### Penutupan shift
+
+Shift ditutup saat tombol Tutup Shift dipakai, logout dipanggil, akun berganti dari Amil ke akun lain, atau pengguna keluar dari area akun menuju landing/public. Listener `pagehide` mencoba menutup shift saat tab/dokumen ditinggalkan. Penutupan saat logout dan pergantian akun berjalan sebelum sesi dihapus/diganti; `pagehide` tetap best-effort karena perilaku browser. Jika ditemukan lebih dari satu shift terbuka lama untuk akun yang sama, operasi penutupan menutup semuanya agar tidak ada sesi yang tertinggal.
+
+### Batasan produksi
+
+Project tetap prototype statis browser dengan `localStorage`, bukan backend/cloud. Oleh sebab itu, filter dan role di sini adalah batas UI, bukan kontrol keamanan server; `pagehide` tidak dapat dijamin jika proses browser mati mendadak/perangkat kehilangan daya. Sebelum produksi perlu endpoint logout yang menutup shift secara transaksional, heartbeat/lease atau aturan sesi kedaluwarsa, database server, otorisasi server-side per tenant/Amil, audit immutable, dan ekspor dari server.
+
+Tes otomatis baru `tests/amil-shifts.test.cjs` mencakup start, perhitungan transaksi dan koreksi, akses tiga role, filter, ekspor dua format, logout, account switch, serta fallback pagehide.

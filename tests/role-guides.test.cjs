@@ -33,7 +33,7 @@ const createPage = new Function(
 
 const expectedMenus = {
   Admin: [
-    'Profil Lembaga & UPZ', 'Akun & Peran', 'Periode Zakat', 'Jadwal & Kehadiran', 'Tarif & Rumus',
+    'Profil Lembaga & UPZ', 'Akun & Peran', 'Periode Zakat', 'Pelacakan Shift Amil', 'Tarif & Rumus',
     'Mustahik & Kelayakan', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
   ],
   Muzakki: [
@@ -45,13 +45,13 @@ const expectedMenus = {
     'Struk Digital dan Cetak', 'Koreksi Terkendali', 'Evaluasi Prototype'
   ],
   Amil: [
-    'Jadwal & Kehadiran', 'Penerimaan & Verifikasi · Scan QR',
+    'Pelacakan Shift Amil', 'Penerimaan & Verifikasi · Scan QR',
     'Ketentuan, Dalil, Doa dan Akad', 'Notifikasi', 'Evaluasi Prototype'
   ],
   Bendahara: [
     'Serah Terima & Rekonsiliasi', 'Jurnal dan Laporan Keuangan',
     'Koreksi Terkendali', 'Alokasi & Persetujuan', 'Batch & Penyaluran Lapangan',
-    'Laporan & Statistik', 'Insentif Amil', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
+    'Laporan & Statistik', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
   ],
   Relawan: [
     'Batch & Penyaluran Lapangan', 'Bila Kamera atau Jaringan Bermasalah',
@@ -60,7 +60,7 @@ const expectedMenus = {
   Pengurus: [
     'Penerimaan dan Verifikasi', 'Alokasi dan Persetujuan Program',
     'Jurnal dan Laporan Keuangan', 'Laporan & Statistik',
-    'Koreksi Terkendali', 'Insentif Amil', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
+    'Koreksi Terkendali', 'Pelacakan Shift Amil', 'Acuan Workbook 1447H', 'Evaluasi Prototype'
   ]
 }
 

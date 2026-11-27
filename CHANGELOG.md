@@ -1,3 +1,12 @@
+# Perubahan stakeholder — hapus insentif Amil dan lacak shift otomatis — 27 November 2026
+
+- Menghapus menu/route, konfigurasi, aturan, dan panduan operasional insentif Amil dari aplikasi aktif. Properti aturan lama `monthlyIncentive` dan `method` juga dibersihkan dari penyimpanan V5 saat bootstrap dan dari cadangan saat impor. Data `schedule` lama dipertahankan hanya untuk kompatibilitas arsip; pembuatan jadwal manual tidak disediakan.
+- Menggunakan kembali `shiftSessions` dan `shiftId` yang sudah terhubung pada pengesahan transaksi Amil serta serah-terima Bendahara. Tombol **Mulai Shift** tetap menjadi satu-satunya cara membuka shift.
+- Menambahkan halaman pelacakan shift untuk Amil (data pribadi) dan Admin/Pengurus (semua shift tenant aktif), termasuk filter, sortir, detail transaksi, ringkasan tiap shift, dan ekspor CSV/XLSX.
+- Menutup semua shift Amil yang terbuka pada logout, pergantian akun, navigasi keluar area akun, serta mencoba penutupan pada `pagehide`. Penutupan tab tetap best-effort karena project menggunakan `localStorage` tanpa backend.
+- Menambahkan `tests/amil-shifts.test.cjs`; pengujian ekspor memeriksa struktur arsip XLSX/Office Open XML dan filter tanggal lokal lintas tengah malam WIB. Seluruh 22 suite dan seluruh pemeriksaan sintaks JavaScript aktif lulus. Cache service worker dinaikkan ke `sizisnur-shell-v5-20261127-amil-shift-tracking-no-incentive`.
+- Catatan produksi: otorisasi server-side, transaksi lintas perangkat, serta penutupan shift yang dijamin tetap memerlukan backend.
+
 # Changelog SiZisNur Prototype
 
 ## Penghapusan aman periode draf dan penyelarasan konfirmasi transaksi — 26 November 2026

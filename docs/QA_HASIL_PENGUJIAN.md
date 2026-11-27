@@ -1,8 +1,10 @@
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 25 November 2026
+Tanggal pembaruan: 27 November 2026
 
 ## Pemeriksaan statis
+
+Pada verifikasi 27 November 2026, `node --check` juga dijalankan untuk seluruh skrip JavaScript yang dimuat aplikasi (`app.js`, `revision-v5.js`, `platform-admin.js`, `public-portal.js`, `prototype-settings.js`, `authentication.js`, `public-intake.js`, `qrcode.js`, dan `service-worker.js`); semuanya lulus.
 
 | Perintah | Hasil |
 |---|---|
@@ -11,11 +13,11 @@ Tanggal pembaruan: 25 November 2026
 | `node --check js/authentication.js` | Lulus |
 | `node --check js/public-intake.js` | Lulus |
 | `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 19 suite, 19/19 |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 22 suite, 22/22 (27 November 2026) |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
-| `node tests/role-guides.test.cjs` | Lulus — 7 role, 62 tutorial menu, 319 langkah, 62 ilustrasi UI |
+| `node tests/role-guides.test.cjs` | Lulus — 7 role, 61 tutorial menu, 314 langkah, 61 ilustrasi UI |
 | `node tests/dark-alerts.test.cjs` | Lulus — semua varian alert/toast memenuhi rasio kontras minimal 4,5:1 pada tema terang dan gelap |
 | `node tests/dark-ui-theme.test.cjs` | Lulus — badge status, panel hasil panduan, preview, aksen teks, label form, kontrol berbahaya, dan indikator langkah memenuhi token/kontras tema |
 | `node tests/pagination.test.cjs` | Lulus — render 10 baris per halaman, navigasi dan batas halaman, tabel pendek/kosong, lembaga Muzakki, audit penuh, serta PDF laporan lengkap |
@@ -24,9 +26,10 @@ Tanggal pembaruan: 25 November 2026
 | `node tests/muzakki-registration.test.cjs` | Lulus — registrasi empat data tanpa lembaga, akun tanpa person/kartu/membership, dan penghubungan dari dalam akun dengan persetujuan |
 | `node tests/dashboard-analytics.test.cjs` | Lulus — agregasi grafik, filter status/media dan role tervalidasi |
 | `node tests/dashboard-status.test.cjs` | Lulus — status koneksi, antrean lembaga dan role tervalidasi |
-| `node tests/muzakki-dashboard.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
+| `node tests/public-intake.test.cjs` | Lulus — akses bukti periode aktif, pemulihan QR, pembatalan Pending yang memenuhi syarat, jejak audit, dan pembatasan setelah diproses Amil/panitia |
 | `node tests/transaction-calculator.test.cjs` | Lulus — modul bersama Operator/Muzakki/Publik, transaksi multi-baris dan media campuran, kalkulasi uang/beras, format Rupiah bertitik, konfirmasi kelebihan, dan struk seragam |
 | `node tests/transaction-line-adaptivity.test.cjs` | Lulus — visibilitas dan status aktif field per kategori, label Maal/Profesi, validasi input kondisional, dan normalisasi nilai yang tidak relevan |
+| `node tests/amil-shifts.test.cjs` | Lulus — pembukaan shift dari tombol Mulai Shift, relasi `shiftId`, status transaksi yang dihitung, koreksi disetujui, akses personal Amil, cakupan Admin/Pengurus, filter tanggal lokal dan sortir, validasi struktur XLSX/Office Open XML, ekspor CSV, penutupan logout/pergantian akun/pagehide |
 
 ## Cakupan yang diperiksa oleh test otomatis
 
@@ -43,6 +46,7 @@ Tanggal pembaruan: 25 November 2026
 - Dashboard Muzakki hanya menampilkan catatan milik akun sendiri, memisahkan status pengesahan Amil dari rekonsiliasi Bendahara, serta menampilkan riwayat sesuai membership lintas periode/lembaga. Akses dashboard agregat panitia ditolak.
 - Tabel zakat periode berjalan menampilkan tombol pembukaan bukti/QR untuk setiap transaksi aktif. Pembatalan hanya tersedia bagi transaksi self-service Pending yang tidak mempunyai penanda Amil, Operator, shift, atau berita acara. Pembatalan menyimpan alasan, aktor, waktu, audit, dan status batal; QR record batal tidak lagi ditampilkan sebagai kode yang dapat dipindai.
 - Hash SHA-256 yang sesuai vektor uji `abc` serta deteksi perubahan detail audit.
+- Pelacakan Shift Amil: pencatatan otomatis dari tombol Mulai Shift, pengaitan transaksi ketika berstatus Paid, rekap uang/beras dan hitungan per shift, akses per Amil, tampilan seluruh tenant aktif untuk Admin/Pengurus, filter/sortir, ekspor CSV/XLSX, dan penutupan saat logout/pergantian akun/pagehide.
 - Portal Zakat Publik: tautan opaque per tenant/periode, pembatasan role Admin/Amil/Operator, QR banner dan WhatsApp share, formulir publik tanpa login, OTP 6 digit yang ditampilkan di browser sebagai demo, pencocokan identitas tanpa auto-merge, transaksi Pending, pencegahan transaksi unpaid ganda, bukti, pembatalan dengan alasan dan audit, serta larangan pembatalan setelah diproses.
 - Cetak Thermal 80 mm memakai jendela khusus selebar 460 px untuk pratinjau roll, aturan `@page size: auto` di `<head>` yang mengikuti media pada driver, konten 74 mm, font monospace yang diperbesar, QR 28 mm, dan toolbar layar yang disembunyikan saat cetak; Cetak/Simpan PDF tetap memakai layout halaman normal.
 - Modul transaksi terpadu dipakai oleh Operator/Amil, Muzakki, dan formulir publik. Satu transaksi mendukung hingga 12 rincian jenis/media, kalkulasi adaptif per baris, Fitrah uang+beras, total terpisah, satu nomor/QR/struk, serta detail satuan pada struk.
@@ -173,5 +177,5 @@ Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersa
 
 - `tests/support-tickets.test.cjs` memverifikasi pembuatan tiket oleh pengguna tenant, pencatatan identitas dan `tenantId`, inbox root lintas tenant, tampilan asal Lembaga, balasan Admin SiZisNur, balasan lanjutan tenant, transisi status, serta audit dan antrean sinkronisasi lokal.
 - Tes isolasi memastikan role non-Admin hanya melihat tiket miliknya, Admin Lembaga dapat melihat tiket dalam tenant yang sama, dan root dapat melihat tiket semua tenant.
-- Seluruh 20 berkas `tests/*.test.cjs` lulus setelah perubahan ini; `node --check` juga lulus untuk `js/revision-v5.js` dan `js/platform-admin.js`.
+- Seluruh 22 berkas `tests/*.test.cjs` lulus pada verifikasi 27 November 2026; `node --check` juga lulus untuk `js/revision-v5.js` dan `js/platform-admin.js`.
 - Hasil di atas adalah pengujian otomatis prototype lokal, bukan uji otorisasi backend atau pengujian multi-perangkat produksi.
