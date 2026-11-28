@@ -886,6 +886,10 @@ body.dark .tenant-map-label{background:rgba(19,35,29,.9);border-color:#53685c;co
 .transaction-line-excess input{margin-top:2px;flex:0 0 auto}
 .shared-transaction-form>.form-actions{margin:0}
 .shared-transaction-form>.form-actions .btn{white-space:normal}
+.transaction-submit-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:16px}
+.transaction-submit-actions .btn{white-space:normal}
+.transaction-submit-note{max-width:620px;margin:0;text-align:right;font-size:10.5px;line-height:1.5}
+@media(max-width:620px){.transaction-submit-actions{align-items:stretch}.transaction-submit-actions .btn{align-self:flex-end}.transaction-submit-note{text-align:left}}
 .transaction-calculation-preview{margin:0;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
 .receipt-line-item{align-items:flex-start}
 .receipt-line-item>span{min-width:0;line-height:1.55}
@@ -965,3 +969,33 @@ body.dark .decision-no {
     padding: 16px;
   }
 }
+
+/* Keep conditionally hidden form fields out of layout, including wrappers styled as flex. */
+.field[hidden]{display:none!important}
+
+
+/* Cross-tenant support inbox and threaded ticket conversation. */
+.support-ticket-history{display:grid;gap:12px;margin-top:22px}
+.support-ticket-card{display:grid;gap:13px}
+.support-ticket-card .card-top{align-items:flex-start}
+.support-ticket-card .card-top h3{font-size:16px;margin:5px 0 0}
+.ticket-id{font:700 10px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.ticket-summary{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11px}
+.ticket-thread{display:grid;gap:9px;margin:14px 0}
+.ticket-message{border:1px solid var(--line);border-radius:11px;padding:12px 14px;background:var(--soft);min-width:0}
+.ticket-message.is-platform{border-left:4px solid var(--main);background:var(--main-w)}
+.ticket-message-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px}
+.ticket-message-head span{color:var(--muted);font-size:10px}
+.ticket-message p{margin:8px 0 0;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.ticket-detail-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.ticket-detail-meta>div{display:grid;gap:4px;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--soft);min-width:0}
+.ticket-detail-meta span,.ticket-detail-meta small{font-size:10px;color:var(--muted)}
+.ticket-detail-meta b{font-size:12px;overflow-wrap:anywhere}
+.ticket-status-text{font-size:11px;font-weight:750}
+.ticket-status-text.is-pending{color:var(--warn)}
+.ticket-status-text.is-done{color:var(--main)}
+.root-ticket-filters{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 14px}
+.root-ticket-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+.support-ticket-submit{margin-bottom:18px}
+@media(max-width:1100px){.root-ticket-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:680px){.ticket-detail-meta{grid-template-columns:1fr}.ticket-summary{display:grid}.root-ticket-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ticket-message-head{display:grid;gap:3px}}

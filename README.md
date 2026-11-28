@@ -67,15 +67,27 @@ Profil lembaga untuk pemilihan Muzakki menampilkan ID publik unik, alamat dan wi
 
 Navigasi akun Muzakki dipisahkan menjadi tiga halaman: **Dashboard Zakat Saya** untuk ringkasan dan riwayat pribadi, **Layanan Mandiri** untuk profil/keluarga/kalkulator zakat, serta **Rencana Bayar Zakat** untuk memulai perencanaan pembayaran dan memperoleh QR transaksi Pending. Dashboard tidak lagi menampung panel layanan mandiri berbentuk dropdown.
 
-File mandiri yang memuat HTML, CSS, JavaScript, autentikasi simulasi, QR, logo, dan Pengaturan Prototype tersedia pada `standalone/SiZisNur_Prototype_V5_Standalone.html`. Petunjuk lebih lengkap: `docs/PENGATURAN_PROTOTYPE.md` dan `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`. Petunjuk detail penyatuan form dan format transaksi ada pada `docs/INPUT_TRANSAKSI_TERPADU.md`.
+Petunjuk pengaturan dan autentikasi simulasi tersedia pada `docs/PENGATURAN_PROTOTYPE.md` dan `docs/LOGIN_REGISTER_DAN_AKSES_DEMO.md`. Petunjuk detail penyatuan form dan format transaksi ada pada `docs/INPUT_TRANSAKSI_TERPADU.md`. Project dijalankan sebagai aplikasi web dari folder project melalui HTTPS atau server lokal; distribusi HTML satu file tidak lagi disediakan.
 
-## 6. Pengaturan Prototype
+## 6. Pelacakan Shift Amil otomatis
+
+Amil membuka pelayanan melalui tombol **Mulai Shift** pada halaman **Penerimaan & Verifikasi**. Sistem membuat catatan shift dengan waktu mulai dan menghubungkan transaksi pada saat pembayaran disahkan Amil (status `Paid`) melalui `shiftId` yang sudah digunakan pada serah-terima Bendahara. Transaksi Pending/batal tidak dihitung sebagai transaksi yang diterima. Total uang dan beras dihitung dari rincian transaksi serta koreksi yang telah disetujui.
+
+Menu **Pelacakan Shift Amil** tersedia untuk Amil, Admin Lembaga, dan Pengurus. Amil hanya melihat shift miliknya; Admin dan Pengurus dapat melihat seluruh shift di lembaga aktif, memfilter Amil/tanggal/status, mengurutkan waktu/durasi/jumlah transaksi/total penerimaan, membuka rincian transaksi, serta mengunduh CSV atau XLSX sesuai filter. Shift dibuat otomatis lewat tombol mulai yang ada; tidak ada form penjadwalan atau pencatatan shift manual. Logout, pergantian akun, dan keluar dari area akun menutup shift melalui logika aplikasi. Penutupan saat tab/browser ditutup bergantung pada event `pagehide` browser.
+
+Fitur pembagian, penjadwalan, dan pembayaran insentif Amil tidak disediakan pada versi ini. Data lama pada koleksi `schedule` atau arsip workbook, bila ada, dipertahankan hanya agar kompatibilitas dan catatan historis tidak terputus; data tersebut tidak menjadi alur operasional baru.
+
+**Batas penting:** aplikasi masih berupa prototype browser berbasis `localStorage`, tanpa backend. Penutupan saat logout dan pembatasan role berjalan di sisi klien pada browser yang sama; penutupan tab bersifat best-effort dan tidak menjamin lintas perangkat. Produksi harus menerapkan penutupan shift di endpoint logout/server, transaksi dan laporan berbasis database server, serta RBAC dan isolasi tenant server-side. Detail teknis tersedia pada `docs/IMPLEMENTASI_TRACKING_SHIFT_AMIL.md`.
+
+Verifikasi kode: `node tests/amil-shifts.test.cjs` menguji alur shift; jalankan seluruh regresi dengan `for f in tests/*.test.cjs; do node "$f"; done`. Pemeriksaan sintaks mencakup semua JavaScript aktif.
+
+## 7. Pengaturan Prototype
 
 Aktor Admin SiZisNur memiliki tab **Pengaturan Prototype** untuk mengekspor dan mengimpor cadangan JSON database V5, reset ke seed terbaru, menghapus semua data simulasi, memeriksa relasi dasar, mengembalikan tema, dan keluar dari sesi root. Reset dan hapus data menggunakan frasa konfirmasi. Hapus semua data akan mengosongkan Mustahik; akun Admin SiZisNur tetap dipertahankan agar konsol root dapat diakses kembali. Lihat `docs/PENGATURAN_PROTOTYPE.md` untuk format cadangan, batas impor, perlindungan data, dan cara menjalankan.
 
 **Catatan Mustahik:** array Mustahik tidak diubah dalam pembaruan akun contoh dan reset mengambil kembali seed yang dipertahankan. Catatan implementasi workbook pada project menyebut record individual yang ada sebagai data sintetis non-identifying untuk mereproduksi agregat workbook terverifikasi; workbook Excel sumber tidak disertakan di dalam arsip ini.
 
-## 7. Kalkulasi otomatis transaksi zakat
+## 8. Kalkulasi otomatis transaksi zakat
 
 Form transaksi **Muzakki (Layanan Mandiri)**, input konter **Operator/Amil**, dan **Formulir Publik** memakai satu pembangun formulir, mesin kalkulasi, validasi, konfirmasi kelebihan, model rincian transaksi, dan renderer struk yang sama. Setiap baris adalah satu kombinasi jenis zakat/donasi dan media; satu formulir dapat memuat hingga 12 baris dalam satu nomor transaksi dan satu QR. Contohnya, Zakat Fitrah uang dan Zakat Fitrah beras dapat digabung dengan Zakat Maal, Profesi, Fidyah, Kafarat, atau Infak/Sedekah. Pada aturan prototype saat ini, media beras tersedia untuk Zakat Fitrah; kategori lain menggunakan uang. Bila kelebihan pembayaran Fitrah beras dipisahkan, rincian Infak/Sedekah mengikuti media beras tersebut. Pratinjau menghitung kewajiban, nilai dibayar, kekurangan, kelebihan, serta total uang dan beras secara terpisah. Perubahan jenis, media, jumlah jiwa/hari/kasus, nilai harta atau penghasilan, haul, serta jenis kafarat memperbarui estimasi.
 
@@ -98,7 +110,7 @@ Kafarat tidak dipatok dengan satu nominal universal: kalkulasi bergantung pada j
 
 Rujukan resmi yang digunakan untuk nilai awal: [BAZNAS RI — zakat fitrah dan fidyah 1447 H/2026 M](https://baznas.go.id/news-show/Ramadan_2026,_BAZNAS_RI_Tetapkan_Zakat_Fitrah_Rp50_Ribu/3708), [nisab dan kadar zakat penghasilan 2026](https://www.baznas.go.id/zakatpenghasilan), [kalkulator zakat BAZNAS](https://baznas.go.id/kalkulatorzakat), dan [penjelasan kafarat BAZNAS](https://baznas.go.id/artikel-show/Mengenal-Arti-Kafarat/232). Tarif tetap dapat disesuaikan Admin lembaga sesuai ketetapan wilayah.
 
-## 8. Matriks actor dan tanggung jawab
+## 9. Matriks actor dan tanggung jawab
 
 | Actor | Fokus | Kewenangan prototype |
 |---|---|---|
@@ -120,11 +132,13 @@ Pengaturan akses pada prototype berlaku di lapisan UI JavaScript. Itu bukan peng
 - **Email demo:** `root@sizisnur.demo`
 - **ID internal:** `PA-SIZISNUR-ROOT`
 - **Cara masuk:** pilih tile **Admin SiZisNur** pada halaman **Akses Demo Langsung**. Akun root tidak diterima pada jalur Login Panitia.
-- **Konsol:** Ringkasan, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
+- **Konsol:** Ringkasan, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, **Tiket Bantuan**, Pengaturan Sistem Root, Audit Platform, dan Profil Akun Root.
 
-Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, serta mengaktifkan/nonaktifkan akun lembaga. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
+Admin SiZisNur dapat membuat lembaga beserta akun Admin awal dan aturan/periode draf, mengaktifkan/menangguhkan lembaga, meninjau pengajuan publik, mengubah metadata lembaga, mengaktifkan/nonaktifkan akun lembaga, serta menangani **Tiket Bantuan** lintas lembaga. Tiket menyimpan asal Lembaga dan identitas pelapor; root dapat membalas langsung dan mengubah status, sedangkan pengguna Lembaga dapat membaca jawaban serta membalas kembali. Lembaga yang ditangguhkan atau ketika mode pemeliharaan aktif tidak dapat membuka workspace operasional. Pengajuan publik yang masuk tetap berstatus **menunggu** sampai ditinjau dari konsol root.
 
-## 9. Alur end-to-end yang diimplementasikan
+Catatan review alur sistem dan keputusan desain tiket support tersedia pada [`docs/REVIEW_ALUR_DAN_TIKET_SUPPORT_2026-11-25.md`](docs/REVIEW_ALUR_DAN_TIKET_SUPPORT_2026-11-25.md).
+
+## 10. Alur end-to-end yang diimplementasikan
 
 ### A. Persiapan
 
@@ -136,7 +150,7 @@ Pada jalur mandiri, Muzakki membuat akun lebih dahulu dengan nama lengkap, nomor
 
 Amil wajib membuka shift. Setelah scan QR, layar verifikasi menampilkan identitas Muzakki, rincian uang/beras, identitas Amil, dan pengingat akad. Amil baru dapat mengesahkan setelah mengonfirmasi penerimaan fisik dan akad. Struk dapat diunduh sebagai PNG, dicetak atau disimpan sebagai PDF melalui browser, dan dicetak dengan layout thermal 80 mm.
 
-QR `Pending` berakhir setelah 24 jam atau saat periode ditutup, mana yang lebih dahulu. Email dan WhatsApp dicatat sebagai kanal simulasi, bukan pengiriman eksternal aktif.
+QR `Pending` berlaku maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Muzakki wajib membawa atau menunjukkan QR ke meja Amil agar rincian, akad, dan pembayaran diverifikasi sebelum tenggat. Setelah batas lewat, QR tidak berlaku dan rencana baru perlu dibuat. Email dan WhatsApp dicatat sebagai kanal simulasi, bukan pengiriman eksternal aktif.
 
 ### C. Rekonsiliasi Bendahara
 
@@ -152,19 +166,19 @@ Bendahara menyiapkan alokasi dari saldo yang sudah direkonsiliasi, atau dari per
 
 Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat difilter menurut periode dan jenis laporan serta diekspor ke CSV, XLSX, atau PDF melalui fungsi cetak browser. Paket CSV/XLSX UPZ disediakan sebagai bahan pelaporan bulanan, tetapi belum dikirim langsung ke BAZNAS. Log audit demo memakai rantai hash SHA-256 untuk membantu mendeteksi perubahan yang tidak konsisten.
 
-## 10. Modul tambahan
+## 11. Modul tambahan
 
 - **Master wilayah per lembaga:** setiap lembaga memiliki satu Daerah induk dan hierarki RW → RT yang dikelola Admin pada menu Profil Lembaga. Dataset default hanya memuat Masjid An-Nur / Perumahan Villa Pesona Asri, RW 11 dengan RT 01–06. Preset Multi-Lembaga juga memuat Masjid Al-Hikmah / Kompleks Buana Citra, RW 1 (RT 01–10) dan RW 2 (RT 01–05). Tenant baru mendapat Daerah induk otomatis; Admin-nya mengatur RW/RT sendiri. Formulir identitas Muzakki dan Mustahik menggunakan pilihan Warga daerah atau Non-daerah; warga memilih RW dan RT dari master, bukan mengetik bebas. Status domisili dan ID Daerah/RW/RT disimpan pada identitas per lembaga dan dapat direkap pada menu Muzakki serta Laporan.
 - **Preset dataset prototype:** Dataset Masjid An-Nur adalah default dan memuat satu lembaga beserta operasional dan acuan workbook 1447H. Dataset Multi-Lembaga dapat dipilih terpisah di Pengaturan Prototype dan memuat An-Nur, Al-Hikmah, serta pengajuan Al-Falah menunggu. Hapus semua data menyisakan hanya akun Admin SiZisNur (Root), tanpa membuat ulang akun tenant yatim pada reload. Jika belum ada lembaga, halaman Muzakki menjelaskan kondisi tersebut; aplikasi dan Master Wilayah tetap tersedia untuk lembaga baru. Hak akses menu mengikuti matriks role V5.
 - **Modul Input Transaksi Terpadu:** satu komponen input, kalkulasi, konfirmasi kelebihan, validasi, dan struk digunakan oleh Operator/Amil, Muzakki, serta Formulir Publik. Mendukung beberapa rincian jenis/media dalam satu transaksi (maksimal 12 baris), total uang dan beras terpisah, RW/RT sesuai Master Wilayah untuk warga daerah, format Rupiah bertitik, dan struk yang seragam. Lihat `docs/INPUT_TRANSAKSI_TERPADU.md`.
-- **Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi):** Admin, Amil, dan Operator dapat menerbitkan tautan/QR per lembaga dan periode, membagikan tautan melalui WhatsApp, serta mencetak banner. Warga dapat mengisi identitas dan rencana zakat tanpa akun; OTP hanya ditampilkan pada browser, pencarian transaksi dibatasi tenant/periode, transaksi Pending dapat dibuka buktinya dan dibatalkan bila belum diproses. Fitur ini berjalan pada localStorage satu browser, tidak mengirim OTP dan tidak menyinkronkan perangkat. Jangan gunakan data nyata; lihat `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk alur, batas simulasi, dan checklist keamanan produksi.
+- **Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi):** Admin, Amil, dan Operator dapat menerbitkan tautan/QR per lembaga dan periode, membagikan tautan melalui WhatsApp, serta mencetak banner. Warga dapat mengisi identitas dan rencana zakat tanpa akun; OTP hanya ditampilkan pada browser, pencarian transaksi dibatasi tenant/periode, dan transaksi Pending wajib diverifikasi di meja Amil maksimal 2 jam sejak dibuat (atau sampai periode ditutup, mana yang lebih dahulu). QR kedaluwarsa tidak dapat digunakan dan rencana transaksi perlu dibuat ulang. Transaksi Pending juga dapat dibuka buktinya dan dibatalkan bila belum diproses. Fitur ini berjalan pada localStorage satu browser, tidak mengirim OTP dan tidak menyinkronkan perangkat. Jangan gunakan data nyata; lihat `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk alur, batas simulasi, dan checklist keamanan produksi.
 - **Panduan role:** halaman Panduan & Bantuan menampilkan langkah dan diagram alur sesuai peran. Amil juga memiliki halaman ketentuan, dalil, niat, doa, dan pengingat akad.
 - **Support & feedback:** laporan bantuan, saran, bug, dan dugaan masalah keamanan tersimpan di database browser lokal. Pengiriman ke sistem monitoring eksternal memerlukan endpoint.
 - **Offline-first prototype:** service worker menyimpan shell aplikasi. Perubahan data masuk antrean sinkronisasi lokal. Pengiriman baru dicoba jika `window.SIZISNUR_API_BASE` disediakan. Tanpa backend yang sesuai, tidak ada sinkronisasi cloud.
 - **Produksi Portal Publik:** sebelum layanan digunakan warga sungguhan, backend harus menyediakan token tautan ter-hash, tenant isolation, OTP provider nyata, rate-limit/anti-bot, pencocokan identitas yang aman, transaksi atomik/idempotent, otorisasi state machine pembatalan, QR bertanda tangan, enkripsi, audit server, retensi privasi, monitoring, backup, dan penetration test. Checklist lengkap ada pada `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`; jangan menganggap prototype sudah memenuhi kontrol tersebut.
 - **Ruang evaluasi prototype:** menginventarisasi aturan bisnis, kebijakan keuangan, syariah, integrasi dan keamanan yang belum disepakati.
 
-## 11. Batasan dan keamanan yang wajib dipahami
+## 12. Batasan dan keamanan yang wajib dipahami
 
 1. Belum ada backend produksi, PostgreSQL, MFA, otorisasi server-side, enkripsi data-at-rest, backup terjadwal, atau isolasi lembaga tingkat server. Prototype kini memiliki form login email/password dan hash PBKDF2 pada browser, tetapi kredensial serta sesi tetap berada di localStorage/sessionStorage dan dapat dimodifikasi pemilik perangkat. Ini bukan autentikasi produksi atau batas keamanan yang dapat dipercaya. Jangan mempublikasikan build demo dengan data nyata. Sebelum produksi, autentikasi root harus memakai kredensial terpisah, MFA wajib, otorisasi backend khusus platform, pembatasan jaringan/perangkat sesuai risiko, rate limit, pencatatan audit server append-only, serta proses pemulihan akun yang diawasi. Jangan masukkan NIK, nomor rekening, alamat rumah nyata, data keluarga nyata, atau transaksi aktual.
 2. `localStorage` dapat dibaca dan diubah oleh pengguna perangkat. Hash audit SHA-256 pada browser bukan bukti immutable, bukan tanda tangan digital, dan bukan pengganti audit server append-only.
@@ -173,16 +187,16 @@ Dashboard menyediakan filter kategori dan ringkasan uang/beras. Laporan dapat di
 5. Kamera QR memerlukan HTTPS dan izin perangkat yang kompatibel. Input token manual tetap tersedia sebagai fallback. Cetak PDF memakai dialog print browser dan bukan berkas PDF yang dihasilkan oleh server.
 6. Notifikasi email/WhatsApp tidak benar-benar terkirim. BAZNAS/UPZ belum terkoneksi karena endpoint dan skema pelaporan resmi belum disediakan.
 7. Jurnal, neraca dan laporan perubahan dana merupakan model simulasi. Bagan akun, pemisahan dana zakat/infak/sedekah/fidyah/kafarat, pengakuan persediaan beras, pajak/biaya, dan standar pelaporan harus ditetapkan bersama Bendahara, Pengurus, BAZNAS, serta auditor.
-8. Tarif zakat, nisab, lafaz akad, doa, formula distribusi, dan kebijakan mustahik perlu disahkan oleh pihak berwenang dan pembimbing agama. Teks akad hanya pengingat UI dan tidak mengesahkan ibadah. Atribut Daerah/RW/RT administratif pada identitas Mustahik tetap terpisah dari `mustahik.region` (kolom H wilayah penilaian survei); kolom H dan formula skor workbook 1447H tidak diubah oleh fitur master wilayah.
+8. Tarif zakat, nisab, lafaz akad, doa, formula distribusi, dan kebijakan mustahik perlu disahkan oleh pihak berwenang dan pembimbing agama. Teks akad hanya pengingat UI dan tidak mengesahkan ibadah. Atribut Daerah/RW/RT administratif pada identitas Mustahik tetap terpisah dari `mustahik.region` (kolom H wilayah penilaian survei). Namun, opsi H kini bersumber dari Master Daerah/RW/RT tenant aktif dan disimpan sebagai ID wilayah: kosong = 0, Non-[Daerah] tenant = 50, dan [Daerah] + RT tenant = 100. Perubahan ini tidak otomatis mengubah domisili administratif warga.
 9. Revisi ini bukan audit hukum. Sebelum rilis, lakukan kajian atas UU 23/2011 tentang Pengelolaan Zakat, PP 14/2014, UU 27/2022 tentang Pelindungan Data Pribadi, peraturan turunannya, kebijakan BAZNAS terkait UPZ, dan ketentuan daerah yang relevan. Konsultasikan dengan penasihat hukum dan BAZNAS.
 
-## 12. Rujukan kebutuhan dan keputusan yang belum selesai
+## 13. Rujukan kebutuhan dan keputusan yang belum selesai
 
 Lihat `docs/CAKUPAN_FITUR.md` untuk pemetaan fitur, `docs/SKENARIO_UAT.md` untuk langkah verifikasi, `docs/QA_HASIL_PENGUJIAN.md` untuk hasil tes, `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk Portal Zakat Publik dan standar keamanan produksi, `docs/IMPLEMENTASI_WORKBOOK_1447H.md` untuk rumus dan angka workbook, dan menu **Evaluasi Prototype** untuk daftar pertanyaan yang perlu diputuskan stakeholder.
 
-Asumsi yang sengaja belum ditetapkan antara lain batas waktu transaksi Pending, apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
+Kebijakan prototype saat ini menetapkan batas verifikasi transaksi Pending maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Keputusan lain yang masih perlu ditetapkan antara lain apakah satu transaksi mencakup beberapa jenis zakat, dasar prioritas Mustahik, formula alokasi fleksibel, saldo agregat workbook Tahap 2, struktur laporan UPZ, dan format integrasi email/WhatsApp.
 
-## 13. Build dan pengujian
+## 14. Build dan pengujian
 
 ```bash
 node --check js/app.js
@@ -206,12 +220,11 @@ node tests/dashboard-analytics.test.cjs
 node tests/dashboard-status.test.cjs
 node tests/public-portal.test.cjs
 node tests/public-intake.test.cjs
-python tools/build-standalone.py
 ```
 
 Pengujian otomatis memeriksa aturan workbook 1447H, komposisi dataset Mustahik sintetis, preset Dataset Masjid An-Nur dan Multi-Lembaga, hapus semua data yang hanya menyisakan Root, larangan pembuatan ulang akun tenant yatim, alert Muzakki saat belum ada lembaga, master Daerah/RW/RT untuk tenant baru, matriks menu seluruh role, autentikasi simulasi, hash audit, alokasi, validasi relasi lintas lembaga, pemisahan domisili administratif dari kolom H penilaian, serta kontras warna alert/toast dan komponen UI global pada light dan dark mode. Tes tersebut bukan pengganti pengujian browser multi-perangkat, penetration test, uji aksesibilitas, uji beban, maupun UAT resmi bersama stakeholder.
 
-## 14. Struktur folder
+## 15. Struktur folder
 
 ```text
 index.html
@@ -234,7 +247,6 @@ docs/
   THIRD_PARTY.md
 manifest.webmanifest
 service-worker.js
-standalone/SiZisNur_Prototype_V5_Standalone.html
 tests/workbook-rules.test.cjs
 tests/public-intake.test.cjs
 tests/dataset-role-reset.test.cjs
@@ -242,7 +254,6 @@ tests/prototype-settings.test.cjs
 tests/authentication.test.cjs
 tests/transaction-calculator.test.cjs
 tests/tenant-territories.test.cjs
-tools/build-standalone.py
 CHANGELOG_V3.md
 README.md
 ```
@@ -257,7 +268,7 @@ README.md
 - Kamera memerlukan HTTPS atau localhost dan dukungan `BarcodeDetector`. Browser yang belum mendukung API pemindai harus memakai input manual.
 - Untuk penjelasan aturan status, privasi, dan batasan produksi, baca `docs/PORTAL_PUBLIK_TRANSPARANSI_DAN_QR.md`.
 
-## 15. Struk thermal 80 mm
+## 16. Struk thermal 80 mm
 
 - Cetak Thermal 80 mm menggunakan pratinjau roll terpusat dan layout satu kolom bergaya POS dengan font monospace, header tengah, metadata label/nilai sejajar, separator ASCII, rincian pembayaran ringkas, total uang/beras rata kanan, serta QR 28 mm.
 - Data yang tercetak tetap sama dengan struk digital/PDF, termasuk seluruh baris multi-jenis/multi-media, status, token QR, dan disclaimer simulasi.

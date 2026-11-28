@@ -23,10 +23,14 @@ Contoh tampilan pada panduan merupakan ilustrasi pengenal elemen menu, bukan tan
 - **Admin** — ringkasan, profil lembaga dan UPZ, akun dan peran, periode zakat, tarif dan rumus, Mustahik dan kelayakan, notifikasi, audit dan arsip, serta acuan workbook.
 - **Muzakki** — tiga halaman terpisah: Dashboard Zakat Saya untuk ringkasan dan riwayat pribadi, Layanan Mandiri untuk daftar lembaga/profil/wilayah/keluarga/kalkulator, serta Rencana Bayar Zakat untuk menyiapkan pembayaran dan memperoleh QR transaksi.
 - **Operator** — ringkasan, data Muzakki Walk-in, input transaksi konter, struk digital dan cetak, serta pengajuan koreksi.
-- **Amil** — ringkasan, shift dan kehadiran, input konter saat tidak ada Operator, pemindaian QR dan verifikasi, bukti setor zakat, ketentuan dan akad, serta notifikasi.
-- **Bendahara** — ringkasan, serah terima dan rekonsiliasi, jurnal dan laporan keuangan, koreksi, alokasi, batch penyaluran, laporan, insentif, audit, dan acuan workbook.
+- **Amil** — ringkasan, Mulai Shift, pelacakan shift dan transaksi milik sendiri, input konter saat tidak ada Operator, pemindaian QR dan verifikasi, bukti setor zakat, ketentuan dan akad, serta notifikasi.
+- **Bendahara** — ringkasan, serah terima dan rekonsiliasi, jurnal dan laporan keuangan, koreksi, alokasi, batch penyaluran, laporan, audit, dan acuan workbook.
 - **Relawan** — ringkasan, daftar batch penyaluran, pemindaian QR Mustahik, konfirmasi penerimaan, serta panduan kendala kamera atau jaringan.
-- **Pengurus** — ringkasan, peninjauan lembaga, penerimaan, rekonsiliasi, koreksi, persetujuan alokasi, jurnal, laporan, insentif, audit, dan acuan workbook dengan akses baca saja kecuali tindakan persetujuan program yang memang disediakan.
+- **Pengurus** — ringkasan, peninjauan lembaga, pelacakan seluruh shift Amil secara baca-saja, penerimaan, rekonsiliasi, koreksi, persetujuan alokasi, jurnal, laporan, audit, dan acuan workbook dengan akses baca saja kecuali tindakan persetujuan program yang memang disediakan.
+
+## Pelacakan shift
+
+Amil memulai shift dari tombol **Mulai Shift** pada Penerimaan & Verifikasi; catatan tidak dibuat dari form manual atau jadwal. Transaksi secara otomatis ditautkan ke shift ketika Amil mengesahkan pembayaran menjadi `Paid`. Amil hanya dapat melihat riwayat miliknya sendiri. Admin Lembaga dan Pengurus dapat melihat semua shift pada lembaga aktif, termasuk filter, pengurutan, rincian, dan ekspor CSV/XLSX. Logout dan pergantian akun menutup shift melalui aplikasi; penutupan saat tab ditutup bergantung pada event browser dan bukan jaminan server.
 
 ## Batasan prototype
 
@@ -40,7 +44,6 @@ Jalankan pemeriksaan berikut dari direktori project:
 node --check js/revision-v5.js
 node tests/role-guides.test.cjs
 node tests/workbook-rules.test.cjs
-python tools/build-standalone.py
 ```
 
 Tes `role-guides.test.cjs` merender panduan untuk ketujuh role dan memeriksa kelengkapan modul, langkah bernomor, ilustrasi UI, FAQ, form feedback, serta tautan navigasi ke masing-masing modul.

@@ -63,13 +63,14 @@ function verifyRole(userId, mustHave, mustNotHave, label) {
   for (const page of mustNotHave) assert.equal(A.can(page), false, `${label}: permission check denies ${page}`)
 }
 
-const adminForbidden = ['allocation', 'distribution', 'reports', 'deposits', 'ledger', 'incentives', 'transactions']
+const adminForbidden = ['allocation', 'distribution', 'reports', 'deposits', 'ledger', 'transactions', 'incentives']
 verifyRole('US-ADM', ['dashboard', 'tenant', 'users', 'periods', 'settings', 'schedule', 'mustahik'], adminForbidden, 'Admin')
+assert.equal(A.can('incentives'), false, 'incentive module must be removed from the active role matrix')
 verifyRole('US-AML', ['dashboard', 'schedule', 'muzakki', 'transactions', 'amil-guide'], ['allocation', 'distribution', 'reports', 'deposits', 'ledger', 'users'], 'Amil')
 verifyRole('US-OPR', ['dashboard', 'muzakki', 'transactions'], ['schedule', 'allocation', 'distribution', 'reports', 'deposits', 'users'], 'Operator')
-verifyRole('US-BEN', ['dashboard', 'deposits', 'ledger', 'allocation', 'distribution', 'reports', 'incentives'], ['schedule', 'users', 'periods', 'settings'], 'Bendahara')
+verifyRole('US-BEN', ['dashboard', 'deposits', 'ledger', 'allocation', 'distribution', 'reports'], ['schedule', 'users', 'periods', 'settings', 'incentives'], 'Bendahara')
 verifyRole('US-REL', ['dashboard', 'distribution'], ['schedule', 'allocation', 'reports', 'deposits', 'ledger', 'users'], 'Relawan')
-verifyRole('US-PGR', ['dashboard', 'tenant', 'transactions', 'deposits', 'ledger', 'allocation', 'reports'], ['schedule', 'distribution', 'users', 'settings'], 'Pengurus')
+verifyRole('US-PGR', ['dashboard', 'tenant', 'transactions', 'deposits', 'ledger', 'allocation', 'reports', 'schedule'], ['distribution', 'users', 'settings', 'incentives'], 'Pengurus')
 verifyRole('US-MZK', ['my-zis', 'muzakki-services', 'pay-plan'], ['dashboard', 'tenant', 'users', 'schedule', 'allocation', 'distribution', 'reports'], 'Muzakki')
 
 // Multi-tenant preset retains precisely two mosque examples and one Al-Falah application.

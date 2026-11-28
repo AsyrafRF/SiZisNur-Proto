@@ -6,7 +6,7 @@
 - Posisi: landing, favicon, login, sidebar.
 
 ## Kebutuhan yang tetap sama
-Semua modul lama **tetap dipertahankan**: lembaga, akun/peran, dashboard, periode, aturan, jadwal amil, muzakki dan kartu, penerimaan multi-kategori, akad, QR & struk, setoran bendahara, survei mustahik, alokasi approval, distribusi, insentif, laporan, notifikasi, audit/arsip, dan portal publik.
+Alur aktif yang dipertahankan mencakup lembaga, akun/peran, dashboard, periode, tarif, pelacakan shift otomatis Amil (tanpa jadwal manual), Muzakki dan kartu, penerimaan multi-kategori, akad, QR & struk, setoran Bendahara, survei Mustahik, alokasi approval, distribusi, laporan, notifikasi, audit/arsip, dan portal publik. Penghitungan serta pembayaran insentif Amil bukan bagian dari lingkup versi ini.
 
 ## Halaman depan
 - Beranda produk sebagai layar awal pengguna belum login.

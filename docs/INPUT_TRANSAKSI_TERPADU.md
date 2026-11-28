@@ -98,7 +98,11 @@ Struk berstatus Pending diberi label **STRUK RENCANA ZAKAT · SIMULASI**, bukan 
 
 Pada thermal, rincian panjang dapat membungkus ke baris berikutnya tanpa menghilangkan nilai atau satuan. Pratinjau layar dibatasi ke lebar 74 mm dan dipusatkan pada jendela khusus, agar tidak tampak seperti potongan kecil di kiri halaman A4. Aturan halaman cetak diletakkan pada stylesheet di bagian `<head>` (bukan di dalam `<body>`) dan memakai `size: auto`, sehingga ukuran kertas mengikuti media yang dipilih pada driver. CSS tidak dapat menyatakan lebar roll 80 mm dengan tinggi otomatis melalui campuran `80mm auto`; satu nilai `80mm` justru membentuk halaman persegi. Saat mencetak, pilih printer thermal, ukuran kertas/roll 80 mm, skala 100% atau Actual size, dan nonaktifkan header/footer browser bila tersedia. Cetak thermal dijalankan melalui dialog cetak browser dengan CSS yang meniru tata letak POS/ESC-POS; prototype belum mengirim byte/perintah ESC/POS langsung, sehingga pilihan kertas 80 mm, densitas, pemotongan kertas, dan dukungan QR tetap mengikuti driver printer yang digunakan. Jika driver hanya menyediakan A4/Letter, ukuran media perlu ditambahkan pada preferensi printer terlebih dahulu; bila tidak, browser dapat tetap menampilkan area kosong atau mengecilkan struk.
 
-## 8. Aturan transaksi dan batas prototype
+## 8. Tombol konfirmasi transaksi
+
+Seluruh kanal input menggunakan tombol **Konfirmasi Zakat**. Keterangan di bawah tombol menjelaskan bahwa tindakan tersebut memproses rencana transaksi dan menerbitkan QR untuk ditunjukkan kepada Amil saat verifikasi pembayaran. Tombol ini tidak mengesahkan pembayaran: transaksi tetap berstatus `pending` sampai Amil menerima, memeriksa, dan mengesahkannya.
+
+## 9. Aturan transaksi dan batas prototype
 
 - Satu transaksi gabungan memiliki satu serial dan satu QR; setiap rincian kategori/media berada di array `lines`.
 - Satu orang dibatasi satu transaksi aktif per Lembaga/periode sesuai aturan prototype yang sedang berlaku. Beberapa kategori pembayaran digabung sebagai baris dalam transaksi yang sama, bukan dibuatkan transaksi aktif terpisah.
@@ -107,7 +111,7 @@ Pada thermal, rincian panjang dapat membungkus ke baris berikutnya tanpa menghil
 - Penyimpanan memakai `localStorage`, sehingga transaksi publik tidak muncul otomatis pada HP warga lain atau perangkat petugas yang berbeda.
 - Tidak ada backend, database server, penguncian transaksi atomik, maupun otorisasi server. Manipulasi browser masih mungkin.
 
-## 9. Kebutuhan sebelum produksi
+## 10. Kebutuhan sebelum produksi
 
 1. **Sumber data bersama:** API dan database relasional untuk Lembaga, periode, identitas, membership, transaksi induk, dan rincian transaksi.
 2. **Isolasi Lembaga:** setiap request menentukan Lembaga dari sesi/tautan tervalidasi di server; jangan mempercayai `tenantId` dari payload browser.

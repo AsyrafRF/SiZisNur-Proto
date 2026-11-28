@@ -64,7 +64,8 @@ db.transactions.push({
 })
 db.transactions.push({
   id: 'TR-PUBLIC-002', tenantId: 'TN-ANNUR', serial: 'AM-002-PENDING', personId: 'PRIVATE-PERSON-002',
-  status: 'pending', createdAt: '2026-11-14T08:10:00.000Z',
+  status: 'pending', createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
   lines: [{ category: 'Zakat Maal', type: 'uang', value: 900000 }],
 })
 db.distributions.push({ id: 'DS-PUBLIC-001', tenantId: 'TN-ANNUR', status: 'tersalurkan', money: 25000, rice: 2.5, mustahikId: 'PRIVATE-MUSTAHIK-001' })
@@ -85,7 +86,20 @@ assert.doesNotMatch(verified, /100\.000/)
 
 const pending = publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-002|AM-002-PENDING')
 assert.match(pending, /BELUM TERVAKLIDASI/)
+assert.match(pending, /2 jam sejak transaksi dibuat/)
+assert.match(pending, /meja Amil/)
 assert.doesNotMatch(pending, /STRUK VALID/)
+
+const expiredPublicTx = {
+  id: 'TR-PUBLIC-EXPIRED', tenantId: 'TN-ANNUR', serial: 'AM-EXPIRED', personId: 'PRIVATE-PERSON-EXPIRED',
+  status: 'pending', createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  expiresAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), lines: [],
+}
+db.transactions.push(expiredPublicTx)
+const expiredPublicReceipt = publicPortal.verifyPublicToken('SIZISNUR|TN-ANNUR|TR-PUBLIC-EXPIRED|AM-EXPIRED')
+assert.match(expiredPublicReceipt, /QR Kedaluwarsa/)
+assert.match(expiredPublicReceipt, /QR tidak dapat digunakan/)
+assert.equal(expiredPublicTx.status, 'expired', 'public QR verification must persist the expired status')
 
 // Suspended and unpublished lembaga do not appear or pass public QR verification.
 const hidden = A.db.tenants.find((item) => item.id === 'TN-ALHIKMAH')

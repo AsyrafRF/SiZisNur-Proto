@@ -45,6 +45,12 @@ vm.runInContext(source, context, { timeout: 10000 });
 
 const updateForm = window.__SIZISNUR_UPDATE_TRANSACTION_FORM;
 assert.equal(typeof updateForm, 'function', 'the shared transaction form updater is exposed');
+const transactionActionMarkup = window.__SIZISNUR_TRANSACTION_FORM_ACTION;
+assert.equal(typeof transactionActionMarkup, 'function', 'all transaction channels should share one submit-action renderer');
+const sharedActionHtml = transactionActionMarkup();
+assert.ok(sharedActionHtml.includes('>Konfirmasi Zakat</button>'), 'the shared transaction action label must be consistent');
+assert.ok(sharedActionHtml.includes('memproses transaksi dan menerbitkan QR'), 'the helper must explain that the action processes the transaction and issues a QR');
+assert.ok(sharedActionHtml.includes('transaksi belum lunas sampai disahkan Amil'), 'the helper must not imply that submitting confirms payment');
 
 function makeControl(value = '') {
   return { value, disabled: false, required: false, checked: false, dataset: { autoFill: 'true' }, selectionStart: null };
@@ -203,9 +209,13 @@ const revisionSource = fs.readFileSync(path.join(root, 'js', 'revision-v5.js'), 
 const publicSource = fs.readFileSync(path.join(root, 'js', 'public-intake.js'), 'utf8');
 const cssSource = fs.readFileSync(path.join(root, 'css', 'style.css'), 'utf8');
 assert.match(cssSource, /\[data-line-wrap\]\[hidden\]\s*\{\s*display:none!important\s*\}/, 'category-specific hidden fields must not be forced visible by .field display:flex');
+assert.match(cssSource, /\.transaction-submit-note\s*\{[^}]*font-size:10\.5px/, 'the helper under the transaction button should be visually secondary');
 assert.match(revisionSource, /transactionCalculatorFields\('self'/);
 assert.match(revisionSource, /transactionCalculatorFields\('operator'/);
 assert.match(publicSource, /__SIZISNUR_TRANSACTION_FORM_FIELDS\('public'/);
 assert.match(publicSource, /__SIZISNUR_UPDATE_TRANSACTION_FORM/);
+assert.match(revisionSource, /<button type=\"submit\" class=\"btn primary\">Konfirmasi Zakat<\/button>/, 'all signed-in transaction entry forms share the unified button label');
+assert.equal((revisionSource.match(/\$\{transactionFormActionMarkup\(\)\}/g) || []).length, 2, 'self-service and operator/counter transaction forms use the shared action and helper');
+assert.match(revisionSource, /Tekan tombol ini untuk memproses transaksi dan menerbitkan QR/);
 
 console.log('transaction-line-adaptivity.test.cjs: all assertions passed');

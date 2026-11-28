@@ -9,7 +9,7 @@ const revisionPath = path.join(__dirname, '..', 'js', 'revision-v5.js');
 let source = fs.readFileSync(appPath, 'utf8').replace(/\r\n/g, '\n');
 source = source.replace(
   'render();\n})();',
-  'window.__SiZisNurTest={mustahikModal,muzakkiModal,navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'
+  'window.__SiZisNurTest={mustahikModal,muzakkiModal,scoreMustahik,navigateRef:navigate,loginRef:login,html:()=>elements.app.innerHTML,modalHtml:()=>elements["modal-root"].innerHTML};\nrender();\nwindow.__SiZisNurBridge.db = window.__SiZisNurBridge.seedMultiTenant();\nwindow.__SiZisNurBridge.persist();\n})();'
 );
 source += '\n' + fs.readFileSync(revisionPath, 'utf8');
 
@@ -45,6 +45,28 @@ const annurArea = db.areas.find((x) => x.tenantId === 'TN-ANNUR');
 const alhikmahArea = db.areas.find((x) => x.tenantId === 'TN-ALHIKMAH');
 assert.equal(annurArea.name, 'Perumahan Villa Pesona Asri');
 assert.equal(alhikmahArea.name, 'Kompleks Buana Citra');
+
+// Column H is now a tenant-scoped master reference rather than a hard-coded NON RW 10 label.
+assert.ok(db.mustahiks.filter((x) => x.tenantId === 'TN-ANNUR').every((x) => String(x.region).startsWith('AREA_RT|')),
+  'unambiguous legacy VPA RT03 values should migrate to the An-Nur RT primary key');
+const annurRtForScore = db.rts.find((x) => x.tenantId === 'TN-ANNUR');
+const alhikmahRtForScore = db.rts.find((x) => x.tenantId === 'TN-ALHIKMAH');
+assert.equal(window.__SIZISNUR_SCORE_MUSTAHIK_REGION('', 'TN-ANNUR'), 0);
+assert.equal(window.__SIZISNUR_SCORE_MUSTAHIK_REGION(`NON_AREA|${annurArea.id}`, 'TN-ANNUR'), 50);
+assert.equal(window.__SIZISNUR_SCORE_MUSTAHIK_REGION(`AREA_RT|${annurRtForScore.id}`, 'TN-ANNUR'), 100);
+assert.equal(window.__SIZISNUR_SCORE_MUSTAHIK_REGION(`NON_AREA|${annurArea.id}`, 'TN-ALHIKMAH'), 0,
+  'a Daerah ID from another tenant must not be accepted');
+assert.equal(window.__SIZISNUR_SCORE_MUSTAHIK_REGION(`AREA_RT|${alhikmahRtForScore.id}`, 'TN-ANNUR'), 0,
+  'an RT ID from another tenant must not be accepted');
+const annurAssessmentField = window.__SIZISNUR_MUSTAHIK_REGION_FIELD({ region: '' }, 'TN-ANNUR');
+assert.ok(annurAssessmentField.includes(`NON_AREA|${annurArea.id}`));
+assert.ok(annurAssessmentField.includes(`AREA_RT|${annurRtForScore.id}`));
+assert.ok(annurAssessmentField.includes('Non-Perumahan Villa Pesona Asri'));
+assert.ok(!annurAssessmentField.includes('Kompleks Buana Citra'));
+const alhikmahAssessmentField = window.__SIZISNUR_MUSTAHIK_REGION_FIELD({ region: '' }, 'TN-ALHIKMAH');
+assert.ok(alhikmahAssessmentField.includes(`NON_AREA|${alhikmahArea.id}`));
+assert.ok(alhikmahAssessmentField.includes('Non-Kompleks Buana Citra'));
+assert.ok(!alhikmahAssessmentField.includes('Perumahan Villa Pesona Asri'));
 const annurRws = db.rws.filter((x) => x.tenantId === 'TN-ANNUR');
 const alhikmahRws = db.rws.filter((x) => x.tenantId === 'TN-ALHIKMAH');
 assert.equal(annurRws.length, 1);
@@ -156,6 +178,8 @@ assert.ok(modal.indexOf('name="domicileStatus"') < modal.indexOf('name="address"
 app.mustahikModal(null);
 modal = app.modalHtml();
 assert.ok(modal.includes('Wilayah penilaian (kolom H)'));
+assert.ok(modal.includes('Jalur Asnaf lain (kolom Q)'));
+for (const route of ['IBNU SABIL', 'FISABILILLAH', 'GHARIMIN', 'RIQAB', 'AMIL']) assert.ok(modal.includes(route));
 assert.ok(modal.indexOf('name="domicileStatus"') < modal.indexOf('name="address"'));
 
 // Lembaga admin pages and recaps render the hierarchy for the selected tenant.
@@ -195,4 +219,4 @@ assert.ok(newTenantForm.includes('Warga Lembaga Uji'));
 assert.ok(db.areas.some((x) => x.tenantId === 'TN-NEW' && x.name === 'Lembaga Uji'));
 assert.ok(db.rws.filter((x) => x.tenantId === 'TN-ALHIKMAH').every((x) => x.areaId === alhikmahArea.id));
 
-console.log('PASS — master Daerah/RW/RT per lembaga, validasi relasi, formulir Muzakki/Mustahik, rekap hierarkis, dan pemisahan kolom penilaian workbook');
+console.log('PASS — master Daerah/RW/RT per tenant, H score 0/50/100 dengan validasi ID, opsi asnaf, formulir dan rekap hierarkis');

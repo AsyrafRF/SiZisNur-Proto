@@ -40,8 +40,20 @@
     if (profile === 'annur-default') return A.seed()
     throw new Error('Dataset tidak dikenal. Pilih Dataset Multi-Lembaga atau Dataset Masjid An-Nur.')
   }
+  function removeRetiredAmilRuleFields(database) {
+    ;(database.rules || []).forEach((rule) => {
+      delete rule.monthlyIncentive
+      delete rule.method
+    })
+    return database
+  }
   function finalizePreset(fresh, profile) {
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(fresh[key])) fresh[key] = [] })
+    removeRetiredAmilRuleFields(fresh)
+    fresh.transactions.forEach((transaction) => {
+      if (String(transaction.status || '').trim().toLowerCase() === 'tercatat') transaction.status = 'pending'
+      if (transaction.status === 'pending') window.__SIZISNUR_TRANSACTION_POLICY?.normalizePendingExpiry?.(transaction)
+    })
     fresh.platformAdmins = [preservedRootAccount()]
     fresh.users = (fresh.users || []).filter((item) => item.id !== ROOT_ACCOUNT.id)
     fresh.platformAudit = []
@@ -102,17 +114,27 @@
     validateDatabase(database)
     const next = clone(database)
     DB_ARRAYS.forEach((key) => { if (!Array.isArray(next[key])) next[key] = [] })
+    removeRetiredAmilRuleFields(next)
     next.version = 5
     next.seedRevision ||= 2
     next.transactions.forEach((transaction) => {
-      if (String(transaction.status || '').trim().toLowerCase() !== 'tercatat') return
-      transaction.status = 'pending'
-      if (!transaction.expiresAt) {
-        const createdAtMs = Date.parse(transaction.createdAt || '')
-        transaction.expiresAt = Number.isFinite(createdAtMs)
-          ? new Date(createdAtMs + 24 * 60 * 60 * 1000).toISOString()
-          : new Date(0).toISOString()
+      if (String(transaction.status || '').trim().toLowerCase() === 'tercatat') transaction.status = 'pending'
+      if (transaction.status !== 'pending') return
+      const policy = window.__SIZISNUR_TRANSACTION_POLICY
+      if (policy?.normalizePendingExpiry) {
+        policy.normalizePendingExpiry(transaction)
+        return
       }
+      const createdAtMs = Date.parse(transaction.createdAt || '')
+      const oldExpiryMs = Date.parse(transaction.expiresAt || '')
+      const hasCreatedAt = Number.isFinite(createdAtMs)
+      if (!hasCreatedAt && transaction.expiryPolicy === 'amil-2h-v1') return
+      const hasLegacyExpiry = Number.isFinite(oldExpiryMs) && oldExpiryMs > 0
+      const originalCreatedAtMs = hasCreatedAt ? createdAtMs : hasLegacyExpiry ? oldExpiryMs - 24 * 60 * 60 * 1000 : 0
+      transaction.expiresAt = hasCreatedAt || hasLegacyExpiry
+        ? new Date(originalCreatedAtMs + 2 * 60 * 60 * 1000).toISOString()
+        : new Date(0).toISOString()
+      transaction.expiryPolicy = 'amil-2h-v1'
     })
     next.platformAdmins ||= []
     next.users = next.users.filter((item) => item.id !== ROOT_ACCOUNT.id)
@@ -163,6 +185,7 @@
     // preset replaces the database in-place without reloading the script bundle.
     window.__SIZISNUR_REBUILD_DEMO_MUZAKKI?.()
     window.__SIZISNUR_REBUILD_TENANT_TERRITORIES?.()
+    window.__SIZISNUR_MIGRATE_MUSTAHIK_REGIONS?.()
     window.__SIZISNUR_REBUILD_AUDIT_HASHES?.()
     A.persist()
     confirmMode = ''; pendingImport = null; pendingImportSummary = null
@@ -360,6 +383,7 @@
         if (value.trim() !== 'GANTI DATASET') throw new Error('Ketik GANTI DATASET persis untuk mengonfirmasi penggantian dataset.')
         loadDatasetPreset(form.dataset.profile)
       }
+      A.clearModalDraft?.(form)
     } catch (error) { A.toast(error.message || String(error), 'error') }
   })
   document.addEventListener('change', (event) => {

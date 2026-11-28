@@ -21,13 +21,16 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 7. Buka kalkulator zakat dan uji Fitrah, Maal, Profesi, Fidyah, Kafarat, dan Infak/Sedekah. Cocokkan satuan uang `Rp` dan beras `kg`, nisab/haul maal, mode bulanan/tahunan profesi, serta tarif lembaga yang telah ditetapkan Admin.
 8. Untuk kafarat sumpah, pastikan biaya makan 10 orang dihitung dengan tarif lembaga. Untuk kafarat bertahap, pastikan 60 orang tidak dihitung sebelum opsi ketidakmampuan tahapan sebelumnya dikonfirmasi.
 9. Buat rencana transaksi fitrah dan pastikan jumlah awal menggunakan jumlah anggota keluarga serta tarif lembaga.
-10. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Simpan dan terbitkan QR**; dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
+10. Ubah pembayaran agar melebihi kewajiban. Tanpa mencentang pemisahan, tekan **Konfirmasi Zakat**; keterangan di bawah tombol menjelaskan penerbitan QR dan verifikasi oleh Amil. Dialog konfirmasi harus menyebut nilai kelebihan. Pilih **Tidak** dan pastikan transaksi belum tersimpan. Ulangi, pilih **Ya**, lalu pastikan baris transaksi terpisah menjadi nilai zakat dan Infak/Sedekah sesuai media.
 11. Uji pembayaran sama dengan dan di bawah kewajiban; tidak boleh muncul dialog kelebihan. Uji kelebihan Fidyah/Kafarat; tampilkan selisih, tetapi jangan otomatis mengalihkan kategori.
-12. Pastikan status transaksi `Pending`, QR tampil, dan masa berlakunya 24 jam.
-13. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
-14. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
-15. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
-16. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
+12. Pastikan status transaksi `Pending`, QR tampil, tenggat verifikasi tercantum jelas sebagai maksimal 2 jam sejak transaksi dibuat, dan instruksi meminta Muzakki segera menunjukkan QR ke meja Amil.
+13. Pastikan tenggat pada ringkasan, notifikasi, struk digital, dan struk thermal sama dengan waktu pembuatan + 2 jam. Penutupan periode harus mengakhiri transaksi lebih dahulu jika terjadi sebelum tenggat.
+14. Uji data Pending dengan waktu pembuatan lebih dari 2 jam sebelumnya: QR harus berstatus kedaluwarsa, tidak menampilkan QR aktif, dan tidak dapat disahkan Amil meskipun token dimasukkan manual.
+15. Impor backup lama yang masih memakai waktu 24 jam; pastikan tenggat dinormalisasi dari waktu pembuatan asli menjadi 2 jam, bukan dihitung ulang dari waktu impor.
+16. Unduh PNG, cetak atau simpan PDF dari dialog browser, lalu uji layout thermal 80 mm.
+17. Coba membuat transaksi kedua pada lembaga dan periode yang sama. Sistem harus menolak selama transaksi pertama masih aktif.
+18. Hubungkan akun ke lembaga lain, pindah lembaga, lalu pastikan transaksi/QR lembaga pertama tidak dapat diverifikasi pada lembaga kedua.
+19. Buat transaksi pada lembaga kedua dan pastikan akun masih dibatasi satu transaksi aktif untuk lembaga dan periodenya masing-masing.
 
 ## B. Jalur Operator dan verifikasi Amil
 
@@ -81,7 +84,19 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 9. Pastikan Relawan hanya melihat batch yang ditugaskan kepadanya.
 10. Konfirmasi satu penerima. Pastikan progres batch berubah dan penerima tidak dapat dicatat dua kali.
 
-## F. Role dan pembatasan akses
+## F. Shift Amil otomatis dan pelacakan
+
+1. Login sebagai Amil dan buka **Penerimaan & Verifikasi**. Pastikan tombol **Mulai Shift** tersedia dan tidak ada form untuk mengisi waktu atau membuat shift manual.
+2. Tekan **Mulai Shift**. Pastikan satu record baru dibuat pada `shiftSessions` dengan `amilId`, `tenantId`, `openedAt`, dan status `open`.
+3. Proses satu transaksi uji melalui QR, akad, dan konfirmasi penerimaan fisik. Pastikan transaksi berubah menjadi `Paid` dan `shiftId` menunjuk shift yang sedang aktif. Pastikan transaksi Pending atau batal tidak dihitung pada rekap shift.
+4. Buka **Pelacakan Shift Amil** sebagai Amil. Pastikan hanya shift akun tersebut yang terlihat, beserta waktu mulai, waktu selesai/durasi berjalan, jumlah transaksi, total uang dan total beras. Buka detail transaksi dan pastikan hanya transaksi `Paid` atau tahap lanjut yang terhubung pada shift tersebut yang tampil.
+5. Unduh CSV dan XLSX dari akun Amil. Pastikan laporan berisi data milik Amil tersebut saja dan menyertakan baris total berdasarkan hasil filter.
+6. Logout sebagai Amil. Pastikan shift otomatis menjadi `closed`, `closedAt` terisi, serta `transactionCount`, `moneyTotal`, `riceTotal`, dan `closeReason` disimpan. Ulangi pergantian akun Amil ke role lain; shift harus tertutup sebelum role baru aktif.
+7. Login sebagai Admin dan Pengurus. Pastikan keduanya dapat melihat semua shift pada lembaga aktif, memfilter berdasarkan Amil/rentang tanggal/status, mengurutkan waktu/durasi/jumlah/total, melihat detail, dan mengekspor CSV/XLSX. Pastikan shift lembaga lain tidak tercampur.
+8. Pastikan Admin/Pengurus tidak mendapatkan tombol untuk memulai, menutup, mengubah, atau membuat shift secara manual; hak aksesnya hanya peninjauan.
+9. Uji penutupan saat tab/browser ditutup pada browser aktual. Catat bahwa event `pagehide` adalah mekanisme best-effort prototype; penutupan server-side tetap wajib pada implementasi produksi.
+
+## G. Role dan pembatasan akses
 
 | Role | Yang perlu diuji | Batas akses yang diharapkan |
 |---|---|---|
@@ -93,18 +108,21 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 | Relawan | Batch dan QR penerima | Tidak melihat kas, daftar transaksi Muzakki atau alokasi yang tidak ditugaskan |
 | Pengurus | Laporan, audit, koreksi dan approval | Read-only untuk data operasional. Hanya aksi persetujuan program tersedia |
 
-## G. Laporan, dukungan dan kesiapan offline
+## H. Laporan, dukungan dan kesiapan offline
 
 1. Ubah filter periode dan jenis laporan. Pastikan ringkasan serta ekspor mengikuti filter.
 2. Unduh CSV dan XLSX. Periksa bahwa data uang dan beras mempunyai kolom/satuan masing-masing.
 3. Gunakan fungsi cetak browser dan pilih Simpan sebagai PDF.
 4. Unduh paket UPZ dan pastikan statusnya dijelaskan sebagai bahan ekspor, bukan upload langsung ke BAZNAS.
-5. Dari setiap role, kirim ticket bantuan, bug, saran, atau laporan keamanan. Pastikan ticket tersimpan lokal.
-6. Putuskan koneksi jaringan. Pastikan shell yang sudah di-cache tetap dapat dibuka dan perubahan simulasi masuk antrean lokal.
-7. Pulihkan koneksi. Tanpa endpoint API tidak ada sync cloud. Dengan endpoint uji khusus, validasi autentikasi, idempotensi, konflik, dan penerimaan event di server.
-8. Periksa dashboard, panduan role, diagram alur dan halaman Evaluasi Prototype.
+5. Dari setiap role Lembaga, kirim tiket bantuan, bug, saran, atau laporan keamanan. Pastikan tiket masuk ke `supportTickets` dengan `tenantId`, identitas pelapor, dan pesan awal.
+6. Masuk sebagai Admin SiZisNur. Buka **Tiket Bantuan**, pastikan tiket dari beberapa Lembaga terlihat bersama nama/ID Lembaga asal, lalu buka salah satu tiket dan balas dengan status **Menunggu jawaban Lembaga**.
+7. Masuk kembali sebagai pelapor. Pastikan balasan root tampil pada riwayat tiket, kirim informasi tambahan, dan pastikan status berubah menjadi **Menunggu Admin SiZisNur**. Uji pula balasan Admin Lembaga pada tiket milik role lain di tenant yang sama; role non-Admin tidak boleh melihat tiket pengguna lain.
+8. Kembali sebagai root, balas dan tandai tiket **Selesai**. Pastikan riwayat percakapan dan Audit Platform mencatat jawaban/status akhir.
+9. Putuskan koneksi jaringan. Pastikan shell yang sudah di-cache tetap dapat dibuka dan perubahan simulasi masuk antrean lokal.
+10. Pulihkan koneksi. Tanpa endpoint API tidak ada sync cloud. Dengan endpoint uji khusus, validasi autentikasi, idempotensi, konflik, dan penerimaan event di server.
+11. Periksa dashboard, panduan role, diagram alur dan halaman Evaluasi Prototype.
 
-## H. Acuan Workbook 1447H/2026M
+## I. Acuan Workbook 1447H/2026M
 
 1. Buka menu Acuan Workbook 1447H menggunakan Admin, Bendahara atau Pengurus.
 2. Cocokkan penerimaan Rp175.240.500, 3.114 jiwa, 980 blanko, beras zakat 1.882,6 kg, beras infak 71,5 kg, serta komposisi cached Mustahik 21/103/5.
@@ -112,15 +130,14 @@ Semua data pada prototype adalah data demo lokal. Jangan memakai identitas warga
 4. Buat Tahap 1 dan Tahap 2 workbook melalui Bendahara. Tahap 1 Rp71.900.000 dan 685 kg. Tahap 2 Rp76.387.500 dan 1.197,6 kg termasuk saldo agregat.
 5. Ajukan dan setujui dengan Pengurus.
 6. Pastikan gabungan alokasi dasar menjadi Rp148.287.500 dan 1.882,6 kg. Saldo Rp37.500 dan 13,04 paket tidak dialokasikan otomatis kepada penerima.
-7. Periksa pool insentif Q dan R yang masing-masing Rp8.000.000. Hubungan metode belum diputuskan.
-8. Catat seluruh anomali pada `docs/IMPLEMENTASI_WORKBOOK_1447H.md` sebagai item validasi.
+7. Catat anomali formula dan saldo historis pada `docs/IMPLEMENTASI_WORKBOOK_1447H.md` sebagai item validasi. Data historis workbook yang sudah tidak menjadi lingkup operasional tidak diuji sebagai fitur aplikasi.
 
 ## Catatan
 
 UAT ini perlu dijalankan bersama perwakilan Admin, Operator, Amil, Bendahara, Relawan, Pengurus, dan Muzakki. Hasil akhir memerlukan persetujuan tertulis stakeholder, pemeriksaan syariah dan hukum, serta uji keamanan sistem produksi.
 
 
-## I. Reset data, preset dataset, dan pemulihan fitur
+## J. Reset data, preset dataset, dan pemulihan fitur
 
 1. Login sebagai Admin SiZisNur (Root) dan buka Pengaturan Prototype. Pastikan tersedia ekspor cadangan, impor cadangan, reset ke dataset default, hapus semua data, Dataset Multi-Lembaga, dan Dataset Masjid An-Nur.
 2. Pilih **Dataset Masjid An-Nur**. Pastikan hanya satu lembaga (Masjid An-Nur) tersedia, dengan 129 record Mustahik sintetis dan menu Acuan Workbook 1447H beserta catatan anomali, angka agregat, tahap alokasi, dan temuan sumber.
@@ -128,12 +145,12 @@ UAT ini perlu dijalankan bersama perwakilan Admin, Operator, Amil, Bendahara, Re
 4. Pilih **Hapus semua data**, ketik frasa konfirmasi `HAPUS SEMUA`, lalu muat ulang halaman. Pastikan tidak ada akun tenant yang tersisa atau dibuat ulang; hanya Admin SiZisNur (Root) yang dapat login. Khususnya, akun Relawan tidak boleh muncul sebagai pengguna tanpa lembaga.
 5. Buat akun Muzakki baru melalui registrasi mandiri saat tidak ada lembaga. Pastikan akun dapat dibuat tanpa memilih lembaga. Setelah login, Dashboard/Layanan Mandiri/Rencana Bayar menjelaskan **Belum ada Lembaga yang terdaftar**; jangan tampilkan tombol transaksi yang belum dapat digunakan.
 6. Dari Root, buat lembaga baru atau setujui pengajuan lembaga. Pastikan satu Daerah induk terbentuk otomatis. Login sebagai Admin lembaga baru, buka Master Wilayah Administratif, tambahkan RW dan RT, lalu uji pemilihannya pada form Muzakki/Mustahik.
-7. Periksa menu masing-masing role pada lembaga baru dan pada kedua preset. Admin harus dapat melihat dan mengatur Jadwal & Kehadiran, tetapi tidak boleh melihat Alokasi & Persetujuan, Penyaluran, atau Laporan & Statistik. Pastikan Amil, Operator, Bendahara, Relawan, dan Pengurus hanya melihat menu sesuai tanggung jawab serta panduan role.
+7. Periksa menu masing-masing role pada lembaga baru dan pada kedua preset. Admin harus dapat melihat Pelacakan Shift Amil pada lembaga aktif, tetapi tidak boleh melihat Alokasi & Persetujuan atau Penyaluran; akses laporan mengikuti matriks role saat ini. Pastikan Amil, Operator, Bendahara, Relawan, dan Pengurus hanya melihat menu sesuai tanggung jawab serta panduan role.
 8. Jalankan `node tests/dataset-role-reset.test.cjs` dan `node tests/prototype-settings.test.cjs`; keduanya harus lulus.
 
 
 
-## J. Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi)
+## K. Portal Zakat Publik & Pendataan Mandiri (evaluasi simulasi)
 
 > Jalankan hanya menggunakan data sintetis dan satu browser/profil yang sama. OTP yang ditampilkan di layar bukan OTP sungguhan; data tidak tersinkron ke perangkat lain. Fitur ini bukan kanal pembayaran nyata.
 

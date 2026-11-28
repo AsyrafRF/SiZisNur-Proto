@@ -9,7 +9,8 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 | Admin SiZisNur (root/platform) | INTERAKTIF + SIMULASI | Buat lembaga + Admin awal, tinjau pengajuan, ubah metadata/status lembaga, aktif/nonaktif akun lembaga, pengaturan global, mode pemeliharaan, audit root | Password/MFA, RBAC server, approval ganda, audit immutable, proses onboarding/legal sesungguhnya |
 | Muzakki | INTERAKTIF + SIMULASI | Registrasi akun mandiri dengan nama lengkap, nomor HP, email, alamat, dan password login (tanpa memilih lembaga); setelah login, pilih lembaga aktif dari menu akun untuk membuat keanggotaan dan data Muzakki lembaga. Mendukung multi-lembaga, domisili/Daerah/RT, profil, keluarga, kalkulator, transaksi, QR, dan riwayat | Verifikasi kontak OTP, autentikasi, pengelolaan persetujuan privasi dan sinkronisasi multi-device |
 | Operator | INTERAKTIF | Walk-in, identitas Muzakki, kalkulasi otomatis fitrah/maal/profesi/fidyah/kafarat, pratinjau kewajiban dan kelebihan, pemisahan ke infak/sedekah serta konfirmasi sebelum menyimpan kelebihan yang belum dialokasikan, transaksi Pending dan QR | Integrasi loket dan printer khusus yang tervalidasi |
-| Amil | INTERAKTIF + SIMULASI | Input konter dengan kalkulator transaksi bersama Operator, buka/tutup shift, scan QR, ringkasan akad, verifikasi pembayaran, BSZ, cetak thermal | Validasi akad oleh otoritas agama, perangkat kasir dan printer tersertifikasi |
+| Amil | INTERAKTIF + SIMULASI | Input konter dengan kalkulator transaksi bersama Operator, Mulai/Tutup Shift otomatis, pencatatan transaksi melalui `shiftId` saat pengesahan, riwayat shift pribadi, scan QR, ringkasan akad, verifikasi pembayaran, BSZ, cetak thermal | Penutupan terjamin saat browser/perangkat mati, validasi akad oleh otoritas agama, perangkat kasir dan printer tersertifikasi |
+| Pelacakan Shift Amil | INTERAKTIF + SIMULASI | Amil melihat shift sendiri; Admin dan Pengurus melihat seluruh shift pada tenant aktif; waktu mulai/selesai, durasi, jumlah transaksi, total uang/beras, detail transaksi, filter Amil/tanggal/status, sortir, ekspor CSV dan XLSX | Database server, filter/otorisasi server-side, laporan lintas perangkat, penutupan server saat logout/heartbeat dan rekonsiliasi sesi lintas perangkat |
 | Bendahara | INTERAKTIF + SIMULASI | Berita acara shift tertutup, kas aktual, rekening/logistik tahap dua, selisih, jurnal uang/beras, koreksi, alokasi dan batch | Bank feed, rekonsiliasi otomatis rekening, approval tambahan/dual-control server dan kebijakan akuntansi final |
 | Relawan | INTERAKTIF + SIMULASI | UI mobile-first, QR atau kode, batch yang ditugaskan, cegah pencatatan ganda | Bukti tanda tangan digital, foto/GPS, mode konflik offline terjamin |
 | Pengurus | INTERAKTIF + SIMULASI | Baca laporan, transaksi, kas, jurnal, koreksi, audit dan menyetujui program penyaluran | E-signature sah, dasbor lintas lembaga terpusat dan notifikasi approval |
@@ -20,16 +21,20 @@ Dokumen ini memisahkan apa yang dapat dicoba di prototype dari komponen yang mas
 | Jurnal dan laporan keuangan | INTERAKTIF + SIMULASI | Jurnal otomatis uang IDR dan persediaan kg, neraca ringkas, perubahan dana, ekspor XLSX | Bagan akun final, standar akuntansi, audit independen dan laporan resmi |
 | Laporan dan UPZ | INTERAKTIF + SIMULASI | Filter periode/jenis, CSV, XLSX, cetak ke PDF, ringkasan UPZ | Pengiriman bulanan ke pusat, validasi skema dan integrasi resmi BAZNAS |
 | Notifikasi | SIMULASI | Pesan lokal, status, ucapan transaksi dan kanal pilihan | Provider email/WA/SMS, template resmi, opt-out dan delivery receipts |
-| Support dan feedback | INTERAKTIF + SIMULASI | Ticket bantuan/bug/feedback tersimpan lokal | Monitoring eksternal, SLA, notifikasi dan manajemen insiden |
+| Support dan feedback | INTERAKTIF + SIMULASI | Tiket bantuan/bug/feedback/security masuk ke inbox Admin SiZisNur; root melihat asal Lembaga, pelapor, prioritas, percakapan, dan dapat membalas; pengguna Lembaga melihat riwayat serta membalas tiketnya; Admin Lembaga dapat memantau tiket satu Lembaga | Backend/API lintas perangkat, notifikasi, lampiran, SLA, penugasan, eskalasi insiden, otorisasi server-side dan retensi |
 | Offline-first | INTERAKTIF + SIMULASI | Cache shell PWA dan antrean perubahan pada browser | Backend sync, resolusi konflik, enkripsi lokal, autentikasi ulang dan jaminan transaksi offline |
 | Audit | INTERAKTIF + SIMULASI | Rantai SHA-256, pemeriksaan konsistensi, log per lembaga | Append-only server, digital signature, WORM, backup terpisah dan audit independen |
 | Privasi dan legal | DOKUMENTASI | Checklist kesiapan rilis dan catatan risiko di halaman Evaluasi Prototype | Penilaian dampak privasi, perjanjian pemrosesan data, tinjauan hukum dan persetujuan BAZNAS |
+
+## Ketetapan lingkup Amil
+
+Versi saat ini tidak menyediakan perencanaan jadwal shift manual maupun perhitungan, pembagian, penjadwalan, atau pembayaran insentif Amil. Shift dimulai melalui tombol **Mulai Shift** pada halaman Penerimaan & Verifikasi. Transaksi yang menjadi `Paid` otomatis terhubung ke shift aktif yang sama. Data jadwal lama, bila masih tersimpan, hanya dipertahankan sebagai arsip kompatibilitas dan tidak ditampilkan sebagai workflow aktif. Penutupan pada logout/pergantian akun/keluar dari area aplikasi dilakukan oleh logika client prototype; event penutupan tab (`pagehide`) merupakan best-effort.
 
 ## Ruang kendali Admin SiZisNur
 
 Admin SiZisNur berada di luar tujuh role lembaga. Akun demo `root@sizisnur.demo` (`PA-SIZISNUR-ROOT`) tersimpan di `platformAdmins` dengan `scope: platform` dan tanpa `tenantId`. Data akun root tidak dimasukkan ke koleksi `users` milik lembaga.
 
-Konsol root menyediakan ringkasan platform, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, Pengaturan Sistem, Audit Platform, dan Profil Root. Pengajuan publik hanya dapat diputuskan melalui konsol root; lembaga yang ditangguhkan atau saat mode pemeliharaan aktif tidak dapat membuka workspace lembaga. Detail dan skenario uji ada pada `ADMIN_SIZISNUR_ROOT.md`.
+Konsol root menyediakan ringkasan platform, Lembaga Terdaftar, Pengajuan Lembaga, Akun Pengguna Lembaga, **Tiket Bantuan**, Pengaturan Sistem, Audit Platform, dan Profil Root. Tiket disimpan menurut `tenantId`; Admin root melihat semua Lembaga, Admin Lembaga melihat tiket Lembaganya, dan pengguna lain hanya melihat tiket yang diajukannya sendiri. Pengajuan publik hanya dapat diputuskan melalui konsol root; lembaga yang ditangguhkan atau saat mode pemeliharaan aktif tidak dapat membuka workspace lembaga. Detail dan skenario uji ada pada `ADMIN_SIZISNUR_ROOT.md`.
 
 Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `localStorage` dan JavaScript dapat dimodifikasi pemilik perangkat. Jangan anggap akun root demo sebagai superadmin aman sebelum autentikasi, MFA, RBAC server-side, isolasi lembaga, dan audit append-only diterapkan.
 
@@ -37,7 +42,7 @@ Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `loca
 
 1. Semua transaksi dari Muzakki dan Operator dimulai pada status `Pending`.
 2. Hanya Amil yang dapat memvalidasi transaksi setelah shift dibuka, QR sesuai lembaga, pembayaran fisik diterima, dan akad dikonfirmasi.
-3. Masa berlaku transaksi Pending adalah 24 jam atau sampai periode ditutup.
+3. Masa berlaku transaksi Pending maksimal 2 jam sejak transaksi dibuat atau sampai periode ditutup, mana yang lebih dahulu. Muzakki harus menunjukkan QR ke meja Amil sebelum tenggat; setelah itu transaksi dan QR kedaluwarsa.
 4. Satu akun Muzakki dapat terhubung dengan beberapa lembaga, namun hanya satu transaksi aktif per lembaga per periode.
 5. Lembaga hanya dapat memeriksa QR transaksi yang berasal dari lembaga itu sendiri.
 6. Operator tidak mempunyai wewenang menerima uang atau mengesahkan transaksi. Amil dapat melakukan input konter sebagai fungsi tambahan.
@@ -61,7 +66,6 @@ Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `loca
 
 - Apakah satu transaksi Muzakki per periode dapat berisi banyak kategori zakat atau perlu transaksi terpisah.
 - Bagaimana prosedur klaim transaksi Walk-in ke akun baru setelah nomor HP atau email berhasil diverifikasi. Prototype tidak menautkan histori secara otomatis karena OTP belum tersedia.
-- Apakah expiry Pending tetap 24 jam, mengikuti batas akhir periode, atau kebijakan lain.
 - Formula alokasi fleksibel, kriteria prioritas, dan distribusi tahap sebelum hari raya.
 - Perlakuan saldo agregat Tahap 2 workbook senilai Rp37.500 dan 13,04 paket.
 - Validasi formula mustahik dan perbedaan nilai cache/formula row 16 pada workbook sumber.
@@ -80,3 +84,8 @@ Tahap 1 dan Tahap 2 tetap disediakan sesuai workbook. Total yang diuji untuk alo
 ## Standar kesiapan rilis
 
 Sebelum go-live, tim perlu melakukan threat modeling, secure SDLC, kontrol akses server-side, MFA untuk role kritis, validasi input, enkripsi saat transit dan tersimpan, audit append-only, backup terpisah, uji pemulihan, logging terpantau, privacy impact assessment, pengujian aksesibilitas, uji beban dan UAT. Tinjau ketentuan pengelolaan zakat dan pelindungan data pribadi bersama penasihat hukum dan BAZNAS.
+
+
+## Catatan pengelolaan periode — 26 November 2026
+
+Admin Lembaga dapat menghapus periode berstatus `draf` melalui menu **Periode Zakat**. Penghapusan memerlukan konfirmasi dan ditolak bila masih ada record lain yang terhubung melalui `periodId` (misalnya transaksi, setoran, alokasi, penyaluran, jadwal, shift, atau tautan publik). Periode `aktif` dan `arsip` tidak menyediakan aksi hapus dan tetap dilindungi pada pemeriksaan aksi.

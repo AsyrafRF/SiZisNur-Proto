@@ -51,6 +51,17 @@ const formFields = window.__SIZISNUR_TRANSACTION_FORM_FIELDS;
 assert.equal(typeof calculate, 'function', 'shared calculation engine should be available');
 assert.equal(typeof makePayment, 'function', 'transaction payment splitter should be available');
 
+const transactionPolicy = window.__SIZISNUR_TRANSACTION_POLICY
+assert.equal(transactionPolicy.ttlMs, 2 * 60 * 60 * 1000, 'all transaction channels must use a two-hour verification window')
+assert.equal(transactionPolicy.expiresAt('2026-11-23T07:00:00.000Z'), '2026-11-23T09:00:00.000Z', 'expiry is measured from the transaction creation timestamp')
+const legacyPending = { status: 'pending', createdAt: '2026-11-23T07:00:00.000Z', expiresAt: '2026-11-24T07:00:00.000Z' }
+assert.equal(transactionPolicy.normalizePendingExpiry(legacyPending), true, 'legacy pending records should be normalized')
+assert.equal(legacyPending.expiresAt, '2026-11-23T09:00:00.000Z', 'legacy 24-hour expiry is replaced with the original creation time plus two hours')
+assert.equal(transactionPolicy.isExpired(legacyPending, Date.parse('2026-11-23T09:00:00.000Z')), true, 'the exact deadline is expired and cannot be verified')
+const legacyWithoutTimestamp = { status: 'pending' }
+transactionPolicy.normalizePendingExpiry(legacyWithoutTimestamp)
+assert.equal(legacyWithoutTimestamp.expiresAt, '1970-01-01T00:00:00.000Z', 'missing creation and expiry timestamps remain immediately expired')
+
 const rules = {
   moneyRate: 45000,
   riceRate: 2.5,

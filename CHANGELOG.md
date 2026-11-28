@@ -1,4 +1,49 @@
+# Perubahan stakeholder — hapus insentif Amil dan lacak shift otomatis — 27 November 2026
+
+- Menghapus menu/route, konfigurasi, aturan, dan panduan operasional insentif Amil dari aplikasi aktif. Properti aturan lama `monthlyIncentive` dan `method` juga dibersihkan dari penyimpanan V5 saat bootstrap dan dari cadangan saat impor. Data `schedule` lama dipertahankan hanya untuk kompatibilitas arsip; pembuatan jadwal manual tidak disediakan.
+- Menggunakan kembali `shiftSessions` dan `shiftId` yang sudah terhubung pada pengesahan transaksi Amil serta serah-terima Bendahara. Tombol **Mulai Shift** tetap menjadi satu-satunya cara membuka shift.
+- Menambahkan halaman pelacakan shift untuk Amil (data pribadi) dan Admin/Pengurus (semua shift tenant aktif), termasuk filter, sortir, detail transaksi, ringkasan tiap shift, dan ekspor CSV/XLSX.
+- Menutup semua shift Amil yang terbuka pada logout, pergantian akun, navigasi keluar area akun, serta mencoba penutupan pada `pagehide`. Penutupan tab tetap best-effort karena project menggunakan `localStorage` tanpa backend.
+- Menambahkan `tests/amil-shifts.test.cjs`; pengujian ekspor memeriksa struktur arsip XLSX/Office Open XML dan filter tanggal lokal lintas tengah malam WIB. Seluruh 22 suite dan seluruh pemeriksaan sintaks JavaScript aktif lulus. Cache service worker dinaikkan ke `sizisnur-shell-v5-20261127-amil-shift-tracking-no-incentive`.
+- Catatan produksi: otorisasi server-side, transaksi lintas perangkat, serta penutupan shift yang dijamin tetap memerlukan backend.
+
 # Changelog SiZisNur Prototype
+
+## Penghapusan aman periode draf dan penyelarasan konfirmasi transaksi — 26 November 2026
+
+- Menambahkan aksi **Hapus draf** pada halaman Periode Zakat hanya untuk periode berstatus `draf`; periode `aktif` dan `arsip` tidak menampilkan aksi tersebut dan tetap ditolak bila aksi dipanggil langsung.
+- Penghapusan tersedia pada draf tanpa record terkait; draf yang masih terhubung ditandai **Terhubung data** dan aksi hapus tidak ditampilkan. Penghapusan memakai modal konfirmasi, pemeriksaan ulang status, dan pemeriksaan relasi `periodId` pada koleksi data agar transaksi, setoran, alokasi, distribusi, jadwal, shift, tautan publik, atau catatan lain tidak menjadi orphan. Penghapusan dicatat pada audit Lembaga.
+- Menyatukan tombol pada form input Operator/Amil, Layanan Mandiri Muzakki, dan Formulir Publik menjadi **Konfirmasi Zakat**. Keterangan kecil di bawah tombol menjelaskan pemrosesan transaksi dan penerbitan QR, sekaligus menegaskan bahwa pembayaran baru lunas setelah disahkan Amil.
+- Rumus kalkulasi, status awal `pending`, batas QR dua jam, proses verifikasi Amil, setoran Bendahara, dan renderer struk tidak diubah. Cache service worker diperbarui dan tes regresi ditambahkan.
+
+
+## Tiket Bantuan lintas Lembaga dan percakapan dengan Admin SiZisNur — 25 November 2026
+
+- Menghubungkan formulir Bantuan, Support & Feedback pada seluruh role Lembaga ke inbox **Tiket Bantuan** pada konsol Admin SiZisNur.
+- Setiap tiket membawa ID Lembaga, pelapor, role, jenis laporan, prioritas, judul, uraian, kontak opsional, dan pesan awal. Root dapat mengidentifikasi Lembaga asal serta membalas langsung dalam percakapan.
+- Menambahkan riwayat pesan dua arah, prioritas, dan status `baru`, `diproses`, `menunggu_tenant`, `menunggu_admin`, serta `selesai`. Balasan pengguna Lembaga membuka kembali tiket ke status `menunggu_admin`.
+- Admin Lembaga dapat melihat dan membalas tiket dalam tenant-nya; role lain hanya melihat tiket yang mereka buat sendiri. Admin SiZisNur dapat melihat semua tiket lintas tenant.
+- Tiket legacy yang belum memiliki `messages` tetap dibaca dari field `description`, sehingga struktur data lama tidak dibuang.
+- Mencatat balasan root pada `platformAudit`, balasan tenant pada audit Lembaga dan antrean sinkronisasi lokal. Menambah tes alur tiket dan memperbarui dokumentasi serta cache service worker.
+- Batasan: percakapan tetap tersimpan di `localStorage` browser. API backend, notifikasi, lampiran, SLA, penugasan, eskalasi keamanan, dan otorisasi server-side belum tersedia.
+
+
+## Penyesuaian survei mustahik, wilayah tenant, dan draft modal — 24 November 2026
+
+- Mengganti label dan field kolom Q dari **Jalur Mualaf** menjadi **Jalur Asnaf lain** dengan opsi Mualaf, Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil. Percabangan kolom R mempertahankan posisi logika Q/P dari formula Mualaf yang terdokumentasi; pilihan Q tidak selalu menjadi status akhir karena kondisi P tetap menentukan hasil. Field Awal Mualaf hanya muncul untuk pilihan Mualaf.
+- Menyelaraskan pilihan kolom H dengan Master Daerah/RW/RT tenant aktif: kosong bernilai 0, Non-[Daerah] tenant bernilai 50, dan [Daerah] dengan RT tenant bernilai 100. Referensi disimpan sebagai ID wilayah tenant, divalidasi lintas relasi, dan dimigrasikan dari nilai lama bila dapat dipetakan secara unik. Data domisili administratif tetap terpisah.
+- Mengubah seluruh modal agar klik backdrop tidak menutup modal. Modal hanya ditutup melalui tombol X atau aksi batal/close yang eksplisit. Draft form disimpan otomatis pada setiap perubahan dan dipulihkan saat modal dibuka kembali; draft dihapus hanya setelah submit berhasil. Field password/file tidak disimpan ke draft.
+- Memperbarui dokumentasi, matriks skor dan versi cache service worker. Baseline nominal/bobot alokasi tetap tidak diubah: project tidak menyediakan dasar alokasi untuk Ibnu Sabil, Fisabilillah, Gharimin, Riqab, dan Amil.
+- Catatan sumber: berkas workbook `.xlsx` asli tidak disertakan di arsip project; pemeriksaan aturan mengikuti dokumentasi dan kode yang tersedia, bukan rekonsiliasi langsung terhadap workbook sumber.
+
+## Kebijakan verifikasi transaksi 2 jam dan penghapusan build standalone — 23 November 2026
+
+- Menetapkan satu masa berlaku untuk semua transaksi zakat `Pending`: maksimal 2 jam sejak waktu pembuatan atau sampai periode ditutup, mana yang lebih dahulu.
+- Menyamakan pembuatan tenggat pada Layanan Mandiri Muzakki, input konter Operator/Amil, dan Formulir Publik; keterangan tenggat serta instruksi menunjukkan QR ke meja Amil ditampilkan pada form, notifikasi, ringkasan dan struk.
+- Memastikan QR kedaluwarsa ditolak pada pemindaian dan pengesahan Amil, serta mengubah transaksi Pending kedaluwarsa menjadi `expired` ketika diperiksa.
+- Memigrasikan tenggat Pending lama pada data lokal, reset/preset dan backup impor dari waktu pembuatan asli menjadi 2 jam. Status dan audit transaksi yang sudah diproses tidak diubah.
+- Menghapus file HTML standalone dan skrip pembangunnya serta membersihkan dokumentasi distribusinya. Aplikasi web dan PWA tetap berjalan dari source project; mode `display: standalone` pada manifest tetap dipertahankan sebagai mode PWA.
+- Memperbarui cache service worker, dokumentasi, UAT, dan tes otomatis.
 
 ## Pembaruan Evaluasi Prototype dan Manajemen Akun — 22 November 2026
 

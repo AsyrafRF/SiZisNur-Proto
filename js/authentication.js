@@ -501,7 +501,7 @@
     const social = event.target.closest('[data-auth-social]')
     if (social) { event.preventDefault(); A.toast(`Login ${social.dataset.authSocial} belum dihubungkan. Gunakan email dan password pada prototype ini.`, 'error'); return }
     const close = event.target.closest('[data-auth-close-modal]')
-    if (close) { state.modal = null; A.render(); return }
+    if (close) { A.saveModalDrafts?.(); state.modal = null; A.render(); return }
   })
   document.addEventListener('submit', async (event) => {
     const form = event.target.closest('form[data-auth-form], form[data-form="user"], form[data-root-form="application-review"], form[data-root-form="tenant-create"], form[data-form="tenant-application"], form[data-form="tenant-review"]')
@@ -521,6 +521,7 @@
       else if (form.dataset.rootForm === 'tenant-create') await createTenantFromRootForm(form, data)
       else if (form.dataset.form === 'tenant-application') await submitInstitutionApplication({ ...data, terms: form.elements.terms?.checked ? 'yes' : '' })
       else if (form.dataset.form === 'tenant-review') await legacyTenantReview(form, data)
+      A.clearModalDraft?.(form)
     } catch (error) {
       A.toast(error.message || String(error), 'error')
       if (submit) submit.disabled = false

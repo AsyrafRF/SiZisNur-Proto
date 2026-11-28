@@ -63,8 +63,9 @@ assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.jiwa,0), 3114);
 assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.money,0), 175_240_500);
 assert.equal(app.WORKBOOK_BASELINE.operators.reduce((n,x)=>n+x.blankos,0), 980);
 assert.equal(app.WORKBOOK_BASELINE.receipts.riceZakat + app.WORKBOOK_BASELINE.receipts.riceInfaq, 1954.1);
-assert.equal(app.WORKBOOK_BASELINE.incentives.anonymized.reduce((n,x)=>n+x.blankos,0), 980);
-assert.equal(app.WORKBOOK_BASELINE.incentives.anonymized.reduce((n,x)=>n+x.days,0), 146);
+assert.equal(app.WORKBOOK_BASELINE.incentives, undefined, 'workbook incentive calculations are no longer part of the active system baseline');
+assert.equal(app.bridge.PAGES.incentives, undefined, 'incentive navigation must be removed');
+assert.equal(app.bridge.can('incentives'), false, 'no role can access the retired incentive page');
 const asnafCounts = Object.fromEntries(['FAKIR','MISKIN','MUALAF','CUKUP LAYAK'].map(k => [k, db.mustahiks.filter(x => (x.finalStatus || x.asnaf) === k).length]));
 assert.deepEqual(asnafCounts, { FAKIR: 21, MISKIN: 103, MUALAF: 5, 'CUKUP LAYAK': 0 });
 
@@ -86,6 +87,46 @@ assert.equal(app.classifyMustahik(300, true).finalStatus, 'MISKIN');
 assert.equal(app.classifyMustahik(400, true).finalStatus, 'CUKUP LAYAK');
 assert.equal(app.classifyMustahik(380, true).finalStatus, 'CUKUP LAYAK', 'row 16 formula/cache discrepancy must remain visible');
 
+// Q has the same decision branches as the previous Mualaf route for all six asnaf choices.
+for (const route of ['MUALAF', 'IBNU SABIL', 'FISABILILLAH', 'GHARIMIN', 'RIQAB', 'AMIL']) {
+  assert.equal(app.classifyMustahik(195, route).finalStatus, route, `${route} should be selected when P is CUKUP LAYAK`);
+  assert.equal(app.classifyMustahik(300, route).finalStatus, 'MISKIN', `${route} must retain the P=MISKIN branch`);
+  assert.equal(app.classifyMustahik(380, route).finalStatus, 'CUKUP LAYAK', `${route} must retain the fallback for P=FAKIR`);
+}
+
+// Modal forms autosave values and choices, restore them on reopen, and never persist passwords.
+const draftForm = {
+  dataset: { form: 'draft-regression', id: 'MS-DRAFT-1' },
+  elements: [
+    { name: 'fullName', type: 'text', value: 'Nama Draft' },
+    { name: 'route', type: 'radio', value: 'AMIL', checked: true },
+    { name: 'consent', type: 'checkbox', value: 'yes', checked: true },
+    { name: 'password', type: 'password', value: 'not-to-save' },
+  ],
+  closest(selector) { return selector === '.modal' ? {} : null; },
+  querySelector() { return null; },
+};
+assert.equal(app.bridge.saveModalDraft(draftForm), true);
+draftForm.elements[0].value = '';
+draftForm.elements[1].checked = false;
+draftForm.elements[2].checked = false;
+draftForm.elements[3].value = '';
+assert.equal(app.bridge.restoreModalDraft(draftForm), true);
+assert.equal(draftForm.elements[0].value, 'Nama Draft');
+assert.equal(draftForm.elements[1].checked, true);
+assert.equal(draftForm.elements[2].checked, true);
+assert.equal(draftForm.elements[3].value, '', 'password fields are not restored from modal drafts');
+assert.equal(app.bridge.clearModalDraft(draftForm), true);
+draftForm.elements[0].value = 'Form baru';
+assert.equal(app.bridge.restoreModalDraft(draftForm), false, 'successful submit can clear the saved draft');
+const appSourceForModal = fs.readFileSync(appPath, 'utf8');
+assert.ok(appSourceForModal.includes("case'close-modal-bg':break;"), 'clicking the backdrop must not close the modal');
+assert.ok(appSourceForModal.includes('saveModalDraft(t.form)'), 'modal changes should autosave drafts');
+assert.ok(appSourceForModal.includes('legacyLines'), 'legacy transaction detail rows must be persisted as part of the modal draft');
+assert.ok(appSourceForModal.includes('sharedLines'), 'shared transaction calculator rows must be persisted as part of the modal draft');
+assert.ok(fs.readFileSync(revisionPath, 'utf8').includes('__SIZISNUR_RESTORE_TRANSACTION_LINES'), 'shared transaction calculator rows must be reconstructed before restoring their fields');
+assert.ok(appSourceForModal.includes("window.addEventListener('pagehide',()=>saveModalDrafts())"), 'leaving the page should flush the active modal draft');
+
 // The revised role matrix is enforced by page access and all role pages render.
 app.loginRef('US-PTG');
 for (const page of ['workbook', 'mustahik', 'tenant', 'users', 'periods', 'settings']) {
@@ -95,6 +136,9 @@ for (const page of ['workbook', 'mustahik', 'tenant', 'users', 'periods', 'setti
 assert.ok(app.html().length > 0);
 assert.ok(app.bridge.can('mustahik'));
 assert.ok(!app.bridge.can('allocation'), 'Admin does not own allocation approval or treasury actions');
+assert.ok(!app.bridge.can('incentives'), 'Admin cannot access an incentive module that has been removed');
+app.navigateRef('schedule');
+assert.ok(app.html().includes('Pelacakan Shift Amil'), 'Admin can access automatic Amil shift tracking');
 app.navigateRef('workbook');
 assert.ok(app.html().includes('175.240.500'));
 assert.ok(app.html().includes('753,04'));
@@ -102,7 +146,9 @@ assert.ok(app.html().includes('row 16'));
 assert.deepEqual(JSON.parse(JSON.stringify(app.WORKBOOK_BASELINE.mustahik.formulaRecalc)), { fakir: 21, miskin: 102, cukupLayak: 1, mualaf: 5, mismatchRow: 16 });
 
 app.loginRef('US-BEN');
-for (const page of ['workbook', 'allocation', 'incentives', 'reports', 'deposits', 'ledger', 'distribution', 'corrections', 'audit']) {
+assert.ok(!app.bridge.can('incentives'), 'Bendahara cannot access the removed incentive feature');
+assert.ok(!app.bridge.can('schedule'), 'Bendahara does not access shift tracking');
+for (const page of ['workbook', 'allocation', 'reports', 'deposits', 'ledger', 'distribution', 'corrections', 'audit']) {
   app.navigateRef(page);
   assert.ok(!app.html().includes('Kesalahan tampilan'), `${page} page should render for Bendahara`);
 }
@@ -116,8 +162,8 @@ assert.ok(app.modalHtml().includes('37.500'));
 assert.ok(app.modalHtml().includes('13,04'));
 
 for (const [uid, allowed, denied] of [
-  ['US-PGR', ['dashboard','workbook','allocation','reports','audit','transactions','deposits','ledger','corrections'], ['users','mustahik','settings','muzakki']],
-  ['US-AML', ['dashboard','transactions','schedule','muzakki','corrections','amil-guide','help'], ['allocation','deposits','users']],
+  ['US-PGR', ['dashboard','workbook','allocation','reports','audit','transactions','deposits','ledger','corrections','schedule'], ['users','mustahik','settings','muzakki','incentives']],
+  ['US-AML', ['dashboard','transactions','schedule','muzakki','corrections','amil-guide','help'], ['allocation','deposits','users','incentives']],
   ['US-OPR', ['dashboard','transactions','muzakki','corrections','help'], ['allocation','deposits','users','amil-guide']],
   ['US-REL', ['dashboard','distribution','help'], ['transactions','allocation','deposits']],
   ['US-MZK', ['my-zis','help'], ['dashboard','transactions','deposits','allocation']],
@@ -148,6 +194,8 @@ assert.ok(!app.bridge.can('workbook'), 'Lembaga B must not access An-Nur workboo
 app.loginRef('US-PTG');
 app.mustahikModal(null);
 assert.ok(app.modalHtml().includes('incomeBand'));
+assert.ok(app.modalHtml().includes('Jalur Asnaf lain (kolom Q)'));
+for (const route of ['MUALAF', 'IBNU SABIL', 'FISABILILLAH', 'GHARIMIN', 'RIQAB', 'AMIL']) assert.ok(app.modalHtml().includes(`value=\"${route}\"`), `survey Q should offer ${route}`);
 
 // Approved corrections are overlays and never mutate the original transaction totals.
 app.loginRef('US-BEN');
@@ -193,7 +241,7 @@ assert.equal(app.flexibleMustahiks().length, 0, 'workbook recipients are reserve
 assert.throws(() => app.createWorkbookStage(1, 'Duplikat', 'uji'), /sudah ada/);
 
 console.log('PASS — seed 129 mustahik sintetis (21/103/5)');
-console.log('PASS — skor, ambang klasifikasi, dan jalur Mualaf mengikuti formula workbook');
+console.log('PASS — skor, ambang klasifikasi, enam jalur Asnaf lain, dan draft modal mengikuti aturan yang diminta');
 console.log('PASS — matriks tujuh role, pembatasan Pengurus read-only dan halaman operasional ter-render');
 console.log('PASS — koreksi terkendali menjadi overlay tanpa menimpa transaksi sumber');
 console.log('PASS — Tahap 1 dan Tahap 2 cocok dengan total Rp148.287.500 dan 1.882,6 kg');
