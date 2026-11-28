@@ -148,7 +148,7 @@
   }
 
   function resetIntake(token) {
-    intakeSession = { token, stage: 'identity', identity: null, otp: null, otpExpiresAt: 0, otpAttempts: 0, verifiedUntil: 0, personId: null, transactionIds: [], cancelTxId: null, error: '' }
+    intakeSession = { token, stage: 'identity', identity: null, otp: null, otpExpiresAt: 0, otpAttempts: 0, otpResends: 0, otpLastSentAt: 0, otpChallenges: [], verifiedUntil: 0, personId: null, transactionIds: [], cancelTxId: null, error: '' }
     return intakeSession
   }
   function sessionFor(token) {
@@ -213,7 +213,15 @@
   function otpForm(ctx, session) {
     const channel = session.identity.otpChannel
     const contact = channel === 'email' ? session.identity.email : session.identity.phone
-    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 2 DARI 3 · VERIFIKASI KONTAK</div><h2>Verifikasi identitas kontak</h2><p>Kode simulasi ditujukan ke <b>${esc(maskContact(contact, channel))}</b>. Masa berlaku kode 5 menit dan maksimal 5 percobaan.</p><div class="pi-demo-otp"><small>KODE OTP DEMO · TIDAK DIKIRIM KE WHATSAPP / EMAIL</small><strong>${esc(session.otp)}</strong><span>Gunakan kode ini untuk menguji alur prototype.</span></div><form data-public-intake-form="otp"><div class="field"><label for="pi-otp">Masukkan 6 digit kode</label><input id="pi-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div><div class="form-actions"><button type="submit" class="btn primary">Verifikasi kode</button><button type="button" class="btn" data-public-intake-action="resend-otp">Buat ulang OTP demo</button><button type="button" class="btn ghost" data-public-intake-action="back-identity">Ubah data</button></div></form>${session.otpAttempts ? `<p class="caption">Percobaan gagal: ${session.otpAttempts}/5.</p>` : ''}</section>`
+    const challenges = session.otpChallenges?.length ? session.otpChallenges : [{ channel: channel === 'email' ? 'email' : 'whatsapp', code: session.otp }]
+    const codeCards = challenges.map((item) => `<div class="pi-demo-otp"><small>KODE OTP DEMO · ${item.channel === 'email' ? 'EMAIL' : 'WHATSAPP'} · TIDAK DIKIRIM KE WHATSAPP / EMAIL</small><strong>${esc(item.code)}</strong><span>${item.channel === 'email' ? esc(maskContact(session.identity.email, 'email')) : esc(maskContact(session.identity.phone, 'phone'))}</span></div>`).join('')
+    const fields = challenges.map((item) => {
+      const contactValue = item.channel === 'email' ? session.identity.email : session.identity.phone
+      if (item.status === 'verified') return `<div class="alert light">✓ ${item.channel === 'email' ? 'Email' : 'Nomor HP'} ${esc(maskContact(contactValue, item.channel))} sudah diverifikasi.</div>`
+      const inputName = item.channel === channel ? 'otp' : `otp_${item.channel === 'email' ? 'email' : 'phone'}`
+      return `<div class="field"><label for="pi-otp-${item.channel}">Kode OTP ${item.channel === 'email' ? 'Email' : 'Nomor HP'} · ${esc(maskContact(contactValue, item.channel))}</label><input id="pi-otp-${item.channel}" name="${inputName}" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div>`
+    }).join('')
+    return `<section class="card pi-form-card"><div class="pi-step-label">LANGKAH 2 DARI 3 · VERIFIKASI KONTAK</div><h2>Verifikasi identitas kontak</h2><p>Nomor HP wajib diverifikasi. Email juga diverifikasi bila diisi. Setiap kode berlaku 5 menit, maksimal 5 percobaan, dan maksimal 3 kali kirim ulang dengan jeda 30 detik.</p>${codeCards}<form data-public-intake-form="otp">${fields}<div class="form-actions"><button type="submit" class="btn primary">Verifikasi kode</button><button type="button" class="btn" data-public-intake-action="resend-otp">Buat ulang OTP demo</button><button type="button" class="btn ghost" data-public-intake-action="back-identity">Ubah data</button></div></form>${session.otpAttempts ? `<p class="caption">Percobaan gagal: ${session.otpAttempts}/5.</p>` : ''}</section>`
   }
   function normalizePhone(value) {
     let digits = String(value || '').replace(/\D/g, '')
@@ -386,22 +394,37 @@
     if (!window.__SIZISNUR_SAVE_DOMICILE) throw new Error('Modul Master Wilayah belum tersedia. Muat ulang prototype.')
     const domicile = window.__SIZISNUR_SAVE_DOMICILE({}, data, ctx.link.tenantId)
     session.identity = { name, phone, email, address, ...domicile, otpChannel }
-    session.otp = createOtp()
-    session.otpExpiresAt = Date.now() + 5 * 60 * 1000
+    const nowMs = Date.now()
+    session.otpChallenges = [{ channel: 'whatsapp', code: createOtp(), expiresAt: nowMs + 5 * 60 * 1000, attempts: 0, resends: 0, status: 'active' }]
+    if (email) session.otpChallenges.push({ channel: 'email', code: createOtp(), expiresAt: nowMs + 5 * 60 * 1000, attempts: 0, resends: 0, status: 'active' })
+    session.otp = session.otpChallenges.find((item) => item.channel === (otpChannel === 'email' ? 'email' : 'whatsapp'))?.code || session.otpChallenges[0].code
+    session.otpExpiresAt = nowMs + 5 * 60 * 1000
     session.otpAttempts = 0
+    session.otpResends = 0
+    session.otpLastSentAt = nowMs
     session.stage = 'otp'
     session.verifiedUntil = 0
     A.render()
   }
   function verifyIdentityOtp(form, session, ctx) {
     const data = Object.fromEntries(new FormData(form).entries())
-    if (!session.otp || Date.now() > session.otpExpiresAt) throw new Error('OTP demo sudah kedaluwarsa. Buat ulang OTP untuk melanjutkan.')
-    if (session.otpAttempts >= 5) throw new Error('Batas percobaan OTP tercapai. Silakan mulai ulang formulir.')
-    if (String(data.otp || '').trim() !== session.otp) {
-      session.otpAttempts += 1
-      A.render()
-      throw new Error('Kode OTP tidak sesuai. Periksa kembali kode demo yang ditampilkan.')
+    const challenges = session.otpChallenges?.length ? session.otpChallenges : [{ channel: session.identity.otpChannel === 'email' ? 'email' : 'whatsapp', code: session.otp, expiresAt: session.otpExpiresAt, attempts: session.otpAttempts, status: 'active' }]
+    if (challenges.some((item) => !item.code || Date.now() > item.expiresAt)) throw new Error('OTP demo sudah kedaluwarsa. Buat ulang OTP untuk melanjutkan.')
+    if (session.otpAttempts >= 5 || challenges.some((item) => item.attempts >= 5)) throw new Error('Batas percobaan OTP tercapai. Silakan mulai ulang formulir.')
+    for (const challenge of challenges) {
+      const inputName = challenge.channel === (session.identity.otpChannel === 'email' ? 'email' : 'whatsapp') ? 'otp' : `otp_${challenge.channel === 'email' ? 'email' : 'phone'}`
+      if (challenge.status === 'verified') continue
+      if (String(data[inputName] || '').trim() !== challenge.code) {
+        challenge.attempts += 1
+        session.otpAttempts += 1
+        if (challenge.attempts >= 5 || session.otpAttempts >= 5) challenge.status = 'locked'
+        A.render()
+        throw new Error(`Kode OTP ${challenge.channel === 'email' ? 'email' : 'nomor HP'} tidak sesuai. Periksa kembali kode demo yang ditampilkan.`)
+      }
+      challenge.status = 'verified'
+      challenge.verifiedAt = A.now()
     }
+    if (challenges.some((item) => item.status !== 'verified')) { A.render(); return }
     const lookup = identityLookup(ctx.link.tenantId, session.identity)
     if (lookup.ambiguous) { session.stage = 'match'; session.lookupError = lookup.reason; session.personId = null; session.verifiedUntil = Date.now() + 10 * 60 * 1000; A.render(); return }
     session.personId = lookup.person?.id || null
@@ -505,8 +528,19 @@
     const ctx = currentPublicContext()
     const session = ctx.link ? sessionFor(ctx.token) : null
     if (action === 'back-home') { state.page = A.user() ? (A.user().scope === 'platform' ? 'platform-admin' : 'dashboard') : 'landing'; state.publicIntakeToken = null; state.modal = null; A.render(); return }
-    if (action === 'back-identity') { if (session) { session.stage = 'identity'; session.otp = null; session.verifiedUntil = 0 }; A.render(); return }
-    if (action === 'resend-otp') { if (!session?.identity) throw new Error('Isi identitas terlebih dahulu.'); session.otp = createOtp(); session.otpExpiresAt = Date.now() + 5 * 60 * 1000; session.otpAttempts = 0; A.render(); return }
+    if (action === 'back-identity') { if (session) { session.stage = 'identity'; session.otp = null; session.otpChallenges = []; session.verifiedUntil = 0 }; A.render(); return }
+    if (action === 'resend-otp') {
+      if (!session?.identity) throw new Error('Isi identitas terlebih dahulu.')
+      const nowMs = Date.now()
+      if (Number(session.otpResends || 0) >= 3) throw new Error('Batas kirim ulang OTP tercapai. Mulai ulang formulir untuk meminta kode baru.')
+      if (nowMs - Number(session.otpLastSentAt || 0) < 30 * 1000) throw new Error('Tunggu 30 detik sebelum meminta OTP baru.')
+      ;(session.otpChallenges || []).filter((item) => item.status !== 'verified').forEach((item) => { item.code = createOtp(); item.expiresAt = nowMs + 5 * 60 * 1000; item.attempts = 0; item.status = 'active'; item.resends = Number(item.resends || 0) + 1 })
+      const primary = session.identity.otpChannel === 'email' ? 'email' : 'whatsapp'
+      session.otp = session.otpChallenges.find((item) => item.channel === primary)?.code || session.otpChallenges[0]?.code
+      session.otpExpiresAt = nowMs + 5 * 60 * 1000
+      session.otpAttempts = 0; session.otpResends = Number(session.otpResends || 0) + 1; session.otpLastSentAt = nowMs
+      A.render(); return
+    }
     if (action === 'restart') { if (ctx.link) resetIntake(ctx.token); A.render(); return }
     if (action === 'cancel-back') { if (session) session.cancelTxId = null; A.render(); return }
     if (action === 'start-cancel') { if (!session || !session.personId || !Number.isFinite(session.verifiedUntil) || Date.now() > session.verifiedUntil) throw new Error('Sesi verifikasi telah berakhir. Ulangi verifikasi kontak.'); const tx = findPublicTransaction(button.dataset.id, session); if (!tx || !canCancelPublic(tx, session.personId, ctx.link.tenantId)) throw new Error('Transaksi ini tidak dapat dibatalkan oleh Portal Publik.'); session.cancelTxId = tx.id; A.render(); return }

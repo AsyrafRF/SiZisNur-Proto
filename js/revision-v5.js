@@ -436,6 +436,7 @@
   A.ROLES.splice(0, A.ROLES.length, ...roles)
   Object.assign(A.PAGES, {
     dashboard: ['Ringkasan', '◫', 'Semua'],
+    account: ['Akun & Keamanan', '◎', 'Semua'],
     tenant: ['Kelola Lembaga & UPZ', '⌂', ['Admin', 'Pengurus']],
     users: ['Akun & Peran', '♙', ['Admin']],
     periods: ['Periode Zakat', '▦', ['Admin']],
@@ -462,7 +463,7 @@
     prototype: ['Evaluasi Prototype', '◇', 'Semua'],
   })
   const pageAccess = {
-    dashboard: roles.filter((role) => role !== 'Muzakki'),
+    dashboard: roles.filter((role) => role !== 'Muzakki'), account: roles,
     tenant: ['Admin', 'Pengurus'], users: ['Admin'], periods: ['Admin'], settings: ['Admin'],
     schedule: ['Admin', 'Amil', 'Pengurus'], muzakki: ['Admin', 'Operator', 'Amil'], transactions: ['Operator', 'Amil', 'Pengurus'],
     deposits: ['Bendahara', 'Pengurus'], ledger: ['Bendahara', 'Pengurus'], corrections: ['Bendahara', 'Amil', 'Operator', 'Pengurus'],
@@ -1826,6 +1827,7 @@
     if (duplicate) throw new Error('Email atau nomor HP sudah digunakan akun Muzakki lain')
     const user = activeUser()
     const contactChanged = String(user.email || '').trim().toLowerCase() !== email || normalizePhone(user.phone || account.phone) !== phoneKey
+    if (contactChanged) throw new Error('Email dan nomor HP akun hanya dapat diubah melalui menu Akun & Keamanan agar OTP kontak baru wajib diverifikasi terlebih dahulu.')
     applyDomicile(person, d, currentTenantId())
     Object.assign(person, { name, phone, email, address: String(d.address).trim() })
     if (isNewPerson) { db.persons.push(person); member.personId = person.id }
@@ -2893,6 +2895,7 @@
     backfillAudit()
     switch (state.page) {
       case 'dashboard': return dashboardV5()
+      case 'account': return window.__SIZISNUR_AUTH?.accountSettingsMarkup?.() || '<div class="alert warn">Modul keamanan akun belum siap. Muat ulang prototype.</div>'
       case 'my-zis': return myZisPage()
       case 'muzakki-services': return muzakkiServicesPage()
       case 'pay-plan': return muzakkiPayPlanPage()

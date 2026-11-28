@@ -168,3 +168,26 @@ UAT ini perlu dijalankan bersama perwakilan Admin, Operator, Amil, Bendahara, Re
 12. Cabut tautan dari menu petugas. Pastikan pratinjau/URL lama tidak dapat membuka formulir. Pastikan periode tertutup atau lembaga dinonaktifkan juga menolak tautan.
 13. Jalankan `node tests/public-intake.test.cjs` dan seluruh tes `for f in tests/*.test.cjs; do node "$f"; done`.
 14. Baca `docs/PORTAL_ZAKAT_PUBLIK_EVALUASI.md`, khususnya bagian batasan prototype dan checklist produksi. Jangan publikasikan banner kepada warga untuk penggunaan riil sebelum backend, OTP provider, isolasi tenant, audit, dan seluruh gate keamanan dipenuhi.
+
+## L. OTP akun, lupa password, dan pengaturan keamanan
+
+> Seluruh kode OTP pada skenario ini adalah kode demo yang ditampilkan pada browser. Gunakan hanya akun/kontak sintetis. Jangan menganggapnya sebagai email/SMS/WhatsApp yang benar-benar dikirim.
+
+1. Reset dataset ke An-Nur atau gunakan akun sintetis yang sudah disiapkan. Buka **Login sebagai Muzakki**, lalu periksa tautan **Lupa password?**. Pastikan form menerima email atau nomor HP.
+2. Buka **Login sebagai Panitia** dan pilih setiap role yang akan diuji. Pastikan tautan pemulihan tersedia dan form lupa password mewajibkan pilihan role agar akun dengan kontak sama tidak tertukar.
+3. Jalankan lupa password untuk satu akun Muzakki. Pastikan OTP demo dibuat pada semua kanal kontak yang tersedia. Verifikasi satu kanal terlebih dahulu; pastikan kanal yang sudah diverifikasi diberi status selesai dan inputnya tidak diminta ulang. Verifikasi kanal sisanya.
+4. Uji kode salah hingga lima kali pada challenge terpisah; percobaan kelima harus mengunci challenge. Uji kode kedaluwarsa setelah 5 menit dan pastikan kode tersebut ditolak. Uji kirim ulang: permintaan sebelum 30 detik ditolak, maksimum tiga kirim ulang diterapkan, dan kode lama tidak lagi berlaku setelah kode baru dibuat.
+5. Setelah semua kanal pemulihan benar, masukkan password baru minimal 8 karakter dan konfirmasi. Pastikan hash password berubah, password baru dapat dipakai untuk login, dan password lama tidak lagi diterima. Pastikan audit keamanan tercatat.
+6. Ulangi pemulihan untuk akun Admin lembaga, Pengurus, Operator, Amil, Bendahara, dan Relawan dengan memilih role yang sesuai. Pastikan pencarian akun terikat pada tenant/role yang benar. Uji pula akun root dari pengaturan Profil Akun Root; root tidak boleh muncul sebagai pilihan Login Panitia.
+7. Buat akun Panitia baru melalui **Akun & Peran** sebagai Admin lembaga. Login normal dengan password awal; pastikan password benar belum cukup untuk membuat sesi apabila email/HP belum diverifikasi. Selesaikan OTP pada kedua kontak, lalu pastikan login berhasil dan status verifikasi tersimpan.
+8. Daftar Muzakki baru. Pastikan akun belum dibuat sebelum OTP email dan HP diverifikasi. Setelah berhasil, pastikan `emailVerifiedAt` dan `phoneVerifiedAt` terisi, tetapi akun tidak otomatis terhubung ke lembaga/person/kartu/membership.
+9. Ajukan lembaga dengan email dan HP sintetis. Pastikan pengajuan belum disimpan sebelum kedua OTP benar. Setelah disimpan, tinjau dan setujui dari root; pastikan status verifikasi kontak diteruskan ke akun Admin awal.
+10. Login sebagai Muzakki dan buka **Akun & Keamanan**. Pastikan status kontak, tombol verifikasi, form ubah profil, ubah password, dan tautan lupa password tersedia. Ubah email dan HP; pastikan nilai lama tidak tertimpa sebelum OTP kontak baru berhasil.
+11. Ulangi halaman **Akun & Keamanan** untuk Admin, Pengurus, Operator, Amil, Bendahara, dan Relawan. Pastikan akses dibatasi ke akun yang sedang aktif dan form ubah password meminta password saat ini serta OTP pada seluruh kontak yang tersedia.
+12. Buka konsol root → **Profil Akun Root** dan pastikan komponen pengaturan keamanan dapat dipakai tanpa mencampurkan akun root ke database/role lembaga.
+13. Pastikan perubahan kontak Muzakki tersinkron dengan record akun dan person membership yang memang terkait, tanpa membuat membership baru atau mengubah pilihan lembaga. Pastikan perubahan profil alamat/domilisi dan alur layanan mandiri tetap berjalan seperti sebelumnya.
+14. Uji **Akses Demo Langsung** secara terpisah. Jalur ini memang merupakan shortcut UAT dan tidak boleh dianggap sebagai login normal dengan OTP.
+15. Jalankan `node tests/authentication.test.cjs`, `node tests/public-intake.test.cjs`, lalu seluruh tes `for f in tests/*.test.cjs; do node "$f"; done`.
+
+**Kriteria penerimaan:** tidak ada akun baru/aksi sensitif yang melewati OTP sesuai kanal yang diwajibkan dalam jalur normal; password tidak berubah sebelum verifikasi selesai; kontak baru tidak disimpan sebelum diverifikasi; dan alur tenant, role, membership, transaksi, serta akses Demo tidak berubah. Semua temuan keamanan produksi tetap harus ditutup di backend, termasuk pengiriman provider nyata, rate limit server-side, anti-enumeration, validasi atomik, pencabutan sesi, dan audit server.
+

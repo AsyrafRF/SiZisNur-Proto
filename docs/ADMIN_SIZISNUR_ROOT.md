@@ -31,9 +31,16 @@ Pada halaman pilihan akses, buka **Akses Demo Langsung** lalu pilih tile **Admin
 | **Tiket Bantuan** | Menerima tiket bantuan, bug, saran, dan dugaan masalah keamanan dari semua Lembaga; membaca identitas Lembaga/pelapor; membalas dalam satu percakapan; mengatur prioritas serta status tindak lanjut. |
 | Pengaturan sistem | Mengubah nama platform, email dukungan, buka/tutup pendaftaran, status default lembaga baru, pengumuman global, dan mode pemeliharaan. |
 | Audit platform | Melihat catatan aktivitas yang dibuat melalui konsol root. |
-| Akun root | Mengubah nama tampilan dan email akun root serta memeriksa pemisahan kewenangan. |
+| Akun root | Mengubah profil/kontak, memverifikasi email/HP, mengubah password dengan OTP, memulihkan password, serta memeriksa pemisahan kewenangan. |
 
 Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyalin parameter aturan awal dari lembaga contoh, dan menambahkan satu periode draf. Admin lembaga harus memeriksa serta mengesahkan tarif dan parameter lokal sebelum dipakai.
+
+
+### Akun & Keamanan Root
+
+Bagian **Akun root** menggunakan komponen keamanan akun bersama. Root dapat memeriksa status kontak, memverifikasi email dan nomor HP yang tersedia, memperbarui kontak setelah OTP simulasi, mengubah password dengan password saat ini + OTP, atau memulai pemulihan password dari halaman tersebut. Root tetap terpisah dari role lembaga dan tidak masuk melalui Login Panitia.
+
+OTP root pada prototype hanya berupa kode demo yang ditampilkan di browser. Tidak ada provider email/SMS, backend pemulihan, MFA, atau sesi terpusat. Untuk produksi, pemulihan root wajib memakai backend platform khusus, MFA, notifikasi, rate limit, audit, dan prosedur break-glass.
 
 
 ## 4. Alur Tiket Bantuan lintas Lembaga
@@ -69,7 +76,8 @@ Saat lembaga baru dibuat, prototype juga membuat satu akun Admin lembaga, menyal
 4. Tangguhkan lembaga uji. Coba masuk sebagai Admin lembaga tersebut dan pastikan workspace diblokir. Aktifkan kembali lembaga.
 5. Kirim pengajuan dari portal publik. Pastikan statusnya `menunggu`, lalu setujui/tolak melalui menu Pengajuan Lembaga.
 6. Aktifkan mode pemeliharaan dan pastikan akun lembaga dibatasi sementara root tetap dapat masuk. Matikan kembali mode pemeliharaan setelah uji.
-7. Periksa Audit Platform untuk melihat rekam perubahan yang dilakukan selama pengujian.
+7. Buka **Akun root**; pastikan profil, status kontak, tombol verifikasi, ubah password, dan lupa password tampil. Uji alur OTP hanya dengan data sintetis.
+8. Periksa Audit Platform untuk melihat rekam perubahan yang dilakukan selama pengujian.
 
 ## 7. Keamanan sebelum produksi
 

@@ -112,9 +112,11 @@ assert.equal(session.stage, 'otp')
 assert.ok(elements.app.innerHTML.includes('KODE OTP DEMO'))
 assert.ok(elements.app.innerHTML.includes('TIDAK DIKIRIM KE WHATSAPP'))
 const otp = session.otp
-fireSubmit(newForm('otp', { otp }))
+const emailOtp = session.otpChallenges.find((item) => item.channel === 'email').code
+fireSubmit(newForm('otp', { otp, otp_email: emailOtp }))
 session = portal.getSession()
 assert.equal(session.stage, 'match')
+assert.ok(session.otpChallenges.every((item) => item.status === 'verified'), 'public intake verifies both required phone and supplied email')
 assert.equal(session.personId, null, 'new verified identity should not be merged to an unrelated person')
 assert.ok(elements.app.innerHTML.includes('Rencana pembayaran zakat'))
 assert.ok(elements.app.innerHTML.includes('Batas verifikasi Amil: 2 jam'), 'public transaction form must clearly show the two-hour Amil deadline')

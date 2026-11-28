@@ -200,10 +200,9 @@
   }
 
   function rootAccount() {
-    const account = rootUser()
-    return `${A.boxhead('Akun Admin SiZisNur', 'Akun platform berdiri sendiri dan tidak terikat pada lembaga tertentu. Akun ini tidak dapat dikelola dari menu Akun & Peran milik lembaga.')}
-      <div class="two-col"><section class="card"><h3>Profil akun root</h3><form data-root-form="root-profile"><div class="grid-form">${A.fld('Nama tampilan','name',account.name,'text','required')}${A.fld('Email akun','email',account.email,'email','required')}</div><div class="form-actions"><button class="btn primary" type="submit">Simpan profil</button></div></form></section>
-      <section class="card"><h3>Pemisahan kewenangan</h3><div class="mini-list"><div class="mini-item"><span>ID akun</span><b class="mono">${esc(account.id)}</b></div><div class="mini-item"><span>Role</span>${badge(ROOT_ROLE)}</div><div class="mini-item"><span>Lingkup</span>${badge('Global / platform')}</div><div class="mini-item"><span>Lembaga terkait</span><b>Tidak ada</b></div></div><div class="alert warn">Akun root demo tidak dilindungi password atau MFA. Jangan gunakan kredensial/penyimpanan prototype ini untuk produksi.</div></section></div>`
+    return `${A.boxhead('Akun Admin SiZisNur', 'Akun platform berdiri sendiri dan tidak terikat pada lembaga tertentu.')}
+      ${window.__SIZISNUR_AUTH?.accountSettingsMarkup?.() || '<div class="alert warn">Modul keamanan akun belum siap. Muat ulang prototype.</div>'}
+      <section class="card"><h3>Pemisahan kewenangan</h3><div class="mini-list"><div class="mini-item"><span>ID akun</span><b class="mono">${esc(rootUser()?.id || '—')}</b></div><div class="mini-item"><span>Role</span>${badge(ROOT_ROLE)}</div><div class="mini-item"><span>Lingkup</span>${badge('Global / platform')}</div><div class="mini-item"><span>Lembaga terkait</span><b>Tidak ada</b></div></div><div class="alert warn">Akun root demo terpisah dari akun lembaga. Seluruh verifikasi dan pemulihan di sini tetap simulasi browser.</div></section>`
   }
 
   function platformAudit() {

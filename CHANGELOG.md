@@ -1,3 +1,16 @@
+# OTP akun, lupa password, dan halaman Akun & Keamanan — 28 November 2026
+
+- Menambahkan satu alur simulasi OTP untuk registrasi Muzakki, pengajuan lembaga, login normal saat kontak belum diverifikasi, verifikasi/perubahan kontak, ubah password, dan pemulihan password. OTP harus berhasil pada kanal yang diwajibkan sebelum aksi dilanjutkan.
+- Menerapkan kode enam digit melalui Web Crypto, masa berlaku 5 menit, maksimal 5 percobaan, maksimal 3 kirim ulang, dan cooldown 30 detik. Challenge mencatat tujuan, kanal, status, percobaan, serta waktu; kode dihapus setelah verifikasi, lockout, atau kedaluwarsa.
+- Menambahkan **Akun & Keamanan** untuk Muzakki dan role lembaga, serta mengintegrasikannya ke Profil Akun Root. Menu ini menyediakan status verifikasi kontak, ubah email/HP setelah OTP, ubah password dengan password saat ini + OTP, dan akses lupa password.
+- Menambahkan lupa password pada form Login Muzakki dan Login Panitia. Pemulihan Panitia mensyaratkan pemilihan role; root tetap dipisahkan dari Login Panitia. Reset password hanya dapat diselesaikan setelah OTP semua kanal terdaftar yang tersedia.
+- Memastikan akun Panitia baru hasil menu Akun & Peran wajib melewati verifikasi kontak pada login normal pertama. Status verifikasi pengajuan lembaga diteruskan ke akun Admin awal setelah root menyetujuinya. Akses Demo Langsung tetap merupakan jalur UAT yang terpisah.
+- Menyesuaikan profil Muzakki agar perubahan kontak hanya melalui Akun & Keamanan dan tetap menyinkronkan identitas login, akun, serta person membership yang sudah terkait; aturan pemilihan lembaga dan pembuatan membership tidak diubah.
+- Memperbarui tes otomatis, skenario UAT, panduan login, QA, deployment dan matriks implementasi. Seluruh 22 suite test serta seluruh pemeriksaan sintaks JavaScript lulus pada 28 November 2026. Cache service worker dinaikkan.
+- **Batas produksi:** kode OTP ditampilkan di browser dan data tersimpan di `localStorage`; tidak ada pengiriman provider, backend, rate limit server, anti-enumeration, atau batas sesi tepercaya. Ini simulasi alur, bukan mekanisme autentikasi produksi.
+
+---
+
 # Perubahan stakeholder — hapus insentif Amil dan lacak shift otomatis — 27 November 2026
 
 - Menghapus menu/route, konfigurasi, aturan, dan panduan operasional insentif Amil dari aplikasi aktif. Properti aturan lama `monthlyIncentive` dan `method` juga dibersihkan dari penyimpanan V5 saat bootstrap dan dari cadangan saat impor. Data `schedule` lama dipertahankan hanya untuk kompatibilitas arsip; pembuatan jadwal manual tidak disediakan.
@@ -52,7 +65,7 @@
 - Email atau nomor HP yang sama ditolak bila akan digunakan lagi pada role yang sama dalam Lembaga yang sama. Kontak yang sama diperbolehkan pada role berbeda; Login Panitia meminta pilihan role supaya akun tidak tertukar.
 - Nama lengkap bukan kunci unik. Jika nama yang sama dipakai orang berbeda (kontak berbeda), form meminta Nama panggilan / penanda yang unik; penanda ditampilkan pada daftar akun, akses demo, dan penugasan petugas.
 - Akun Admin awal yang dibuat melalui pendaftaran/pembuatan lembaga juga memerlukan nomor HP. Registrasi dan pembaruan profil Muzakki turut menyimpan nomor HP pada identitas login, sehingga email maupun HP dapat dipakai sebagai pengenal. Status verifikasi email dan HP disimpan secara terpisah; perubahan kontak mengembalikan statusnya menjadi belum diverifikasi. Data HP pada akun demo adalah nomor sintetis.
-- Batas penting: prototype belum mengirim atau memvalidasi OTP email/HP sungguhan. Status verifikasi baru menjadi terverifikasi setelah integrasi backend dan provider email/WhatsApp/SMS. Jangan anggap field wajib sebagai bukti kepemilikan kontak.
+- Catatan pada tanggal revisi tersebut: OTP email/HP belum tersedia saat itu. Sejak 28 November 2026, flow OTP simulasi sudah ditambahkan; kode tetap hanya tampil di browser dan verifikasi provider sungguhan tetap memerlukan backend/email/WhatsApp/SMS. Jangan anggap field wajib atau OTP lokal sebagai bukti kepemilikan kontak produksi.
 - Pengujian otomatis diperluas untuk duplikasi email/HP, normalisasi nomor, nama sama, role berbeda dengan kontak sama, login role terpilih, dan jumlah 11 kartu evaluasi.
 
 ## 20 November 2026 — Input rincian pembayaran adaptif per jenis zakat
@@ -311,7 +324,7 @@ Pembaruan dilakukan dengan mempertahankan acuan workbook 1447H/2026M dan data mu
 
 ### Batas yang diketahui
 
-Login, peran, database, notifikasi, audit dan antrean sync masih simulasi browser. Tidak ada backend, OTP/MFA, isolasi lembaga server, integrasi email/WhatsApp, bank feed, sinkronisasi cloud aktif atau integrasi resmi BAZNAS. Alokasi fleksibel memakai asumsi pembagian rata dan harus disahkan stakeholder. Lihat `docs/CAKUPAN_FITUR.md` serta `docs/LEGAL_READINESS.md`.
+Pada baseline prototype 4 November 2026, login, peran, database, notifikasi, audit dan antrean sync masih simulasi browser; backend, OTP/MFA, isolasi lembaga server, integrasi email/WhatsApp, bank feed, sinkronisasi cloud aktif dan integrasi resmi BAZNAS belum tersedia. Pembaruan 28 November menambahkan simulasi OTP akun dan lupa password, tetapi batasan backend/provider produksi tetap berlaku. Alokasi fleksibel memakai asumsi pembagian rata dan harus disahkan stakeholder. Lihat `docs/CAKUPAN_FITUR.md` serta `docs/LEGAL_READINESS.md`.
 
 ## 4 November 2026 — Workbook 1447H/2026M
 

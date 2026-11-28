@@ -1,10 +1,10 @@
 # Hasil Pemeriksaan SiZisNur V5
 
-Tanggal pembaruan: 27 November 2026
+Tanggal pembaruan: 28 November 2026
 
 ## Pemeriksaan statis
 
-Pada verifikasi 27 November 2026, `node --check` juga dijalankan untuk seluruh skrip JavaScript yang dimuat aplikasi (`app.js`, `revision-v5.js`, `platform-admin.js`, `public-portal.js`, `prototype-settings.js`, `authentication.js`, `public-intake.js`, `qrcode.js`, dan `service-worker.js`); semuanya lulus.
+Pada verifikasi 28 November 2026, `node --check` juga dijalankan untuk seluruh skrip JavaScript yang dimuat aplikasi (`app.js`, `revision-v5.js`, `platform-admin.js`, `public-portal.js`, `prototype-settings.js`, `authentication.js`, `public-intake.js`, `qrcode.js`, dan `service-worker.js`); semuanya lulus.
 
 | Perintah | Hasil |
 |---|---|
@@ -12,8 +12,8 @@ Pada verifikasi 27 November 2026, `node --check` juga dijalankan untuk seluruh s
 | `node --check js/revision-v5.js` | Lulus |
 | `node --check js/authentication.js` | Lulus |
 | `node --check js/public-intake.js` | Lulus |
-| `node --test tests/authentication.test.cjs` | Lulus — pilihan login terpisah, autentikasi per role, PBKDF2, registrasi Muzakki/lembaga, pembuatan Admin awal setelah persetujuan, dan penggantian password pertama |
-| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 22 suite, 22/22 (27 November 2026) |
+| `node tests/authentication.test.cjs` | Lulus — login per role, registrasi dan login OTP, pemulihan password dari login/pengaturan akun, verifikasi kontak, lockout 5 percobaan, kedaluwarsa 5 menit, cooldown 30 detik, maksimum 3 kirim ulang, serta akses Akun & Keamanan seluruh role dan root |
+| `for f in tests/*.test.cjs; do node "$f"; done` | Lulus — 22 suite, 22/22 (28 November 2026) |
 | `node tests/workbook-rules.test.cjs` | Lulus |
 | `node tests/dataset-role-reset.test.cjs` | Lulus — default An-Nur, preset multi-lembaga, hapus hanya menyisakan Root, tidak membuat ulang Relawan orphan, alert Muzakki tanpa lembaga, master wilayah tenant baru, dan menu role konsisten |
 | `node tests/prototype-settings.test.cjs` | Lulus — reset, preset An-Nur/Multi, export/import, relasi akun Muzakki, Master Wilayah per preset, hapus data, dan kredensial root |
@@ -35,6 +35,8 @@ Pada verifikasi 27 November 2026, `node --check` juga dijalankan untuk seluruh s
 
 - Schema demo V5 dan matriks akses tujuh role, diverifikasi pada dataset An-Nur dan Multi-Lembaga.
 - Pilihan awal Login sebagai Muzakki atau Login sebagai Panitia; form email/password, pembatasan akun antar-role, dan halaman Akses Demo Langsung terpisah.
+- OTP autentikasi akun pada registrasi Muzakki, pengajuan lembaga, login saat kontak belum diverifikasi, perubahan/verifikasi kontak akun, penggantian password, dan pemulihan password dari login maupun pengaturan akun. Challenge menguji kedaluwarsa 5 menit, batas 5 percobaan, maksimum 3 kirim ulang dan cooldown 30 detik; kode simulasi tidak dikirim ke provider.
+- Halaman Akun & Keamanan pada akun Muzakki dan seluruh role lembaga, serta integrasi pengaturan akun root; perubahan email/HP tidak disimpan sebelum kontak yang berubah diverifikasi.
 - Hash kredensial PBKDF2 browser-side, registrasi Muzakki tanpa lembaga, pengajuan lembaga tanpa membuat akun Panitia, pembuatan Admin awal setelah disetujui root, serta penggantian password sementara pada login pertama.
 - Registrasi mandiri Muzakki hanya menyimpan nama lengkap, nomor HP, email, dan alamat; akun awal tidak diberi lembaga, person, kartu Muzakki, atau membership sampai pemilihan lembaga dari dalam akun.
 - Halaman operasional yang dapat dirender per role dan halaman yang ditolak; Admin tidak melihat menu khusus Amil, Bendahara, Relawan, atau Pengurus.
@@ -63,7 +65,7 @@ Pada verifikasi 27 November 2026, `node --check` juga dijalankan untuk seluruh s
 
 Tes Node menggunakan mock browser dan tidak membuktikan kelayakan produksi. Tampilan pratinjau thermal sudah dibatasi ke lebar roll dan deklarasi ukuran halaman diverifikasi secara struktural; hasil akhir tetap bergantung pada driver printer dan opsi paper size di Microsoft Edge. Pengujian manual end-to-end di browser nyata, kamera pada HTTPS, printer thermal, perangkat offline, integrasi API, aksesibilitas, pengujian beban, penetration test, backup/restore, serta UAT dengan stakeholder belum dilakukan.
 
-Tidak ada backend atau endpoint sinkronisasi yang disertakan. Portal Zakat Publik menyimpan tautan/identitas/transaksi pada localStorage browser yang sama; OTP hanya ditampilkan di layar dan bukan dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
+Tidak ada backend atau endpoint sinkronisasi yang disertakan. OTP autentikasi akun dan Portal Zakat Publik hanya ditampilkan di layar sebagai kode demo; challenge serta status verifikasi berada di localStorage dan bukan bukti kepemilikan kontak yang aman. Kode tidak dikirim ke WhatsApp/SMS/email. QR/banner pada prototype tidak menyinkronkan perangkat warga dengan perangkat petugas. Notifikasi email/WhatsApp dan koneksi BAZNAS masih simulasi/ekspor berkas. Hash audit pada localStorage bukan audit immutable. Jangan memasukkan data pribadi atau transaksi nyata.
 
 Lihat `docs/TRANSAKSI_TERPADU_MULTI_JENIS.md` untuk rincian alur transaksi bersama, `SKENARIO_UAT.md` untuk prosedur uji manual, `PORTAL_ZAKAT_PUBLIK_EVALUASI.md` untuk langkah evaluasi serta checklist keamanan produksi, dan `CAKUPAN_FITUR.md` untuk pemetaan fitur serta batasannya.
 

@@ -14,6 +14,12 @@ Tombol **Batalkan** hanya muncul untuk transaksi mandiri berstatus `pending` yan
 
 Halaman ini berisi daftar lembaga yang terhubung, tombol untuk bergabung dengan lembaga lain, pengaturan profil dan wilayah alamat pada lembaga aktif, pengelolaan keluarga tanggungan, serta kalkulator zakat. Jika akun belum terhubung dengan lembaga, halaman menampilkan data akun global dan tombol **Pilih lembaga**. Setelah bergabung, formulir layanan mandiri tersedia.
 
+## 4. Akun & Keamanan
+
+Menu **Akun & Keamanan** terpisah dari Layanan Mandiri. Muzakki dapat memeriksa status verifikasi email dan nomor HP, memperbarui nama/kontak, memverifikasi kontak yang belum tervalidasi, mengubah password dengan password saat ini dan OTP, serta membuka alur **Lupa password?**. Kontak baru hanya disimpan setelah OTP pada kanal yang berubah berhasil.
+
+Pada prototype, OTP 6 digit hanya ditampilkan di browser. Akun baru diverifikasi sebelum disimpan saat registrasi; login normal akun yang kontaknya belum diverifikasi memerlukan OTP. Kode tidak dikirim ke provider. Jangan memakai data pribadi atau menganggap status verifikasi lokal sebagai bukti kepemilikan kontak produksi.
+
 ## 3. Rencana Bayar Zakat
 
 Halaman ini menampilkan lembaga aktif, periode zakat, jumlah keluarga, dan status rencana. Tombol **Mulai rencana bayar zakat** membuka formulir transaksi mandiri yang sudah ada. Perhitungan jenis zakat, nominal atau jumlah beras, konfirmasi, status Pending, dan penerbitan QR tetap mengikuti proses transaksi lama. Muzakki kemudian menunjukkan QR kepada Amil untuk pemeriksaan penerimaan fisik dan akad.

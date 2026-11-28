@@ -65,7 +65,7 @@ Perhatian: pemisahan di atas hanya pemisahan logis pada prototype browser. `loca
 ## Keputusan yang masih memerlukan stakeholder
 
 - Apakah satu transaksi Muzakki per periode dapat berisi banyak kategori zakat atau perlu transaksi terpisah.
-- Bagaimana prosedur klaim transaksi Walk-in ke akun baru setelah nomor HP atau email berhasil diverifikasi. Prototype tidak menautkan histori secara otomatis karena OTP belum tersedia.
+- Bagaimana prosedur klaim transaksi Walk-in ke akun baru setelah nomor HP/email diverifikasi. Prototype kini memiliki OTP simulasi untuk membuktikan urutan alur, tetapi tidak menautkan histori secara otomatis; aturan persetujuan klaim, pencocokan identitas dan pemeriksaan petugas masih perlu diputuskan.
 - Formula alokasi fleksibel, kriteria prioritas, dan distribusi tahap sebelum hari raya.
 - Perlakuan saldo agregat Tahap 2 workbook senilai Rp37.500 dan 13,04 paket.
 - Validasi formula mustahik dan perbedaan nilai cache/formula row 16 pada workbook sumber.
